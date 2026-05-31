@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickTools — Engineering Toolkit</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3450;
+  --accent: #4f8ef7;
+  --accent2: #a78bfa;
+  --accent3: #34d399;
+  --accent4: #fb923c;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --radius: 14px;
+  --shadow: 0 4px 32px rgba(0,0,0,0.45);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── NAV ── */
+nav {
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,17,23,0.85);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+.nav-brand .icon { font-size: 22px; }
+.nav-badge {
+  font-size: 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  color: var(--text2);
+}
+
+/* ── HERO ── */
+.hero {
+  text-align: center;
+  padding: 80px 24px 56px;
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(79,142,247,0.1);
+  border: 1px solid rgba(79,142,247,0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.hero h1 span {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 16px;
+  color: var(--text2);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* ── GRID ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 0 40px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.card-1::before { background: linear-gradient(90deg, #0078D4, #50b0f0); }
+.card-1:hover   { border-color: #0078D4; }
+
+.card-2::before { background: linear-gradient(90deg, #2563eb, #818cf8); }
+.card-2:hover   { border-color: #2563eb; }
+
+.card-3::before { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+.card-3:hover   { border-color: #7c3aed; }
+
+.card-4::before { background: linear-gradient(90deg, #1558b0, #6d28d9); }
+.card-4:hover   { border-color: #1558b0; }
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.card-1 .card-icon { background: rgba(0,120,212,0.15); }
+.card-2 .card-icon { background: rgba(37,99,235,0.15); }
+.card-3 .card-icon { background: rgba(124,58,237,0.15); }
+.card-4 .card-icon { background: rgba(21,88,176,0.15); }
+
+.card-meta { flex: 1; }
+.card-meta h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.card-meta p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+}
+.card-1 .tag { background: rgba(0,120,212,0.12); color: #4ea8e0; border-color: rgba(0,120,212,0.25); }
+.card-2 .tag { background: rgba(37,99,235,0.12); color: #818cf8; border-color: rgba(37,99,235,0.25); }
+.card-3 .tag { background: rgba(124,58,237,0.12); color: #a78bfa; border-color: rgba(124,58,237,0.25); }
+.card-4 .tag { background: rgba(21,88,176,0.12); color: #60a5fa; border-color: rgba(21,88,176,0.25); }
+
+.card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+.card-1 .card-cta { color: #4ea8e0; }
+.card-2 .card-cta { color: #818cf8; }
+.card-3 .card-cta { color: #a78bfa; }
+.card-4 .card-cta { color: #60a5fa; }
+
+.arrow {
+  font-size: 18px;
+  transition: transform .2s;
+}
+.card:hover .arrow { transform: translateX(4px); }
+
+/* ── FOOTER ── */
+footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+@media (max-width: 640px) {
+  nav { padding: 14px 20px; }
+  .hero { padding: 48px 20px 36px; }
+  .grid { padding: 0 20px 48px; gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">
+    <span class="icon">⚡</span>
+    QuickTools
+  </a>
+  <span class="nav-badge">4 tools</span>
+</nav>
+
+<section class="hero">
+  <span class="hero-eyebrow">Engineering Toolkit</span>
+  <h1>Tools that make<br><span>complex work faster</span></h1>
+  <p>A curated set of interactive utilities for cloud migration, system design, estimation, and interviewing — all running locally in your browser.</p>
+</section>
+
+<main class="grid">
+
+  <a class="card card-1" href="Azure_Migration_Navigator.html">
+    <div class="card-icon">☁️</div>
+    <div class="card-meta">
+      <h2>Azure Cloud Migration Navigator</h2>
+      <p>Step-by-step guided wizard for planning and executing Azure cloud migrations. Covers assessment, lift-and-shift, re-platforming, and modernisation phases.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Azure</span>
+      <span class="tag">Cloud</span>
+      <span class="tag">Migration</span>
+      <span class="tag">Architecture</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-2" href="Interview_Scorecard.html">
+    <div class="card-icon">📋</div>
+    <div class="card-meta">
+      <h2>Interview Scorecard</h2>
+      <p>Structured evaluation scorecard for Senior .NET + Azure candidates. Score competencies, capture notes, and generate a consistent hire/no-hire recommendation.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">.NET</span>
+      <span class="tag">Azure</span>
+      <span class="tag">Hiring</span>
+      <span class="tag">Evaluation</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-3" href="SoftwareEstimationTool.html">
+    <div class="card-icon">📊</div>
+    <div class="card-meta">
+      <h2>Software Effort Estimation Tool</h2>
+      <p>End-to-end estimation from initiation to delivery. Break down features, apply complexity weights, and generate effort charts with timeline projections.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Estimation</span>
+      <span class="tag">Planning</span>
+      <span class="tag">Agile</span>
+      <span class="tag">Charts</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-4" href="SystemDesignAssistant.html">
+    <div class="card-icon">🏗️</div>
+    <div class="card-meta">
+      <h2>System Design Assistant</h2>
+      <p>Architect's field manual for designing scalable systems. Walk through requirements, capacity planning, component selection, and trade-off analysis interactively.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Architecture</span>
+      <span class="tag">Scalability</span>
+      <span class="tag">Design</span>
+      <span class="tag">Patterns</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+</main>
+
+<footer>
+  Built with plain HTML · No dependencies · Works offline · Open source on GitHub
+</footer>
+
+</body>
+</html>

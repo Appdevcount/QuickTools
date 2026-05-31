@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Assistant — Architect's Field Manual</title>
+<style>
+:root {
+  --bg: #f7f9fc; --surface: #ffffff; --surface2: #f0f4f8; --border: #dde4ed;
+  --accent: #1558b0; --accent2: #6d28d9; --success: #16a34a; --warning: #b45309;
+  --danger: #dc2626; --text: #111827; --text2: #374151; --text3: #6b7280;
+  --radius: 10px; --radius-sm: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+/* HEADER */
+.app-header { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 2px 10px rgba(21,88,176,0.08); padding: 12px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+.header-brand { display: flex; align-items: center; gap: 10px; min-width: 240px; }
+.header-brand .logo { font-size: 28px; }
+.header-brand h1 { font-size: 1.1rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.header-brand p { font-size: 0.75rem; color: var(--text2); }
+.header-mid { flex: 1; min-width: 200px; }
+.prog-row { display: flex; align-items: center; gap: 10px; }
+.prog-label { font-size: 0.75rem; color: var(--text2); white-space: nowrap; }
+.prog-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, #1558b0, #6d28d9); border-radius: 4px; transition: width 0.4s; }
+.prog-pct { font-size: 0.75rem; color: var(--accent); font-weight: 700; min-width: 36px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.project-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; width: 220px; }
+.project-input:focus { outline: none; border-color: var(--accent); }
+.btn { padding: 7px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--accent); color: #ffffff; }
+.btn-primary:hover { background: #1a6dd6; }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+.btn-success { background: var(--success); color: #ffffff; }
+.btn-success:hover { filter: brightness(1.1); }
+
+/* MAIN LAYOUT */
+.main-layout { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+.app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.tab-panel { display: none; flex: 1; min-height: 0; }
+.tab-panel.active { display: flex; flex: 1; }
+#tab-wizard { display: none; }
+#tab-wizard.active { display: flex; flex: 1; min-height: 0; }
+
+/* APP SIDEBAR (unified: main tabs + wizard subnav) */
+.app-sidebar { width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.25s ease, min-width 0.25s ease; flex-shrink: 0; overflow: hidden; }
+.app-sidebar.collapsed { width: 52px; min-width: 52px; }
+
+/* Sidebar header row */
+.sidebar-hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-hdr-label { font-size: 0.65rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; overflow: hidden; }
+.app-sidebar.collapsed .sidebar-hdr { justify-content: center; }
+.app-sidebar.collapsed .sidebar-hdr-label { display: none; }
+.sidebar-toggle-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); padding: 4px 7px; font-size: 14px; line-height: 1; transition: all 0.15s; flex-shrink: 0; }
+.sidebar-toggle-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* Main section tabs */
+.sidebar-tabs { flex-shrink: 0; padding: 8px 6px 4px; }
+.stab-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; margin-bottom: 2px; position: relative; overflow: hidden; }
+.stab-item:hover { background: var(--surface2); }
+.stab-item.active { background: rgba(21,88,176,0.10); border-left: 2px solid var(--accent); }
+.stab-item.active .stab-label { color: var(--accent); font-weight: 700; }
+.stab-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+.stab-label { font-size: 0.82rem; font-weight: 500; color: var(--text2); white-space: nowrap; overflow: hidden; }
+.app-sidebar.collapsed .stab-label { display: none; }
+.app-sidebar.collapsed .stab-item { justify-content: center; gap: 0; padding: 10px 0; overflow: visible; }
+.app-sidebar.collapsed .stab-item::after { content: attr(data-tooltip); position: absolute; left: 56px; top: 50%; transform: translateY(-50%); background: var(--text); color: #fff; padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; z-index: 200; transition: opacity 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.app-sidebar.collapsed .stab-item:hover::after { opacity: 1; }
+
+/* Wizard sub-navigation */
+.sidebar-divider { height: 1px; background: var(--border); margin: 2px 8px 0; flex-shrink: 0; }
+.sidebar-subnav-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-subnav-wrap.hidden { display: none; }
+.subnav-hdr { font-size: 0.65rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px 4px; flex-shrink: 0; white-space: nowrap; }
+.app-sidebar.collapsed .subnav-hdr { display: none; }
+.sidebar-wizard-nav { flex: 1; overflow-y: auto; padding: 4px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; margin-bottom: 2px; position: relative; overflow: hidden; }
+.nav-item:hover { background: var(--surface2); }
+.nav-item.active { background: rgba(21,88,176,0.09); border-left: 2px solid var(--accent); }
+.nav-item.active .nav-title { color: var(--accent); }
+.nav-num { width: 24px; height: 24px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+.nav-item.active .nav-num { background: var(--accent); color: #ffffff; }
+.nav-item.done .nav-num { background: var(--success); color: #ffffff; }
+.nav-title { font-size: 0.78rem; color: var(--text2); line-height: 1.3; flex: 1; white-space: nowrap; overflow: hidden; }
+.nav-progress { font-size: 0.65rem; color: var(--text3); white-space: nowrap; }
+.app-sidebar.collapsed .sidebar-wizard-nav .nav-item { justify-content: center; gap: 0; padding: 8px 0; overflow: visible; }
+.app-sidebar.collapsed .sidebar-wizard-nav .nav-item > div:last-child { display: none; }
+.app-sidebar.collapsed .sidebar-wizard-nav .nav-item::after { content: attr(data-tooltip); position: absolute; left: 56px; top: 50%; transform: translateY(-50%); background: var(--text); color: #fff; padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; z-index: 200; transition: opacity 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+.app-sidebar.collapsed .sidebar-wizard-nav .nav-item:hover::after { opacity: 1; }
+
+/* SECTION CONTENT */
+.section-content { flex: 1; overflow-y: auto; padding: 24px; background: #ffffff; }
+.section-card { max-width: 900px; margin: 0 auto; }
+.section-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.section-icon-big { font-size: 36px; }
+.section-header-text h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+.section-header-text .cat-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.section-header-nav { margin-left: auto; display: flex; gap: 8px; }
+
+/* INFO BOXES */
+.info-boxes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+@media (max-width: 700px) { .info-boxes { grid-template-columns: 1fr; } }
+.info-box { padding: 12px 14px; border-radius: var(--radius); border-left: 3px solid; }
+.info-box.purpose { background: rgba(21, 88, 176, 0.07); border-color: #1558b0; }
+.info-box.scenario { background: rgba(22, 163, 74, 0.07); border-color: #16a34a; }
+.info-box.tradeoff { background: rgba(180, 83, 9, 0.07); border-color: #b45309; }
+.info-box-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.info-box.purpose .info-box-label { color: #1558b0; }
+.info-box.scenario .info-box-label { color: #16a34a; }
+.info-box.tradeoff .info-box-label { color: #b45309; }
+.info-box p { font-size: 0.82rem; color: var(--text2); line-height: 1.5; }
+
+/* DECISION TREE POINTS */
+.decision-points { background: var(--surface2); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; }
+.decision-points-label { font-size: 0.7rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.decision-point { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; font-size: 0.82rem; color: var(--text2); }
+.decision-point::before { content: '├─'; font-family: monospace; color: var(--text3); flex-shrink: 0; }
+.decision-point:last-child::before { content: '└─'; }
+
+/* INPUTS SECTION */
+.inputs-section { margin-bottom: 20px; }
+.inputs-section-title { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.inputs-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+.form-input, .form-select, .form-textarea { width: 100%; background: #ffffff; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.85rem; font-family: inherit; transition: border-color 0.2s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 70px; }
+.form-select { cursor: pointer; }
+.form-select option { background: #ffffff; }
+
+/* CHIPS (MULTISELECT) */
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; user-select: none; }
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.selected { background: rgba(21, 88, 176, 0.12); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+
+/* CHECKLIST */
+.checklist { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; }
+.checklist-title { font-size: 0.7rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.check-item { display: flex; align-items: center; gap: 10px; padding: 5px 0; cursor: pointer; }
+.check-item input[type="checkbox"] { display: none; }
+.check-box { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.check-item input:checked ~ .check-box { background: var(--success); border-color: var(--success); }
+.check-item input:checked ~ .check-box::after { content: '✓'; font-size: 11px; color: #ffffff; font-weight: 700; }
+.check-item input:checked ~ .check-label { color: var(--text2); text-decoration: line-through; }
+.check-label { font-size: 0.83rem; color: var(--text); }
+
+/* SCORE + RISK ROW */
+.score-risk-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.score-group label { display: block; font-size: 0.75rem; color: var(--text2); margin-bottom: 6px; font-weight: 600; }
+.score-slider-wrap { display: flex; align-items: center; gap: 10px; }
+.score-slider { flex: 1; accent-color: var(--accent); }
+.score-val { font-size: 1.1rem; font-weight: 800; color: var(--accent); min-width: 24px; text-align: center; }
+.risk-btns { display: flex; gap: 6px; }
+.risk-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text2); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+.risk-btn.sel-low { background: rgba(22,163,74,0.12); border-color: #16a34a; color: #16a34a; }
+.risk-btn.sel-medium { background: rgba(180,83,9,0.12); border-color: #b45309; color: #b45309; }
+.risk-btn.sel-high { background: rgba(220,38,38,0.12); border-color: #dc2626; color: #dc2626; }
+.risk-btn.sel-critical { background: rgba(109,40,217,0.12); border-color: #6d28d9; color: #6d28d9; }
+
+/* NAV FOOTER */
+.section-nav-footer { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-top: 1px solid var(--border); margin-top: 8px; }
+.section-pos { font-size: 0.8rem; color: var(--text2); }
+
+/* DECISION TREE TAB */
+#tab-tree { display: none; flex-direction: column; padding: 24px; overflow-y: auto; }
+#tab-tree.active { display: flex; }
+.tree-page { max-width: 900px; margin: 0 auto; width: 100%; }
+.tree-page h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+.tree-page .tree-desc { font-size: 0.85rem; color: var(--text2); margin-bottom: 24px; }
+.tree-flow { display: flex; flex-direction: column; gap: 0; }
+.tree-node { display: flex; flex-direction: column; align-items: center; }
+.tree-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; position: relative; }
+.tree-card.start-end { border-color: var(--accent); background: rgba(21,88,176,0.07); }
+.tree-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.tree-card-num { background: var(--surface2); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+.tree-card-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.tree-tradeoff { font-size: 0.75rem; color: #d29922; margin-top: 4px; }
+.tree-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tree-item-chip { padding: 2px 10px; background: var(--surface2); border-radius: 12px; font-size: 0.75rem; color: var(--text2); }
+.tree-arrow { width: 2px; height: 24px; background: var(--border); position: relative; }
+.tree-arrow::after { content: '▼'; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text3); }
+.guide-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-top: 24px; }
+.guide-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--accent); }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.guide-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; color: var(--text2); border-left: 3px solid var(--border); }
+.guide-item strong { color: var(--text); }
+.beyond-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.beyond-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; }
+.beyond-item h4 { font-size: 0.8rem; font-weight: 700; color: var(--accent2); margin-bottom: 4px; }
+.beyond-item ul { list-style: none; }
+.beyond-item ul li { font-size: 0.78rem; color: var(--text2); padding: 2px 0; }
+.beyond-item ul li::before { content: '→ '; color: var(--text3); }
+.arch-compare { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.arch-vs { flex: 1; min-width: 180px; background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; }
+.arch-vs h4 { font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; }
+.arch-vs ul { list-style: none; }
+.arch-vs ul li { font-size: 0.77rem; color: var(--text2); padding: 2px 0; }
+.arch-vs ul li::before { content: '• '; color: var(--accent); }
+
+/* EVAL TABLE TAB */
+#tab-eval { display: none; flex-direction: column; padding: 24px; overflow-y: auto; }
+#tab-eval.active { display: flex; }
+.eval-wrap { max-width: 1100px; margin: 0 auto; width: 100%; }
+.eval-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.eval-header-row h2 { font-size: 1.2rem; font-weight: 700; }
+.eval-stats { display: flex; gap: 16px; }
+.eval-stat { text-align: center; }
+.eval-stat .val { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+.eval-stat .lbl { font-size: 0.7rem; color: var(--text2); }
+.eval-table { width: 100%; border-collapse: collapse; }
+.eval-table th { background: var(--surface2); padding: 10px 12px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+.eval-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.eval-table tr:hover td { background: rgba(21,88,176,0.04); }
+.eval-num { font-size: 0.85rem; font-weight: 700; color: var(--text2); }
+.eval-item-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.cat-pill { display: inline-block; padding: 1px 8px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+.cat-req { background: rgba(21,88,176,0.11); color: #1558b0; }
+.cat-arch { background: rgba(22,163,74,0.11); color: #15803d; }
+.cat-data { background: rgba(180,83,9,0.11); color: #b45309; }
+.cat-perf { background: rgba(220,38,38,0.11); color: #dc2626; }
+.cat-sec { background: rgba(109,40,217,0.11); color: #6d28d9; }
+.cat-ops { background: rgba(22,163,74,0.11); color: #15803d; }
+.cat-rel { background: rgba(220,38,38,0.11); color: #dc2626; }
+.cat-dev { background: rgba(21,88,176,0.11); color: #1558b0; }
+.cat-biz { background: rgba(180,83,9,0.11); color: #b45309; }
+.cat-iface { background: rgba(109,40,217,0.11); color: #6d28d9; }
+.cat-scale { background: rgba(22,163,74,0.11); color: #15803d; }
+.why-text { font-size: 0.78rem; color: var(--text2); }
+.eval-chips-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+.eval-chip { padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 0.72rem; cursor: pointer; transition: all 0.15s; }
+.eval-chip:hover { border-color: var(--accent); color: var(--text); }
+.eval-chip.sel { background: rgba(21,88,176,0.12); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.eval-score-wrap { display: flex; align-items: center; gap: 6px; }
+.eval-score-slider { width: 70px; accent-color: var(--accent); }
+.eval-score-num { font-size: 0.9rem; font-weight: 800; color: var(--accent); min-width: 14px; }
+.eval-risk-sel { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+.eval-notes-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: 4px; font-size: 0.78rem; font-family: inherit; resize: vertical; min-height: 54px; }
+.eval-notes-input:focus { outline: none; border-color: var(--accent); }
+
+/* REPORT TAB */
+#tab-report { display: none; flex-direction: column; padding: 24px; overflow-y: auto; }
+#tab-report.active { display: flex; }
+.report-wrap { max-width: 900px; margin: 0 auto; width: 100%; }
+.report-placeholder { text-align: center; padding: 80px 20px; }
+.report-placeholder span { font-size: 48px; display: block; margin-bottom: 16px; }
+.report-placeholder h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.report-placeholder p { font-size: 0.85rem; color: var(--text2); margin-bottom: 20px; }
+.report-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.report-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; }
+.report-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+.report-meta { font-size: 0.82rem; color: var(--text2); margin-bottom: 24px; }
+.report-section { margin-bottom: 28px; }
+.report-section-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.report-step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; padding: 12px 14px; background: var(--surface2); border-radius: var(--radius-sm); border-left: 3px solid var(--accent); }
+.report-step-num { font-size: 0.75rem; font-weight: 800; color: var(--accent); background: rgba(21,88,176,0.11); padding: 3px 8px; border-radius: 12px; white-space: nowrap; }
+.report-step-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+.report-step-body { font-size: 0.83rem; color: var(--text2); margin-top: 2px; }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.report-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+.report-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.report-card p, .report-card li { font-size: 0.8rem; color: var(--text2); }
+.report-card ul { list-style: none; }
+.report-card ul li::before { content: '✓ '; color: var(--success); }
+.report-card ul li.unchecked::before { content: '○ '; color: var(--text3); }
+.score-summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.score-badge { padding: 8px 16px; border-radius: var(--radius-sm); text-align: center; }
+.score-badge .sb-val { font-size: 1.4rem; font-weight: 800; }
+.score-badge .sb-lbl { font-size: 0.7rem; }
+.arch-template { background: rgba(21,88,176,0.06); border: 1px solid rgba(21,88,176,0.22); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.arch-template p { font-size: 0.88rem; color: var(--text); line-height: 1.8; font-style: italic; }
+.arch-template strong { color: var(--accent); font-style: normal; }
+.eval-summary-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.eval-summary-table th { background: var(--surface2); padding: 8px 10px; text-align: left; color: var(--text2); }
+.eval-summary-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.risk-badge { padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; }
+.risk-low { background: rgba(22,163,74,0.12); color: #16a34a; }
+.risk-med { background: rgba(180,83,9,0.12); color: #b45309; }
+.risk-high { background: rgba(220,38,38,0.12); color: #dc2626; }
+.risk-critical { background: rgba(109,40,217,0.12); color: #6d28d9; }
+
+@media print {
+  .app-header, .tab-nav, .section-nav, .section-nav-footer, .report-actions, .report-text-view { display: none !important; }
+  .report-content { border: none; padding: 0; }
+  body { background: white; color: black; }
+}
+
+/* PLAIN TEXT VIEW */
+.report-text-view { display: none; margin-bottom: 20px; }
+.report-text-view.visible { display: block; }
+.report-text-area { width: 100%; min-height: 600px; background: #f8fafc; color: #1e293b; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; resize: vertical; white-space: pre; overflow: auto; }
+.report-text-area:focus { outline: 2px solid var(--accent); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* HELP TAB */
+#tab-help { display: none; flex-direction: column; overflow-y: auto; }
+#tab-help.active { display: flex; }
+.help-wrap { max-width: 960px; margin: 0 auto; width: 100%; padding: 32px 24px; }
+.help-hero { background: linear-gradient(135deg, #1558b0 0%, #6d28d9 100%); border-radius: var(--radius); padding: 36px 32px; margin-bottom: 28px; color: #fff; }
+.help-hero h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+.help-hero p { font-size: 0.95rem; opacity: 0.9; line-height: 1.6; max-width: 680px; }
+.help-section { margin-bottom: 28px; }
+.help-section-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.help-steps { display: flex; flex-direction: column; gap: 10px; }
+.help-step { display: flex; gap: 16px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 4px rgba(21,88,176,0.06); }
+.help-step-num { min-width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; flex-shrink: 0; }
+.help-step-body h4 { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.help-step-body p { font-size: 0.83rem; color: var(--text2); line-height: 1.55; }
+.help-step-body code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.78rem; color: var(--accent); font-family: 'Consolas', monospace; }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 620px) { .help-grid { grid-template-columns: 1fr; } }
+.help-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 1px 4px rgba(21,88,176,0.05); }
+.help-card h4 { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.help-card p, .help-card li { font-size: 0.82rem; color: var(--text2); line-height: 1.55; }
+.help-card ul { list-style: none; padding: 0; }
+.help-card ul li { padding: 3px 0; }
+.help-card ul li::before { content: '→ '; color: var(--accent); font-weight: 700; }
+.help-tip { background: rgba(21,88,176,0.07); border: 1px solid rgba(21,88,176,0.2); border-radius: var(--radius); padding: 14px 18px; display: flex; gap: 12px; margin-bottom: 10px; }
+.help-tip-icon { font-size: 20px; flex-shrink: 0; }
+.help-tip p { font-size: 0.83rem; color: var(--text2); line-height: 1.5; margin: 0; }
+.help-tip p strong { color: var(--text); }
+.help-shortcut-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.help-shortcut-table th { background: var(--surface2); padding: 9px 12px; text-align: left; color: var(--text2); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.help-shortcut-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+.help-shortcut-table tr:last-child td { border-bottom: none; }
+.kbd { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-family: 'Consolas', monospace; font-size: 0.75rem; color: var(--text); box-shadow: 0 2px 0 var(--border); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <span class="logo">🏗️</span>
+    <div>
+      <h1>System Design Assistant</h1>
+      <p>Architect's Field Manual — Vision to Evolution</p>
+    </div>
+  </div>
+  <div class="header-mid">
+    <div class="prog-row">
+      <span class="prog-label">Wizard Progress</span>
+      <div class="prog-track"><div class="prog-fill" id="overall-progress" style="width:0%"></div></div>
+      <span class="prog-pct" id="progress-pct">0%</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <input type="file" id="report-upload-input" accept=".txt" style="display:none" onchange="handleReportUpload(event)">
+    <input type="text" id="project-name" class="project-input" placeholder="Project / System Name..." oninput="saveProjectName(this.value)">
+    <button class="btn btn-primary" onclick="generateReport()">📄 Generate Report</button>
+    <button class="btn btn-ghost" onclick="triggerUpload()" title="Upload a previously exported .txt report to restore all data">📁 Upload Report</button>
+    <button class="btn btn-ghost" onclick="clearAll()" title="Clear all data">🗑</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <aside class="app-sidebar" id="app-sidebar">
+    <div class="sidebar-hdr">
+      <span class="sidebar-hdr-label">Navigation</span>
+      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleNav()" title="Collapse menu">&#8249;</button>
+    </div>
+    <div class="sidebar-tabs">
+      <div class="stab-item active" id="stab-wizard" onclick="switchTab('wizard')" data-tooltip="Design Wizard">
+        <span class="stab-icon">🧭</span>
+        <span class="stab-label">Design Wizard</span>
+      </div>
+      <div class="stab-item" id="stab-tree" onclick="switchTab('tree')" data-tooltip="Decision Tree">
+        <span class="stab-icon">🌳</span>
+        <span class="stab-label">Decision Tree</span>
+      </div>
+      <div class="stab-item" id="stab-eval" onclick="switchTab('eval')" data-tooltip="Evaluation Checklist">
+        <span class="stab-icon">📊</span>
+        <span class="stab-label">Evaluation Checklist</span>
+      </div>
+      <div class="stab-item" id="stab-report" onclick="switchTab('report')" data-tooltip="Report">
+        <span class="stab-icon">📄</span>
+        <span class="stab-label">Report</span>
+      </div>
+      <div class="stab-item" id="stab-help" onclick="switchTab('help')" data-tooltip="Help & Guide">
+        <span class="stab-icon">❓</span>
+        <span class="stab-label">Help &amp; Guide</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-subnav-wrap" id="sidebar-subnav-wrap">
+      <div class="subnav-hdr" id="subnav-hdr-count">18 Design Layers</div>
+      <div class="sidebar-wizard-nav" id="section-nav"></div>
+    </div>
+  </aside>
+
+  <div class="app-content">
+    <div id="tab-wizard" class="tab-panel active">
+      <main class="section-content" id="section-content"></main>
+    </div>
+    <div id="tab-tree" class="tab-panel">
+      <div class="tree-page" id="tree-page"></div>
+    </div>
+    <div id="tab-eval" class="tab-panel">
+      <div class="eval-wrap" id="eval-wrap"></div>
+    </div>
+    <div id="tab-report" class="tab-panel">
+      <div class="report-wrap" id="report-wrap">
+        <div class="report-placeholder">
+          <span>📄</span>
+          <h3>Report not generated yet</h3>
+          <p>Complete the Design Wizard, then click "Generate Report" to see your full system design document.</p>
+          <button class="btn btn-primary" onclick="generateReport()">Generate Report Now</button>
+        </div>
+      </div>
+    </div>
+    <div id="tab-help" class="tab-panel">
+      <div class="help-wrap" id="help-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA — 15 SECTIONS (all content from the MD file)
+// ═══════════════════════════════════════════════════
+const SECTIONS = [
+  {
+    id:1, icon:"🎯", title:"Vision & Business Understanding", category:"Foundation", color:"#1558b0",
+    purpose:"Systems exist to solve business problems, not just technical puzzles. Purpose-first thinking ensures every architectural decision is anchored in real value.",
+    scenario:"A healthcare app → downtime could mean missed patient alerts, so uptime is critical.",
+    tradeoff:"Accuracy vs speed, compliance vs agility, cost vs reliability.",
+    decisionTree:["Who are the users?","What pain are we solving?","What is success vs out of scope?","Business trade-offs (accuracy vs speed, compliance vs agility)"],
+    checklist:["Target users identified","Business KPIs known","Compliance requirements listed","Scope boundaries defined"],
+    inputs:[
+      {label:"Target users",key:"users",type:"text",placeholder:"e.g., patients, doctors, hospital admins"},
+      {label:"Business problem / pain point",key:"problem",type:"textarea",placeholder:"Describe the core pain this system solves..."},
+      {label:"Definition of success",key:"success",type:"text",placeholder:"e.g., 99.9% uptime, < 200ms response, 10K concurrent users"},
+      {label:"Out of scope",key:"outOfScope",type:"text",placeholder:"e.g., mobile app, reporting dashboards, billing"},
+      {label:"Primary business trade-off",key:"tradeoffChoice",type:"select",options:["-- Select --","Accuracy over Speed","Speed over Accuracy","Reliability over Cost","Cost over Reliability","Compliance over Agility","Agility over Compliance"]},
+      {label:"Industry / Domain",key:"domain",type:"select",options:["-- Select --","Healthcare","E-Commerce","Banking / Finance","Social Media","SaaS / B2B","IoT / Industrial","Gaming","Logistics","Government / Public","Education","Other"]}
+    ]
+  },
+  {
+    id:2, icon:"📋", title:"Requirements", category:"Foundation", color:"#5b21b6",
+    purpose:"Requirements define what the system must do (functional) and how well it must do it (non-functional). Getting these wrong invalidates every downstream decision.",
+    scenario:"E-commerce checkout → must handle cart, payment, inventory, notification. Banking → 99.99% uptime, strict compliance.",
+    tradeoff:"Higher guarantees increase cost and complexity. Simplicity vs completeness.",
+    decisionTree:["Functional: flows (register, order, refund, notify)","Non-Functional: availability, latency, scalability, security, DR","Trade-off: higher guarantees = higher cost"],
+    checklist:["Inputs/outputs defined","APIs/events identified","Edge cases listed","SLA/SLO defined","Latency target stated"],
+    inputs:[
+      {label:"Core functional flows (comma-separated)",key:"flows",type:"text",placeholder:"e.g., Register, Login, Search, Order, Pay, Notify, Refund"},
+      {label:"Availability SLA",key:"availability",type:"select",options:["-- Select --","99% (3.65 days downtime/yr)","99.9% (8.7 hours/yr)","99.95% (4.4 hours/yr)","99.99% (52 min/yr)","99.999% (5 min/yr)"]},
+      {label:"Latency target (p99)",key:"latency",type:"select",options:["-- Select --","< 50ms (real-time)","< 100ms (interactive)","< 500ms (acceptable)","< 1s (background)","< 3s (batch OK)","> 3s (async / report)"]},
+      {label:"Expected peak concurrent users",key:"userScale",type:"select",options:["-- Select --","< 100 (internal tool)","100 – 10K (small app)","10K – 100K (growing startup)","100K – 1M (mid-scale)","1M – 10M (large platform)","> 10M (hyper-scale)"]},
+      {label:"Data volume",key:"dataVolume",type:"select",options:["-- Select --","< 1GB","1GB – 100GB","100GB – 1TB","1TB – 100TB","> 100TB (big data)"]},
+      {label:"Non-functional priorities",key:"nfrPriority",type:"multiselect",options:["High Availability","Low Latency","High Throughput","Strong Consistency","Data Security","Compliance","Cost Efficiency","Maintainability","Disaster Recovery","Observability"]}
+    ]
+  },
+  {
+    id:3, icon:"⚙️", title:"Constraints", category:"Foundation", color:"#0369a1",
+    purpose:"Constraints are the reality check. Ignoring team size, budget, or deadlines produces brilliant blueprints that never ship.",
+    scenario:"Startup with 3 engineers → modular monolith, not microservices. Enterprise with compliance → private cloud.",
+    tradeoff:"Ambition vs feasibility.",
+    decisionTree:["Team size & skills","Budget & deadlines","Regulations & compliance","Trade-off: ambition vs feasibility"],
+    checklist:["Hiring capability assessed","Cloud budget known","Migration limitations understood","Vendor lock-in tolerance decided"],
+    inputs:[
+      {label:"Team size",key:"teamSize",type:"select",options:["-- Select --","Solo / 1–2 engineers","Small (3–8)","Medium (9–20)","Large (20+)","Multiple independent teams"]},
+      {label:"Delivery timeline",key:"timeline",type:"select",options:["-- Select --","< 1 month (MVP)","1–3 months","3–6 months","6–12 months","> 1 year"]},
+      {label:"Monthly cloud budget",key:"budget",type:"select",options:["-- Select --","< $500","$500 – $5K","$5K – $50K","$50K – $500K","> $500K"]},
+      {label:"Regulatory constraints",key:"regulations",type:"multiselect",options:["GDPR","HIPAA","PCI-DSS","SOC 2","FedRAMP","ISO 27001","CCPA","None"]},
+      {label:"Vendor lock-in tolerance",key:"vendorLock",type:"select",options:["-- Select --","None (fully portable)","Low (minimal cloud APIs)","Medium (some managed services OK)","High (all-in on one cloud provider)"]},
+      {label:"Existing system constraints",key:"legacy",type:"text",placeholder:"e.g., must integrate with SAP, Oracle DB on-prem, mainframe"}
+    ]
+  },
+  {
+    id:4, icon:"⚠️", title:"Risk Identification", category:"Foundation", color:"#b45309",
+    purpose:"Ask: What could kill this project in 6 months? Identifying risks early lets you design mitigations in, not bolt them on later.",
+    scenario:"Social app → traffic spike from viral post. Fintech → regulatory change mid-build. Healthcare → HIPAA audit.",
+    tradeoff:"Risk mitigation vs speed of delivery.",
+    decisionTree:["Technical risks (API instability, traffic spikes)","Business risks (compliance changes)","Operational risks (slow release cycles)","Trade-off: mitigation vs speed"],
+    checklist:["Technical risks listed","Business risks listed","Operational risks listed","Mitigation plan per risk defined"],
+    inputs:[
+      {label:"Technical risks",key:"techRisks",type:"multiselect",options:["Traffic spikes / viral growth","Third-party API instability","Data migration complexity","Integration failures","Security vulnerabilities","Scaling bottlenecks","Tech debt accumulation","Unknown data volume growth"]},
+      {label:"Business risks",key:"bizRisks",type:"multiselect",options:["Regulatory changes","Competitor launch","Funding loss","Scope creep","Stakeholder misalignment","Market shift","Vendor discontinuation"]},
+      {label:"Operational risks",key:"opsRisks",type:"multiselect",options:["Slow release cycles","On-call burnout","Poor observability","Manual deployments","Knowledge silos","Vendor outages","DR not tested"]},
+      {label:"Risk appetite",key:"riskAppetite",type:"select",options:["-- Select --","Conservative (mitigate everything)","Balanced (mitigate top 3)","Aggressive (accept more risk for speed)"]},
+      {label:"Mitigation approach",key:"mitigation",type:"textarea",placeholder:"Describe your top mitigations (e.g., load testing, canary deploys, circuit breakers)..."}
+    ]
+  },
+  {
+    id:5, icon:"🏛️", title:"Architecture Style", category:"Architecture", color:"#047857",
+    purpose:"The architecture style determines how services are organized, deployed, and scaled. This single decision ripples through team structure, CI/CD, and cost.",
+    scenario:"SaaS product → start modular monolith, evolve to microservices as domains stabilize. 3-person startup → monolith, ship fast.",
+    tradeoff:"Simplicity vs scalability. Delivery speed vs operational complexity.",
+    decisionTree:["Monolith → simple, fast delivery","Modular monolith → balance","Microservices → scalable, complex","Event-driven → resilient, eventual consistency","Serverless → cost-efficient, vendor lock-in","Trade-off: simplicity vs scalability"],
+    checklist:["Team ownership model defined","Deployment independence decided","Data isolation strategy chosen","Communication pattern chosen"],
+    inputs:[
+      {label:"Primary architecture style",key:"archStyle",type:"select",options:["-- Select --","Monolith (single deployable)","Modular Monolith (bounded modules, single deploy)","Microservices (independent services per domain)","Event-Driven Architecture (EDA)","Serverless / FaaS","Hybrid (mix)"]},
+      {label:"Service communication",key:"commPattern",type:"select",options:["-- Select --","Synchronous REST","Synchronous gRPC","Asynchronous (Message Bus)","Event-Driven (Event Sourcing)","Mixed (sync + async)"]},
+      {label:"Deployment target",key:"deployTarget",type:"select",options:["-- Select --","Azure (AKS / Container Apps / Functions)","AWS (EKS / ECS / Lambda)","GCP (GKE / Cloud Run)","On-premises","Hybrid Cloud","Multi-cloud"]},
+      {label:"Team ownership model",key:"teamOwnership",type:"select",options:["-- Select --","Single team owns all","Feature teams per domain","Platform team + product teams","Independent service teams (Conway's Law)"]},
+      {label:"Anti-patterns to avoid",key:"antiPatterns",type:"multiselect",options:["Distributed Monolith","Chatty Microservices","Shared Database across services","Synchronous chains > 3 hops","God Service","Premature Microservices"]}
+    ]
+  },
+  {
+    id:6, icon:"🗺️", title:"High-Level Component Design", category:"Architecture", color:"#1d4ed8",
+    purpose:"Map the system's major building blocks and how data flows between them. Draw the component diagram before writing a single line of code.",
+    scenario:"E-commerce: API Gateway (auth + rate limit) → Order Service → Payment Service → Inventory DB → Notification via Service Bus.",
+    tradeoff:"Centralized gateway (control + security) vs direct service calls (simplicity).",
+    decisionTree:["Client → Gateway → Services → Cache → Database → Messaging → External","Trade-off: centralized gateway (control) vs direct calls (simplicity)"],
+    checklist:["Clear service boundaries drawn","API vs async separation clear","Statelessness checked","Backward compatibility plan exists"],
+    inputs:[
+      {label:"Core services / modules",key:"coreServices",type:"text",placeholder:"e.g., Auth, Orders, Payments, Inventory, Notifications, Analytics, Search"},
+      {label:"Gateway / entry point pattern",key:"gatewayPattern",type:"select",options:["-- Select --","Single API Gateway (Azure APIM / Kong)","BFF — Backend for Frontend per client","No gateway (direct service calls)","Service Mesh (Istio / Linkerd)","GraphQL Federation"]},
+      {label:"External integrations",key:"externalIntegrations",type:"text",placeholder:"e.g., Stripe (payments), SendGrid (email), Twilio (SMS), Auth0, Salesforce"},
+      {label:"Stateless services?",key:"stateless",type:"select",options:["-- Select --","Yes — all services fully stateless","Mostly — session state in Redis","No — sticky sessions required","Mixed"]},
+      {label:"Backward compatibility",key:"backCompat",type:"select",options:["-- Select --","API versioning (/v1, /v2)","Consumer-driven contracts (Pact)","Semantic versioning + deprecation window","Header-based versioning","No versioning (breaking changes OK)"]}
+    ]
+  },
+  // P2-1 — new API Design layer
+  {
+    id:16, icon:"📡", title:"API Design", category:"Architecture", color:"#0284c7",
+    purpose:"The API is the contract between your system and its consumers. A well-designed API survives version changes; a poor one forces breaking migrations for every client.",
+    scenario:"Mobile app uses REST JSON. Internal microservices use gRPC for efficiency. A flexible partner integration uses GraphQL. Real-time dashboard uses WebSocket.",
+    tradeoff:"REST simplicity vs GraphQL flexibility. Strict versioning vs consumer freedom. Verbose error bodies vs minimal information leakage.",
+    decisionTree:["Protocol (REST / gRPC / GraphQL / WebSocket)","Pagination (cursor vs offset)","Error contract (RFC 7807 vs custom)","Versioning strategy","Trade-off: REST simplicity vs GraphQL flexibility"],
+    checklist:["API protocol agreed across all teams","Pagination strategy documented","Standard error format defined","API versioning approach agreed"],
+    inputs:[
+      {label:"Primary API protocol",key:"apiProtocol",type:"select",options:["-- Select --","REST (JSON / HTTP 1.1)","gRPC (Protobuf / HTTP/2)","GraphQL","REST + gRPC (public external / internal services)","WebSocket / SignalR (real-time push)","Event-based only (no sync API)"]},
+      {label:"Pagination strategy",key:"pagination",type:"select",options:["-- Select --","Cursor-based (stable for large data sets — recommended)","Offset / page-number (simple, may drift under concurrent inserts)","Keyset / seek pagination","No pagination (small datasets only)"]},
+      {label:"Error response standard",key:"errorStandard",type:"select",options:["-- Select --","RFC 7807 Problem Details (standardised, recommended)","Custom error envelope { code, message, details }","HTTP status code only (no body)","GraphQL errors array"]},
+      {label:"API versioning approach",key:"apiVersionScheme",type:"select",options:["-- Select --","URL path versioning (/v1/resource)","Request header (API-Version: 2)","Query parameter (?api-version=2)","Content negotiation (Accept header)","No versioning (breaking changes accepted)"]},
+      {label:"Hypermedia / HATEOAS",key:"hateoas",type:"select",options:["-- Select --","Full HATEOAS (links in every response)","Partial (links on state-transition endpoints only)","None (clients encode URLs)"]},
+      {label:"Wire format",key:"wireFormat",type:"multiselect",options:["JSON","Protobuf","MessagePack","XML (legacy)","Multipart / form-data (file upload)","Server-Sent Events","NDJSON (streaming)"]}
+    ]
+  },
+  {
+    id:7, icon:"🗄️", title:"Data Architecture", category:"Data", color:"#be185d",
+    purpose:"Data architecture defines ownership, schema evolution, transaction boundaries, and retention. Getting this wrong is expensive to fix later.",
+    scenario:"Banking → strict ACID transactions, one source of truth. Social media → eventual consistency, denormalized reads for speed.",
+    tradeoff:"SQL (consistency, reporting ease) vs NoSQL (scale, flexibility). Reporting ease vs domain independence.",
+    decisionTree:["SQL → strong consistency, harder scale","NoSQL → flexible scale, weaker consistency","Ownership, schema evolution, retention","Trade-off: reporting ease vs independence"],
+    checklist:["Single source of truth per domain","Backup strategy defined","Archival/retention policy set","Partition strategy planned","Database-per-service boundaries defined (microservices)"],
+    inputs:[
+      {label:"Primary database",key:"primaryDb",type:"select",options:["-- Select --","SQL Server (OLTP)","PostgreSQL (OLTP)","Azure Cosmos DB (multi-model)","MongoDB (document)","Cassandra / HBase (wide-column)","DynamoDB (key-value)","Redis (cache / KV)","Neo4j (graph)","InfluxDB / TimescaleDB (time-series)"]},
+      {label:"Consistency model",key:"consistencyModel",type:"select",options:["-- Select --","Strong Consistency (ACID)","Eventual Consistency (BASE)","Causal Consistency","Read-your-writes","Session Consistency"]},
+      {label:"Read/Write ratio",key:"rwPattern",type:"select",options:["-- Select --","Read-heavy (10:1+) — scale reads","Write-heavy (1:10+) — scale writes","Balanced","Mixed (OLTP + OLAP — use CQRS)"]},
+      {label:"Partitioning strategy",key:"partitioning",type:"select",options:["-- Select --","None (single partition)","Hash partitioning (even distribution)","Range partitioning (date/ID ranges)","List partitioning (region/tenant)","Composite (hash + range)"]},
+      {label:"RPO / RTO target",key:"rpo",type:"select",options:["-- Select --","RPO < 1 min / RTO < 5 min (mission-critical)","RPO < 1 hr / RTO < 1 hr","RPO < 4 hrs / RTO < 4 hrs","RPO < 24 hrs / RTO < 24 hrs"]},
+      {label:"Schema evolution",key:"schemaEvo",type:"select",options:["-- Select --","EF Core Migrations (code-first)","Flyway / Liquibase (script-based)","Schema registry (Avro/Protobuf)","Manual DBA-managed","Schemaless (NoSQL)"]},
+      {label:"Database ownership (microservices)",key:"dbOwnership",type:"select",options:["-- Select --","Single shared DB (all services — anti-pattern for microservices)","Database-per-service (recommended for microservices)","Schema-per-service (shared DB, isolated schemas)","Polyglot persistence (each service chooses its own DB type)","N/A — monolith or modular monolith"]},
+      {label:"Service → DB mapping (polyglot)",key:"polyglotMap",type:"textarea",placeholder:"e.g., Orders → PostgreSQL, Catalog → MongoDB, Sessions → Redis, Analytics → ClickHouse"}
+    ]
+  },
+  {
+    id:8, icon:"🔗", title:"Integration & Communication", category:"Architecture", color:"#c2410c",
+    purpose:"How services talk to each other determines coupling, resilience, and scalability. Sync is simple but brittle; async is resilient but adds complexity.",
+    scenario:"Payment confirmation → sync (immediate user feedback needed). Order notifications → async (resilient, retryable, fire-and-forget).",
+    tradeoff:"Coupling vs resilience. Immediate consistency vs eventual consistency.",
+    decisionTree:["Sync → immediate, tightly coupled","Async → resilient, scalable, eventual consistency","Trade-off: coupling vs resilience"],
+    checklist:["Timeout & retry strategy defined","Idempotency plan in place","Message ordering requirements clarified","DLQ handling designed"],
+    inputs:[
+      {label:"Sync protocol",key:"syncProtocol",type:"select",options:["-- Select --","REST (JSON / HTTP 1.1)","gRPC (Protobuf / HTTP2)","GraphQL","SignalR / WebSocket","SOAP (legacy)","None (async only)"]},
+      {label:"Async messaging technology",key:"asyncTech",type:"select",options:["-- Select --","Azure Service Bus (enterprise)","Azure Event Hubs (streaming)","Azure Storage Queue (simple)","RabbitMQ","Apache Kafka","AWS SQS / SNS","None (sync only)"]},
+      {label:"Message ordering",key:"ordering",type:"select",options:["-- Select --","Strict FIFO ordering required","Per-partition / per-session ordering","No ordering required"]},
+      {label:"Idempotency strategy",key:"idempotency",type:"select",options:["-- Select --","Idempotency keys (UUID per request)","Service Bus deduplication IDs","Optimistic locking (ETag / version)","At-least-once + idempotent handlers","Not required"]},
+      {label:"DLQ / error handling",key:"dlqHandling",type:"select",options:["-- Select --","Dead Letter Queue with alerts + replay","Retry with exponential backoff","Manual intervention queue","Discard + structured log","None designed yet"]}
+    ]
+  },
+  {
+    id:9, icon:"📈", title:"Scaling Strategy", category:"Scalability", color:"#4d7c0f",
+    purpose:"Predict where bottlenecks will hit first: reads, writes, compute, or storage. Scale the right layer before it becomes the crisis.",
+    scenario:"Streaming app → reads bottleneck first → CDN + caching before adding servers. Black Friday → pre-warm cache + autoscale compute.",
+    tradeoff:"Cost vs performance. Over-provisioning vs elasticity. Complexity of distributed caching vs simplicity of single DB.",
+    decisionTree:["Reads → caching, CDN","Writes → sharding, partitioning","Compute → autoscale","Storage → replication, archiving","Trade-off: cost vs performance"],
+    checklist:["Bottlenecks identified and ranked","Scale-out vs scale-up decided","Hot partition handling designed","Cache invalidation strategy defined"],
+    inputs:[
+      {label:"Primary bottleneck",key:"bottleneck",type:"select",options:["-- Select --","Read-heavy (CDN + cache)","Write-heavy (sharding + partitioning)","Compute-intensive (CPU/GPU autoscale)","Storage-intensive (tiered storage)","Network-intensive (high throughput)","Balanced"]},
+      {label:"Caching strategy",key:"cachingStrategy",type:"select",options:["-- Select --","No caching","In-process cache (IMemoryCache)","Distributed cache (Redis / Memcached)","CDN (static + edge API caching)","Read-through cache","Write-through cache","Cache-aside (lazy loading)","Output cache (HTTP response)"]},
+      {label:"Database scaling",key:"dbScaling",type:"select",options:["-- Select --","Single node (no scaling yet)","Read replicas (scale reads)","Sharding / horizontal partitioning","Multi-master replication","CQRS (separate read/write stores)","Connection pooling (PgBouncer / pgpool)"]},
+      {label:"Compute scaling",key:"computeScaling",type:"select",options:["-- Select --","Manual scaling","Kubernetes HPA (CPU / memory)","KEDA (event-driven autoscale)","Azure VMSS / AWS Auto Scaling Groups","Serverless / consumption-based"]},
+      {label:"CDN",key:"cdnUsage",type:"select",options:["-- Select --","No CDN","CDN for static assets only","CDN for APIs + static (Azure Front Door)","Multi-CDN / global acceleration"]}
+    ]
+  },
+  {
+    id:10, icon:"🛡️", title:"Failure & Resilience Design", category:"Reliability", color:"#b91c1c",
+    purpose:"Assume everything will fail: DB down, network broken, dependency slow. Design for graceful degradation, not perfect success paths.",
+    scenario:"Payment fails → retry with idempotency key. Inventory DB down → return 'out of stock' fallback. Search slow → return cached results.",
+    tradeoff:"Resilience vs complexity. Every pattern (retry, circuit breaker) adds code, latency, and cognitive load.",
+    decisionTree:["Retry, circuit breaker, bulkhead","Fallback, compensation","Dead letter queues","Trade-off: resilience vs complexity"],
+    checklist:["Graceful degradation designed","Partial failure handling defined","Retry storm prevention planned","Alert thresholds set"],
+    inputs:[
+      {label:"Resilience patterns",key:"resiliencePatterns",type:"multiselect",options:["Retry with exponential backoff + jitter","Circuit Breaker (Polly)","Bulkhead (thread/connection isolation)","Timeout","Fallback response","Hedging (parallel redundant requests)","Rate limiting (inbound)","Outbox pattern (reliable publish)","Health check + liveness probes"]},
+      {label:"Distributed transaction strategy",key:"sagaStrategy",type:"select",options:["-- Select --","None (no long transactions)","Choreography Saga (event-driven)","Orchestration Saga (central coordinator)","2PC — avoid in distributed systems"]},
+      {label:"Chaos engineering",key:"chaosEngineering",type:"select",options:["-- Select --","None planned","Manual fault injection (test environments)","Azure Chaos Studio","Full chaos engineering practice (GameDays)"]},
+      {label:"Health check depth",key:"healthChecks",type:"select",options:["-- Select --","Liveness only","Liveness + Readiness","Liveness + Readiness + Startup probes","Deep health (check all dependencies)"]}
+    ]
+  },
+  {
+    id:11, icon:"🔒", title:"Security Architecture", category:"Security", color:"#dc2626",
+    purpose:"Security is not a feature, it is a layer. AuthN proves who you are. AuthZ proves what you can do. Both must be explicit and auditable.",
+    scenario:"Healthcare → PII encryption at rest + in transit + field-level encryption + full audit logs. Fintech → HMAC-signed API calls, secret rotation every 30 days.",
+    tradeoff:"Security vs usability. Every security layer adds friction for legitimate users.",
+    decisionTree:["AuthN/AuthZ","Token flow, secrets, encryption","Audit logs","Trade-off: security vs usability"],
+    checklist:["RBAC/ABAC model defined","Encryption at rest and in transit","Secret rotation policy","Vulnerability management plan"],
+    inputs:[
+      {label:"Authentication (AuthN)",key:"authN",type:"select",options:["-- Select --","JWT (stateless tokens)","OAuth 2.0 + OIDC","API Keys","SAML 2.0 (enterprise SSO)","Certificate-based (mTLS)","Azure AD / Entra ID","Auth0 / Okta","Azure AD B2C (customer identity)"]},
+      {label:"Authorization (AuthZ) model",key:"authZ",type:"select",options:["-- Select --","RBAC (Role-Based Access Control)","ABAC (Attribute-Based Access Control)","PBAC (Policy-Based — OPA)","ACL (Access Control Lists)","Claims + Permissions"]},
+      {label:"Secret management",key:"secretMgmt",type:"select",options:["-- Select --","Azure Key Vault","AWS Secrets Manager","HashiCorp Vault","Kubernetes Secrets + CSI driver","Environment variables (dev only)"]},
+      {label:"Encryption requirements",key:"encryption",type:"multiselect",options:["TLS 1.3 in transit","AES-256 at rest","Field-level encryption (PII / PHI)","End-to-end encryption","Key rotation policy","Envelope encryption"]},
+      {label:"Audit logging",key:"auditLogging",type:"select",options:["-- Select --","None","Access logs only","Full audit trail (who, what, when, from where)","SIEM integration (Azure Sentinel)"]},
+      {label:"OWASP mitigations",key:"owasp",type:"multiselect",options:["SQL / NoSQL Injection","XSS","CSRF","Broken Authentication","Sensitive Data Exposure","IDOR","Security Misconfiguration","Insecure Deserialization","Rate Limiting / DoS prevention"]}
+    ]
+  },
+  // P3-1 — Multi-Tenancy & SaaS
+  {
+    id:17, icon:"🏢", title:"Multi-Tenancy & SaaS", category:"Architecture", color:"#7c3aed",
+    purpose:"Tenant isolation is a foundational SaaS decision that determines data security, compliance posture, and infra cost. Choose shared for cost; choose dedicated for compliance.",
+    scenario:"A startup with 500 SMB customers → shared schema + row-level security. An enterprise SaaS serving banks → database-per-tenant to satisfy SOC 2 auditors.",
+    tradeoff:"Cost efficiency (shared) vs isolation (dedicated). Noisy-neighbour risk vs operational simplicity. Schema-per-tenant migration cost vs security boundary strength.",
+    decisionTree:["Shared schema → cheapest, row-level security required","Schema-per-tenant → balance of cost and isolation","Database-per-tenant → strongest, highest infra cost","Trade-off: cost vs compliance isolation"],
+    checklist:["Tenant isolation model chosen and documented","Noisy-neighbour mitigation designed","Tenant onboarding flow defined","Data residency requirements verified"],
+    inputs:[
+      {label:"Tenant isolation model",key:"tenantIsolation",type:"select",options:["-- Select --","Shared database, shared schema (row-level security)","Shared database, schema-per-tenant","Database-per-tenant (dedicated instance)","Silo model (fully isolated stack per tenant)","Not applicable (single-tenant system)"]},
+      {label:"Tenant onboarding speed",key:"tenantOnboarding",type:"select",options:["-- Select --","Fully automated provisioning (< 1 min)","Semi-automated (template + manual approval step)","Fully manual (ops team provisions)","N/A"]},
+      {label:"Noisy-neighbour mitigation",key:"noisyNeighbour",type:"select",options:["-- Select --","Per-tenant rate limits and resource quotas","Dedicated compute pool for enterprise tier","Priority queues segmented by tenant tier","No mitigation planned"]},
+      {label:"Data residency requirements",key:"dataResidency",type:"select",options:["-- Select --","None (single region acceptable)","EU-only data residency (GDPR)","Per-tenant configurable region","On-premises deployment option required"]},
+      {label:"Tenant-scoped access control",key:"tenantAuthZ",type:"select",options:["-- Select --","JWT claims carry tenant ID (claim-based)","API key scoped per tenant","mTLS certificate per tenant","Subdomain routing (tenant.app.com)"]}
+    ]
+  },
+  // P3-2 — Network Architecture
+  {
+    id:18, icon:"🌐", title:"Network Architecture", category:"Security", color:"#0369a1",
+    purpose:"Network segmentation and Zero Trust determine blast radius when a component is compromised. 'Trust the perimeter' is obsolete — every request must be verified regardless of network origin.",
+    scenario:"Azure enterprise: hub-spoke VNet, all PaaS on private endpoints, no public IPs on workloads. AWS: private subnets, NAT gateway, WAF at edge, no direct internet access from services.",
+    tradeoff:"Zero Trust (maximum security, full mTLS + verification) vs operational complexity and latency. Private networking vs higher egress costs.",
+    decisionTree:["VNet topology (hub-spoke vs flat vs mesh)","Private vs public PaaS connectivity","Zero Trust model vs perimeter model","Service discovery and DNS strategy","Trade-off: security isolation vs complexity"],
+    checklist:["VNet / VPC topology documented","All PaaS on private endpoints (no public access)","Zero Trust model decision recorded","Service discovery mechanism defined"],
+    inputs:[
+      {label:"VNet / VPC topology",key:"vnetTopology",type:"select",options:["-- Select --","Hub-spoke (recommended for Azure / GCP enterprise)","Flat single VNet / VPC","Mesh (full peer-to-peer)","No VNet (public cloud PaaS only)","On-premises connected (ExpressRoute / Direct Connect)"]},
+      {label:"Zero Trust model",key:"zeroTrust",type:"select",options:["-- Select --","Full Zero Trust (verify every request, no implicit internal trust)","Partial Zero Trust (external verified, internal services trusted within namespace)","Perimeter model (trust everything inside the network)","Not implemented"]},
+      {label:"PaaS private connectivity",key:"privateEndpoints",type:"multiselect",options:["Private Endpoints for all PaaS (DB, storage, bus)","Private DNS zones","No public IPs on workloads","WAF / DDoS protection at edge","NAT Gateway for outbound only","Service Endpoints (subnet-level, lighter than Private Endpoint)"]},
+      {label:"Service discovery",key:"serviceDiscovery",type:"select",options:["-- Select --","Kubernetes DNS (kube-dns / CoreDNS)","Azure Private DNS / Service Discovery","Consul (multi-cloud)","AWS Cloud Map","Nginx / Envoy sidecar (service mesh)","Hardcoded endpoints (avoid at scale)"]},
+      {label:"Ingress / edge protection",key:"ingressEdge",type:"select",options:["-- Select --","Azure Front Door + WAF","Azure Application Gateway + WAF","AWS ALB + WAF","Cloudflare Zero Trust Access","NGINX Ingress Controller","No dedicated ingress"]}
+    ]
+  },
+  {
+    id:12, icon:"👁️", title:"Observability & Operations", category:"Operations", color:"#5b21b6",
+    purpose:"If you can't measure it, you can't manage it. Logs tell you what happened. Metrics tell you how often. Traces tell you why it was slow.",
+    scenario:"E-commerce → track failed payments, latency spikes, cart abandonment. Healthcare → alert when lab results not delivered within SLA window.",
+    tradeoff:"Visibility vs cost. More telemetry = more storage = more cost. Golden signals: latency, traffic, errors, saturation.",
+    decisionTree:["Logs, metrics, traces","Dashboards, alerts","SLA monitoring","Trade-off: visibility vs infra cost"],
+    checklist:["Correlation IDs on all requests","Health check endpoints exposed","SLA monitoring configured","Capacity visibility planned"],
+    inputs:[
+      {label:"Logging stack",key:"loggingStack",type:"select",options:["-- Select --","Structured JSON + ILogger<T>","Application Insights","ELK Stack (Elasticsearch + Logstash + Kibana)","Grafana Loki","Azure Monitor Logs","Splunk","CloudWatch Logs"]},
+      {label:"Metrics / APM",key:"metricsStack",type:"select",options:["-- Select --","Application Insights","Prometheus + Grafana","Azure Monitor","Datadog","New Relic","Dynatrace"]},
+      {label:"Distributed tracing",key:"tracing",type:"select",options:["-- Select --","OpenTelemetry (OTel) — vendor neutral","Azure Application Insights","Jaeger","Zipkin","Datadog APM","None"]},
+      {label:"Alerting",key:"alerting",type:"select",options:["-- Select --","Email alerts only","Azure Monitor Action Groups","PagerDuty / OpsGenie","Slack + PagerDuty","Custom webhook"]},
+      {label:"SLA monitoring",key:"slaMonitoring",type:"select",options:["-- Select --","Manual (periodic checks)","Uptime Robot / Pingdom","Azure Monitor SLA dashboards","Custom SLO/SLI error budget tracking"]}
+    ]
+  },
+  {
+    id:13, icon:"🚀", title:"Deployment & DevOps", category:"DevOps", color:"#075985",
+    purpose:"Deployment strategy determines how fast you can ship and how safely you can roll back. CD without strategy = fast path to production incidents.",
+    scenario:"SaaS product → blue/green for zero-downtime upgrades. Mobile backend → canary (5% → 25% → 100%) before full rollout.",
+    tradeoff:"Speed vs safety. Every deployment gate adds time but reduces blast radius of failures.",
+    decisionTree:["CI/CD pipelines","Canary, blue/green","Rollback strategies","Trade-off: speed vs safety"],
+    checklist:["Zero-downtime deployment planned","Rollback speed acceptable (< 5 min)","Version compatibility maintained","Automated tests gate the pipeline"],
+    inputs:[
+      {label:"CI/CD platform",key:"cicd",type:"select",options:["-- Select --","Azure DevOps Pipelines","GitHub Actions","GitLab CI/CD","Jenkins","TeamCity","CircleCI"]},
+      {label:"Deployment strategy",key:"deployStrategy",type:"select",options:["-- Select --","Rolling update (gradual pod replacement)","Blue/Green (instant switchover)","Canary (%-based traffic shift)","Feature flags (LaunchDarkly / Azure App Config)","Immutable infrastructure","In-place upgrade (risky — avoid)"]},
+      {label:"Container orchestration",key:"containerOrch",type:"select",options:["-- Select --","None (bare metal / VMs)","Docker Compose (dev/staging)","Kubernetes — AKS / EKS / GKE","Azure Container Apps","AWS ECS / Fargate","Nomad"]},
+      {label:"Rollback strategy",key:"rollback",type:"select",options:["-- Select --","Manual rollback (slow, error-prone)","Automated on error rate threshold","Blue/Green instant switchback","GitOps revert (Flux / ArgoCD)"]},
+      {label:"IaC (Infrastructure as Code)",key:"iac",type:"select",options:["-- Select --","Bicep (Azure-native)","Terraform (multi-cloud)","ARM Templates (legacy Azure)","CloudFormation (AWS)","Pulumi (code-first)","None (manual)"]},
+      {label:"Pipeline quality gates",key:"qualityGates",type:"multiselect",options:["Unit Tests","Integration Tests","Code Coverage (≥ 80%)","SAST Scanning","DAST Scanning","Load Test Gate pre-prod","Secrets Scan","Contract Tests (Pact)","Smoke Tests post-deploy"]}
+    ]
+  },
+  {
+    id:14, icon:"💰", title:"Cost Awareness", category:"Business", color:"#65a30d",
+    purpose:"Architecture must survive the finance review. The most elegant design is worthless if it is 10x over budget at scale.",
+    scenario:"Cloud autoscaling → great for traffic spikes, but without max limits can generate unexpected $50K bills in a weekend.",
+    tradeoff:"Performance vs budget. Elasticity vs cost predictability.",
+    decisionTree:["Autoscale limits","Licensing","Network/storage growth","Trade-off: performance vs budget"],
+    checklist:["Autoscale max limits configured","Licensing costs estimated","Storage growth projected (12 months)","Network egress costs reviewed"],
+    inputs:[
+      {label:"Cost model",key:"costModel",type:"select",options:["-- Select --","Pay-per-use (serverless / consumption)","Reserved instances (predictable base load)","Spot / preemptible (batch workloads)","Hybrid (reserved base + spot burst)","Enterprise agreement / EDP"]},
+      {label:"Cost guardrails",key:"costGuardrails",type:"multiselect",options:["Budget alerts (Azure Cost Management)","Autoscale max replica limits","Data retention / archival policies","Right-sizing analysis","Network egress optimization","Spot instance usage for non-critical","Reserved capacity for predictable load"]},
+      {label:"Monthly budget target",key:"monthlyBudget",type:"select",options:["-- Select --","< $500","$500 – $5K","$5K – $50K","$50K – $500K","> $500K"]},
+      {label:"FinOps maturity",key:"finops",type:"select",options:["-- Select --","None (no cost tracking)","Basic (monthly bill review)","Intermediate (tagging + chargeback)","Advanced (FinOps tooling + unit economics)"]}
+    ]
+  },
+  {
+    id:15, icon:"🔮", title:"Evolution & Future Proofing", category:"Strategy", color:"#6b21a8",
+    purpose:"Systems WILL change. Design for evolution, not perfection. The question is not IF the system will change, but WHEN and HOW EASILY.",
+    scenario:"Social app → launch with image support, add video streaming 6 months later. Modular monolith → extract Payment service first as traffic demands microservices.",
+    tradeoff:"Flexibility vs simplicity. Every extensibility point is premature abstraction until it is actually needed.",
+    decisionTree:["Extensibility points","Versioning strategy","Refactoring approach","Trade-off: flexibility vs simplicity"],
+    checklist:["Extensibility points identified","API versioning strategy defined","Refactoring / migration approach planned"],
+    inputs:[
+      {label:"API versioning strategy",key:"apiVersioning",type:"select",options:["-- Select --","URL path versioning (/v1, /v2)","Header versioning (API-Version: 2)","Query parameter (?api-version=2)","Content negotiation (Accept header)","No versioning (breaking changes accepted)"]},
+      {label:"Evolution trigger (when to refactor)",key:"evolutionTrigger",type:"select",options:["-- Select --","Traffic reaches 5x current baseline","Team grows beyond 10 engineers","Specific SLA consistently breached","New compliance requirement","On-demand (no planned trigger)"]},
+      {label:"Planned future capabilities",key:"futureCapabilities",type:"text",placeholder:"e.g., ML recommendations, mobile app, multi-region, real-time streaming, video upload"},
+      {label:"Migration strategy",key:"migrationStrategy",type:"select",options:["-- Select --","Strangler Fig (gradual extraction from monolith)","Big Bang rewrite (risky — avoid if possible)","Branch by abstraction","Parallel run then cut over","No migration planned"]}
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════
+// DATA — 20-ITEM EVALUATION CHECKLIST
+// ═══════════════════════════════════════════════════
+const EVAL_ITEMS = [
+  {id:1,item:"Define Functional Requirements",cat:"Requirements",catKey:"req",why:"Clarifies what the system must do",options:["CRUD APIs","Search","Payments","Notifications","Auth","Reporting","File Upload","Real-time Events"]},
+  {id:2,item:"Define Non-Functional Requirements",cat:"Requirements",catKey:"req",why:"Guides every architecture decision",options:["Latency","Uptime / Availability","Security","Maintainability","Scalability","Compliance","Cost Efficiency","DR / RTO / RPO"]},
+  {id:3,item:"Identify Core Components & Services",cat:"Architecture",catKey:"arch",why:"Enables modularity and separation of concerns",options:["Auth Service","Product Catalog","Order Service","Payment Service","Inventory","Notifications","Analytics","API Gateway"]},
+  {id:4,item:"Choose Architecture Style",cat:"Architecture",catKey:"arch",why:"Impacts team structure, deployment, and scalability",options:["Monolith","Modular Monolith","Microservices","Event-Driven","Serverless","Hybrid"]},
+  {id:5,item:"Data Flow & Control Flow",cat:"Architecture",catKey:"arch",why:"Clarifies system behavior and communication patterns",options:["Sequence Diagram","C4 Model","ERD","Event Storming","Data Flow Diagram","State Machine"]},
+  {id:6,item:"Database Design",cat:"Data",catKey:"data",why:"Aligns storage with access patterns and consistency needs",options:["PostgreSQL","SQL Server","MongoDB","DynamoDB","Cassandra","Cosmos DB","Redis","InfluxDB"]},
+  {id:7,item:"Caching Strategy",cat:"Performance",catKey:"perf",why:"Reduces latency and removes load from backend databases",options:["No Cache","In-Process","Redis","Memcached","CDN","Read-Through","Write-Through","Cache-Aside"]},
+  {id:8,item:"Load Balancing",cat:"Scalability",catKey:"scale",why:"Ensures fault tolerance and even traffic distribution",options:["Round Robin","Least Connections","IP Hash","Azure Load Balancer","NGINX","Traefik","AWS ALB"]},
+  {id:9,item:"Rate Limiting & Throttling",cat:"Security",catKey:"sec",why:"Prevents abuse, DoS, and runaway costs",options:["Token Bucket","Fixed Window","Sliding Window","API Gateway built-in","Azure APIM policy","NGINX rate limit"]},
+  {id:10,item:"Authentication & Authorization",cat:"Security",catKey:"sec",why:"Secures access — AuthN (who) + AuthZ (what)",options:["OAuth2 + OIDC","JWT","API Keys","SAML","Azure AD","Auth0","RBAC","ABAC"]},
+  {id:11,item:"API Design",cat:"Interface",catKey:"iface",why:"Affects developer experience, integration, and evolution",options:["REST","GraphQL","gRPC","WebSocket","SignalR","SOAP","Event-based","Hypermedia (HATEOAS)"]},
+  {id:12,item:"Data Consistency Model",cat:"Data",catKey:"data",why:"Impacts UX, correctness, and distributed system complexity",options:["Strong (ACID)","Eventual (BASE)","Causal","Read-Your-Writes","Session Consistency","Monotonic Reads"]},
+  {id:13,item:"Scalability Strategy",cat:"Scalability",catKey:"scale",why:"Ensures the system handles traffic growth without redesign",options:["Stateless services","Message Queues","Auto-scaling","Sharding","CQRS","HPA (K8s)","KEDA","Read Replicas"]},
+  {id:14,item:"Availability & Fault Tolerance",cat:"Reliability",catKey:"rel",why:"Ensures uptime and graceful handling of partial failures",options:["Replication","Active-Active Failover","Circuit Breaker","Multi-region","Retry + Backoff","Bulkhead","Health Checks"]},
+  {id:15,item:"Monitoring & Observability",cat:"Operations",catKey:"ops",why:"Enables debugging, alerting, and SLA verification",options:["Prometheus","Grafana","ELK Stack","Application Insights","Datadog","Loki","OpenTelemetry","Jaeger"]},
+  {id:16,item:"Disaster Recovery",cat:"Reliability",catKey:"rel",why:"Prepares for catastrophic failures — defines RTO and RPO",options:["Automated Backups","Multi-region Active-Passive","Active-Active","Pilot Light","Warm Standby","Cold Standby","Geo-replication"]},
+  {id:17,item:"Deployment Strategy",cat:"DevOps",catKey:"dev",why:"Reduces release risk and enables fast, safe rollback",options:["CI/CD Pipeline","Blue-Green","Canary Releases","Feature Flags","Rolling Update","Immutable Infra","GitOps"]},
+  {id:18,item:"Tech Stack Justification",cat:"Architecture",catKey:"arch",why:"Ensures alignment with team skills, goals, and support",options:[".NET / C#","Node.js","Java / Spring","Python","React / Angular","Kafka","Kubernetes","Azure / AWS / GCP"]},
+  {id:19,item:"Cost Estimation & Optimization",cat:"Business",catKey:"biz",why:"Architecture must survive finance review — balance perf vs budget",options:["Cloud pricing model","Reserved Instances","Spot Instances","Autoscale limits","FinOps tooling","Right-sizing","Egress optimization"]},
+  {id:20,item:"Compliance & Data Privacy",cat:"Security & Legal",catKey:"sec",why:"Avoids regulatory fines and reputational damage",options:["GDPR","HIPAA","SOC 2","PCI-DSS","FedRAMP","ISO 27001","CCPA","Data residency"]}
+];
+
+// ═══════════════════════════════════════════════════
+// WIZARD → EVAL SYNC MAP  (P1.2)
+// Maps wizard section inputs to matching eval chip values so users
+// don't have to enter the same decisions twice.
+// ═══════════════════════════════════════════════════
+const WIZARD_TO_EVAL = {
+  4:  [{ sid:5,  key:'archStyle',      multi:false, map:{ 'Monolith (single deployable)':'Monolith','Modular Monolith (bounded modules, single deploy)':'Modular Monolith','Microservices (independent services per domain)':'Microservices','Event-Driven Architecture (EDA)':'Event-Driven','Serverless / FaaS':'Serverless','Hybrid (mix)':'Hybrid' }}],
+  6:  [{ sid:7,  key:'primaryDb',      multi:false, map:{ 'PostgreSQL (OLTP)':'PostgreSQL','SQL Server (OLTP)':'SQL Server','Azure Cosmos DB (multi-model)':'Cosmos DB','MongoDB (document)':'MongoDB','Cassandra / HBase (wide-column)':'Cassandra','DynamoDB (key-value)':'DynamoDB','Redis (cache / KV)':'Redis','InfluxDB / TimescaleDB (time-series)':'InfluxDB' }}],
+  7:  [{ sid:9,  key:'cachingStrategy',multi:false, map:{ 'No caching':'No Cache','In-process cache (IMemoryCache)':'In-Process','Distributed cache (Redis / Memcached)':'Redis','CDN (static + edge API caching)':'CDN','Read-through cache':'Read-Through','Write-through cache':'Write-Through','Cache-aside (lazy loading)':'Cache-Aside' }}],
+  10: [
+    { sid:11, key:'authN', multi:false, map:{ 'JWT (stateless tokens)':'JWT','OAuth 2.0 + OIDC':'OAuth2 + OIDC','API Keys':'API Keys','SAML 2.0 (enterprise SSO)':'SAML','Azure AD / Entra ID':'Azure AD','Auth0 / Okta':'Auth0','Azure AD B2C (customer identity)':'Azure AD' }},
+    { sid:11, key:'authZ', multi:false, map:{ 'RBAC (Role-Based Access Control)':'RBAC','ABAC (Attribute-Based Access Control)':'ABAC' }}
+  ],
+  11: [
+    { sid:16, key:'apiProtocol',   multi:false, map:{ 'REST (JSON / HTTP 1.1)':'REST','gRPC (Protobuf / HTTP/2)':'gRPC','GraphQL':'GraphQL','REST + gRPC (public external / internal services)':'gRPC','WebSocket / SignalR (real-time push)':'WebSocket' }},
+    { sid:8,  key:'syncProtocol',  multi:false, map:{ 'REST (JSON / HTTP 1.1)':'REST','gRPC (Protobuf / HTTP2)':'gRPC','GraphQL':'GraphQL','SignalR / WebSocket':'WebSocket','SOAP (legacy)':'SOAP' }}
+  ],
+  12: [{ sid:7,  key:'consistencyModel',multi:false,map:{ 'Strong Consistency (ACID)':'Strong (ACID)','Eventual Consistency (BASE)':'Eventual (BASE)','Causal Consistency':'Causal','Read-your-writes':'Read-Your-Writes','Session Consistency':'Session Consistency' }}],
+  14: [{ sid:10, key:'resiliencePatterns',multi:true,map:{ 'Retry with exponential backoff + jitter':'Retry + Backoff','Circuit Breaker (Polly)':'Circuit Breaker','Bulkhead (thread/connection isolation)':'Bulkhead','Health check + liveness probes':'Health Checks' }}],
+  15: [
+    { sid:12, key:'loggingStack',  multi:false, map:{ 'Application Insights':'Application Insights','ELK Stack (Elasticsearch + Logstash + Kibana)':'ELK Stack','Grafana Loki':'Loki','Splunk':'Splunk' }},
+    { sid:12, key:'metricsStack',  multi:false, map:{ 'Prometheus + Grafana':'Prometheus','Application Insights':'Application Insights','Datadog':'Datadog' }},
+    { sid:12, key:'tracing',       multi:false, map:{ 'OpenTelemetry (OTel) — vendor neutral':'OpenTelemetry','Jaeger':'Jaeger','Zipkin':'Zipkin','Datadog APM':'Datadog' }}
+  ],
+  17: [{ sid:13, key:'deployStrategy', multi:false, map:{ 'Rolling update (gradual pod replacement)':'Rolling Update','Blue/Green (instant switchover)':'Blue-Green','Canary (%-based traffic shift)':'Canary Releases','Feature flags (LaunchDarkly / Azure App Config)':'Feature Flags','Immutable infrastructure':'Immutable Infra' }}],
+  19: [{ sid:14, key:'costGuardrails', multi:true,  map:{ 'Budget alerts (Azure Cost Management)':'FinOps tooling','Right-sizing analysis':'Right-sizing','Network egress optimization':'Egress optimization','Spot instance usage for non-critical':'Spot Instances','Reserved capacity for predictable load':'Reserved Instances' }}],
+  20: [{ sid:3,  key:'regulations',    multi:true,  map:{ 'GDPR':'GDPR','HIPAA':'HIPAA','PCI-DSS':'PCI-DSS','SOC 2':'SOC 2','FedRAMP':'FedRAMP','ISO 27001':'ISO 27001','CCPA':'CCPA' }}]
+};
+
+function syncEvalFromWizard() {
+  let synced = 0;
+  Object.entries(WIZARD_TO_EVAL).forEach(([evalId, sources]) => {
+    const id = parseInt(evalId);
+    if (!state.eval[id]) return;
+    const newOptions = new Set(state.eval[id].options || []);
+    sources.forEach(({ sid, key, multi, map }) => {
+      const raw = state.sections[sid]?.inputs[key];
+      const vals = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      vals.forEach(v => { const mapped = map[v]; if (mapped) { newOptions.add(mapped); synced++; } });
+    });
+    state.eval[id].options = [...newOptions];
+  });
+  saveState();
+  renderEval();
+  showImportToast(`✅ Synced ${synced} decision(s) from wizard into evaluation checklist.`);
+}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let state = {
+  currentSection: 1,
+  currentTab: 'wizard',
+  projectName: '',
+  sections: {},
+  eval: {}
+};
+
+function initState() {
+  const saved = localStorage.getItem('sda_state_v2');
+  if (saved) { try { state = JSON.parse(saved); } catch(e) {} }
+  // ensure all sections exist
+  SECTIONS.forEach(s => {
+    if (!state.sections[s.id]) {
+      state.sections[s.id] = { inputs: {}, checklist: new Array(s.checklist.length).fill(false), score: 3, risk: 'Medium', notes: '' };
+    } else {
+      // ensure checklist array length matches
+      if (!state.sections[s.id].checklist || state.sections[s.id].checklist.length !== s.checklist.length) {
+        state.sections[s.id].checklist = new Array(s.checklist.length).fill(false);
+      }
+    }
+  });
+  EVAL_ITEMS.forEach(e => {
+    if (!state.eval[e.id]) state.eval[e.id] = { options: [], score: 3, risk: 'Medium', notes: '' };
+  });
+  if (!state.currentSection) state.currentSection = 1;
+  state.projectName = state.projectName || '';
+}
+
+function saveState() {
+  localStorage.setItem('sda_state_v2', JSON.stringify(state));
+}
+function saveProjectName(v) { state.projectName = v; saveState(); }
+
+function clearAll() {
+  if (!confirm('Clear all data? This cannot be undone.')) return;
+  localStorage.removeItem('sda_state_v2');
+  state = { currentSection: 1, currentTab: 'wizard', projectName: '', sections: {}, eval: {} };
+  initState();
+  document.getElementById('project-name').value = '';
+  renderNav(); renderSection(); renderEval(); updateProgress();
+}
+
+// ═══════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════
+function getSectionProgress(id) {
+  const s = state.sections[id]; if (!s) return 0;
+  const sec = SECTIONS.find(x => x.id === id);
+  let total = 0, done = 0;
+  // P1.3 — count checklist ticks AND filled inputs so progress reflects real work
+  sec.checklist.forEach((_, i) => { total++; if (s.checklist[i]) done++; });
+  sec.inputs.forEach(inp => {
+    total++;
+    const v = s.inputs[inp.key];
+    if (v && v !== '-- Select --' && !(Array.isArray(v) && v.length === 0) && v !== '') done++;
+  });
+  return total ? Math.round(done / total * 100) : 0;
+}
+
+function updateProgress() {
+  let total = 0, done = 0;
+  SECTIONS.forEach(sec => {
+    const itemCount = sec.checklist.length + sec.inputs.length;
+    total += itemCount;
+    done += Math.round(getSectionProgress(sec.id) / 100 * itemCount);
+  });
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('overall-progress').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════
+// SIDEBAR NAV
+// ═══════════════════════════════════════════════════
+function toggleNav() {
+  const sidebar = document.getElementById('app-sidebar');
+  const btn = document.getElementById('sidebar-toggle-btn');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  btn.innerHTML = collapsed ? '&#8250;' : '&#8249;';
+  btn.title = collapsed ? 'Expand menu' : 'Collapse menu';
+  try { localStorage.setItem('navCollapsed', collapsed ? '1' : '0'); } catch(e) {}
+}
+
+function renderNav() {
+  const el = document.getElementById('section-nav');
+  if (!el) return;
+  // keep count dynamic as sections grow
+  const hdr = document.getElementById('subnav-hdr-count');
+  if (hdr) hdr.textContent = `${SECTIONS.length} Design Layers`;
+  let html = '';
+  SECTIONS.forEach((s, idx) => {
+    const pct = getSectionProgress(s.id);
+    const isDone = pct === 100;
+    const isActive = state.currentSection === s.id;
+    const dispNum = idx + 1;
+    html += `<div class="nav-item ${isActive?'active':''} ${isDone?'done':''}" onclick="goSection(${s.id})" data-tooltip="${s.icon} ${s.title}">
+      <div class="nav-num">${isDone?'✓':dispNum}</div>
+      <div style="flex:1;min-width:0">
+        <div class="nav-title">${s.icon} ${s.title}</div>
+        <div class="nav-progress">${pct}% complete</div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function goSection(id) {
+  state.currentSection = id;
+  saveState();
+  renderNav();
+  renderSection();
+  document.getElementById('section-content').scrollTop = 0;
+}
+
+// ═══════════════════════════════════════════════════
+// SECTION RENDERER
+// ═══════════════════════════════════════════════════
+const CAT_COLORS = {'Foundation':'#1558b0','Architecture':'#047857','Data':'#be185d','Scalability':'#4d7c0f','Reliability':'#b91c1c','Security':'#991b1b','Operations':'#5b21b6','DevOps':'#075985','Business':'#365314','Strategy':'#6b21a8'};
+
+function renderSection() {
+  const s = SECTIONS.find(x => x.id === state.currentSection);
+  if (!s) return;
+  const st = state.sections[s.id];
+  const cc = CAT_COLORS[s.category] || '#58a6ff';
+
+  let dtHtml = s.decisionTree.map((d,i) => `<div class="decision-point">${d}</div>`).join('');
+
+  let inputsHtml = s.inputs.map(inp => {
+    const val = st.inputs[inp.key] || '';
+    if (inp.type === 'text') {
+      return `<div class="form-group">
+        <label class="form-label">${inp.label}</label>
+        <input class="form-input" type="text" placeholder="${inp.placeholder||''}" value="${escHtml(val)}" oninput="setInput(${s.id},'${inp.key}',this.value)">
+      </div>`;
+    }
+    if (inp.type === 'textarea') {
+      return `<div class="form-group">
+        <label class="form-label">${inp.label}</label>
+        <textarea class="form-textarea" placeholder="${inp.placeholder||''}" oninput="setInput(${s.id},'${inp.key}',this.value)">${escHtml(val)}</textarea>
+      </div>`;
+    }
+    if (inp.type === 'select') {
+      const opts = inp.options.map(o => `<option${o===val?' selected':''}>${escHtml(o)}</option>`).join('');
+      return `<div class="form-group">
+        <label class="form-label">${inp.label}</label>
+        <select class="form-select" onchange="setInput(${s.id},'${inp.key}',this.value)">${opts}</select>
+      </div>`;
+    }
+    if (inp.type === 'multiselect') {
+      const selected = Array.isArray(val) ? val : [];
+      const chips = inp.options.map(o => `<span class="chip ${selected.includes(o)?'selected':''}" onclick="toggleChip(${s.id},'${inp.key}','${escHtml(o)}',this)">${o}</span>`).join('');
+      return `<div class="form-group">
+        <label class="form-label">${inp.label}</label>
+        <div class="chips-wrap">${chips}</div>
+      </div>`;
+    }
+    return '';
+  }).join('');
+
+  let checklistHtml = s.checklist.map((item, i) => {
+    const checked = st.checklist[i] ? 'checked' : '';
+    return `<label class="check-item">
+      <input type="checkbox" ${checked} onchange="toggleCheck(${s.id},${i},this.checked)">
+      <div class="check-box"></div>
+      <span class="check-label">${item}</span>
+    </label>`;
+  }).join('');
+
+  const riskOpts = ['Low','Medium','High','Critical'];
+  const riskBtns = riskOpts.map(r => `<button class="risk-btn ${st.risk===r?'sel-'+r.toLowerCase():''}" onclick="setRisk(${s.id},'${r}',this)">${r}</button>`).join('');
+
+  // P2-1 — array-index navigation so any inserted section (id≠sequential) routes correctly
+  const idx = SECTIONS.findIndex(x => x.id === s.id);
+  const prevId = idx > 0 ? SECTIONS[idx-1].id : null;
+  const nextId = idx < SECTIONS.length-1 ? SECTIONS[idx+1].id : null;
+  const prev = prevId !== null ? `<button class="btn btn-ghost" onclick="goSection(${prevId})">← Prev</button>` : '<span></span>';
+  const next = nextId !== null ? `<button class="btn btn-primary" onclick="goSection(${nextId})">Next →</button>` : `<button class="btn btn-success" onclick="generateReport()">📄 Generate Report</button>`;
+
+  document.getElementById('section-content').innerHTML = `<div class="section-card">
+    <div class="section-header">
+      <span class="section-icon-big">${s.icon}</span>
+      <div class="section-header-text">
+        <h2>${idx+1}. ${s.title}</h2>
+        <span class="cat-badge" style="background:${cc}22;color:${cc}">${s.category}</span>
+      </div>
+      <div class="section-header-nav">
+        ${prev} ${next}
+      </div>
+    </div>
+
+    <div class="info-boxes">
+      <div class="info-box purpose"><div class="info-box-label">💡 Purpose</div><p>${s.purpose}</p></div>
+      <div class="info-box scenario"><div class="info-box-label">🌐 Real-World Scenario</div><p>${s.scenario}</p></div>
+      <div class="info-box tradeoff"><div class="info-box-label">⚖️ Trade-off</div><p>${s.tradeoff}</p></div>
+    </div>
+
+    <div class="decision-points">
+      <div class="decision-points-label">🌳 Decision Tree Points</div>
+      ${dtHtml}
+    </div>
+
+    <div class="inputs-section">
+      <div class="inputs-section-title">📝 Your Decisions</div>
+      ${inputsHtml}
+    </div>
+
+    <div class="checklist">
+      <div class="checklist-title">✅ Checklist — ${getSectionProgress(s.id)}% complete</div>
+      ${checklistHtml}
+    </div>
+
+    <div class="score-risk-row">
+      <div class="score-group">
+        <label title="1=Assumptions only · 2=Direction chosen · 3=Decision made · 4=Validated by PoC · 5=Proven in production">Design Confidence (1–5) <span style="font-size:0.7rem;cursor:help">ℹ️</span></label>
+        <div class="score-slider-wrap">
+          <input type="range" class="score-slider" min="1" max="5" value="${st.score}" oninput="setScore(${s.id},this.value,this.nextElementSibling)">
+          <span class="score-val">${st.score}</span>
+        </div>
+        <div style="font-size:0.62rem;color:var(--text3);margin-top:3px;line-height:1.5">1=Assumptions · 3=Decision made · 5=Proven in prod</div>
+      </div>
+      <div class="score-group">
+        <label>Risk Level</label>
+        <div class="risk-btns">${riskBtns}</div>
+      </div>
+      <div class="score-group">
+        <label>Notes</label>
+        <textarea class="form-textarea" placeholder="Quick notes..." rows="3" oninput="setNotes(${s.id},this.value)">${escHtml(st.notes||'')}</textarea>
+      </div>
+    </div>
+
+    <div class="section-nav-footer">
+      <span class="section-pos">Layer ${idx+1} of ${SECTIONS.length}</span>
+      <div style="display:flex;gap:8px">${prev} ${next}</div>
+    </div>
+  </div>`;
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setInput(sid, key, val) {
+  state.sections[sid].inputs[key] = val;
+  saveState();
+}
+
+function toggleChip(sid, key, val, el) {
+  const arr = Array.isArray(state.sections[sid].inputs[key]) ? state.sections[sid].inputs[key] : [];
+  const idx = arr.indexOf(val);
+  if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+  state.sections[sid].inputs[key] = arr;
+  el.classList.toggle('selected');
+  saveState();
+}
+
+function toggleCheck(sid, idx, isChecked) {
+  state.sections[sid].checklist[idx] = isChecked;
+  saveState();
+  updateProgress();
+  renderNav();
+  const items = document.querySelectorAll('.check-item');
+  if (items[idx]) {
+    const label = items[idx].querySelector('.check-label');
+    label.style.textDecoration = isChecked ? 'line-through' : '';
+    label.style.color = isChecked ? 'var(--text2)' : '';
+    const title = document.querySelector('.checklist-title');
+    if (title) title.textContent = `✅ Checklist — ${getSectionProgress(sid)}% complete`;
+  }
+}
+
+function setScore(sid, val, display) {
+  state.sections[sid].score = parseInt(val);
+  display.textContent = val;
+  saveState();
+}
+
+function setRisk(sid, val, el) {
+  state.sections[sid].risk = val;
+  el.closest('.risk-btns').querySelectorAll('.risk-btn').forEach(b => { b.className = 'risk-btn'; });
+  el.classList.add('sel-' + val.toLowerCase());
+  saveState();
+}
+
+function setNotes(sid, val) { state.sections[sid].notes = val; saveState(); }
+
+// ═══════════════════════════════════════════════════
+// DECISION TREE TAB
+// ═══════════════════════════════════════════════════
+function renderTree() {
+  const el = document.getElementById('tree-page');
+  const flowItems = SECTIONS.map((s, i) => {
+    const cc = CAT_COLORS[s.category] || '#58a6ff';
+    const chips = s.decisionTree.slice(0,-1).map(d => `<span class="tree-item-chip">${d}</span>`).join('');
+    const tradeoff = s.decisionTree[s.decisionTree.length - 1];
+    const arrow = i < SECTIONS.length-1 ? `<div class="tree-arrow"></div>` : '';
+    return `<div class="tree-node">
+      <div class="tree-card" style="border-left:3px solid ${cc}">
+        <div class="tree-card-header">
+          <div class="tree-card-num" style="background:${cc}22;color:${cc}">${s.id}</div>
+          <div class="tree-card-title">${s.icon} ${s.title}</div>
+          <span class="cat-badge" style="background:${cc}22;color:${cc};margin-left:auto">${s.category}</span>
+        </div>
+        <div class="tree-items">${chips}</div>
+        <div class="tree-tradeoff">⚖️ ${tradeoff}</div>
+      </div>
+      ${arrow}
+    </div>`;
+  }).join('');
+
+  const archStyles = [
+    {name:'Monolith',pro:'Simple, fast delivery, easy debug',con:'Hard to scale, single point of failure',when:'Small teams, early startup, internal tools'},
+    {name:'Modular Monolith',pro:'Balance of simplicity + modularity',con:'Still one deploy unit',when:'Growing startup, unclear domain boundaries'},
+    {name:'Microservices',pro:'Independent scale + deploy',con:'Distributed complexity, network overhead',when:'Large teams, high scale, clear domains'},
+    {name:'Event-Driven',pro:'Resilient, decoupled, scalable',con:'Eventual consistency, harder to debug',when:'Async workflows, high throughput, loose coupling'},
+    {name:'Serverless',pro:'Zero infra management, pay-per-use',con:'Cold starts, vendor lock-in',when:'Sporadic workloads, event triggers, low ops capacity'}
+  ];
+  const archHtml = archStyles.map(a => `<div class="arch-vs">
+    <h4 style="color:var(--accent)">${a.name}</h4>
+    <ul>
+      <li><strong>✅ Pro:</strong> ${a.pro}</li>
+      <li><strong>⚠️ Con:</strong> ${a.con}</li>
+      <li><strong>📌 When:</strong> ${a.when}</li>
+    </ul>
+  </div>`).join('');
+
+  el.innerHTML = `
+    <h2>🌳 System Design Decision Tree</h2>
+    <p class="tree-desc">Mental model: always start at Vision, move layer by layer. At each step, articulate what you gain and what you sacrifice.</p>
+    <div class="tree-flow">
+      <div class="tree-node">
+        <div class="tree-card start-end"><div class="tree-card-header"><div class="tree-card-title">🚦 START — Work top to bottom through all 15 layers</div></div><div style="font-size:0.8rem;color:var(--text2);margin-top:4px">Begin with Vision, end with Evolution. At each layer, articulate what you gain and what you sacrifice.</div></div>
+        <div class="tree-arrow"></div>
+      </div>
+      ${flowItems}
+      <div class="tree-node">
+        <div class="tree-arrow"></div>
+        <div class="tree-card start-end"><div class="tree-card-header"><div class="tree-card-title">🏁 END — Communicate Decisions</div></div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-top:6px;font-style:italic">"Based on SLA, expected growth, and team maturity, we choose X.<br>This improves A and B, but we accept risk in C.<br>If scale increases, we evolve toward D."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section" style="margin-top:32px">
+      <h3>🏆 Architect vs Developer Mental Model</h3>
+      <div class="guide-grid">
+        <div class="guide-item"><strong>Developer</strong> → Makes code work. Focused on correctness, patterns, and implementation details.</div>
+        <div class="guide-item"><strong>Architect</strong> → Makes the system survive. Focused on trade-offs, failure modes, and evolution paths.</div>
+        <div class="guide-item"><strong>Top-down thinking</strong> → Always start at Vision and move layer by layer through the decision tree.</div>
+        <div class="guide-item"><strong>Trade-off awareness</strong> → At each step, articulate what you gain and what you sacrifice. Never a free lunch.</div>
+        <div class="guide-item"><strong>Scenario recall</strong> → Tie each decision to a real-world example (payments, social media, healthcare, e-commerce).</div>
+        <div class="guide-item"><strong>Communication style</strong> → Narrate decisions with clarity, showing risk awareness and evolution paths.</div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>🏛️ Architecture Style Comparison</h3>
+      <div class="arch-compare">${archHtml}</div>
+    </div>
+
+    <div class="guide-section">
+      <h3>🔍 Beyond the Core Framework — Advanced Areas</h3>
+      <div class="beyond-grid">
+        <div class="beyond-item"><h4>Domain-Specific Architectures</h4><ul><li>Real-time analytics (Kafka, Flink)</li><li>ML pipelines (feature stores, model serving)</li><li>IoT systems (device management, edge computing)</li></ul></div>
+        <div class="beyond-item"><h4>Advanced Patterns</h4><ul><li>Event Sourcing + CQRS</li><li>Saga patterns (choreography + orchestration)</li><li>Multi-region active-active deployments</li><li>Zero-trust security models</li></ul></div>
+        <div class="beyond-item"><h4>Organizational Aspects</h4><ul><li>Conway's Law (team structure influences architecture)</li><li>Governance + compliance audits</li><li>Regulatory frameworks (DORA, Basel III, FDA)</li></ul></div>
+        <div class="beyond-item"><h4>Emerging Trends</h4><ul><li>Serverless-first design</li><li>AI-assisted observability</li><li>Sustainability-aware architecture</li><li>eBPF for networking + security</li></ul></div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// EVALUATION TABLE
+// ═══════════════════════════════════════════════════
+const CAT_CSS = {req:'cat-req',arch:'cat-arch',data:'cat-data',perf:'cat-perf',sec:'cat-sec',ops:'cat-ops',rel:'cat-rel',dev:'cat-dev',biz:'cat-biz',iface:'cat-iface',scale:'cat-scale'};
+
+function renderEval() {
+  const el = document.getElementById('eval-wrap');
+  let totalScore = 0, scored = 0;
+  EVAL_ITEMS.forEach(e => { if (state.eval[e.id]) { totalScore += state.eval[e.id].score; scored++; } });
+  const avgScore = scored ? (totalScore/scored).toFixed(1) : 0;
+  const highRisk = EVAL_ITEMS.filter(e => state.eval[e.id]?.risk === 'High' || state.eval[e.id]?.risk === 'Critical').length;
+
+  let rows = EVAL_ITEMS.map(e => {
+    const ev = state.eval[e.id] || {options:[],score:3,risk:'Medium',notes:''};
+    const chips = e.options.map(o => `<span class="eval-chip ${ev.options.includes(o)?'sel':''}" onclick="toggleEvalChip(${e.id},'${escHtml(o)}',this)">${o}</span>`).join('');
+    const riskOpts = ['Low','Medium','High','Critical'].map(r => `<option${ev.risk===r?' selected':''}>${r}</option>`).join('');
+    return `<tr>
+      <td><span class="eval-num">${e.id}</span></td>
+      <td><div class="eval-item-name">${e.item}</div></td>
+      <td><span class="cat-pill ${CAT_CSS[e.catKey]||'cat-arch'}">${e.cat}</span></td>
+      <td><span class="why-text">${e.why}</span></td>
+      <td><div class="eval-chips-wrap">${chips}</div></td>
+      <td>
+        <div class="eval-score-wrap">
+          <input type="range" class="eval-score-slider" min="1" max="5" value="${ev.score}" oninput="setEvalScore(${e.id},this.value,this.nextElementSibling)">
+          <span class="eval-score-num">${ev.score}</span>
+        </div>
+      </td>
+      <td><select class="eval-risk-sel" onchange="setEvalRisk(${e.id},this.value)">${riskOpts}</select></td>
+      <td><textarea class="eval-notes-input" placeholder="Notes..." oninput="setEvalNotes(${e.id},this.value)">${escHtml(ev.notes||'')}</textarea></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="eval-header-row">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2>📊 System Design Evaluation Checklist (20 Items)</h2>
+        <button class="btn btn-ghost" onclick="syncEvalFromWizard()" title="Pre-fill choices from your Design Wizard decisions — adds without overwriting">⟳ Sync from Wizard</button>
+      </div>
+      <div class="eval-stats">
+        <div class="eval-stat"><div class="val">${avgScore}</div><div class="lbl">Avg Score</div></div>
+        <div class="eval-stat"><div class="val" style="color:var(--danger)">${highRisk}</div><div class="lbl">High/Critical Risk</div></div>
+        <div class="eval-stat"><div class="val" style="color:var(--success)">${20-highRisk}</div><div class="lbl">Low/Med Risk</div></div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="eval-table">
+      <thead><tr>
+        <th>#</th><th>Checklist Item</th><th>Category</th><th>Why It Matters</th>
+        <th>Options / Choices</th><th>Score (1–5)</th><th>Risk</th><th>Notes</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+function toggleEvalChip(id, val, el) {
+  const arr = state.eval[id].options;
+  const i = arr.indexOf(val);
+  if (i === -1) arr.push(val); else arr.splice(i, 1);
+  el.classList.toggle('sel');
+  saveState();
+  // update stats
+  renderEvalStats();
+}
+
+function renderEvalStats() {
+  // lightweight stats update without full re-render
+  let totalScore = 0;
+  EVAL_ITEMS.forEach(e => { totalScore += state.eval[e.id]?.score || 3; });
+  const avg = (totalScore/20).toFixed(1);
+  const highRisk = EVAL_ITEMS.filter(e => state.eval[e.id]?.risk === 'High' || state.eval[e.id]?.risk === 'Critical').length;
+  const stats = document.querySelectorAll('.eval-stat .val');
+  if (stats[0]) stats[0].textContent = avg;
+  if (stats[1]) stats[1].textContent = highRisk;
+  if (stats[2]) stats[2].textContent = 20 - highRisk;
+}
+
+function setEvalScore(id, val, display) {
+  state.eval[id].score = parseInt(val);
+  display.textContent = val;
+  saveState(); renderEvalStats();
+}
+
+function setEvalRisk(id, val) { state.eval[id].risk = val; saveState(); renderEvalStats(); }
+function setEvalNotes(id, val) { state.eval[id].notes = val; saveState(); }
+
+// ═══════════════════════════════════════════════════
+// P3-5 — DYNAMIC TRADE-OFF TEXT per user choice
+// ═══════════════════════════════════════════════════
+const CHOICE_TRADEOFF_MAP = {
+  5: { archStyle: {
+    'Monolith (single deployable)':                     'Monolith chosen for simplicity. Benefit: single deploy, easy debugging, low ops overhead. Risk: single point of failure, cannot scale individual components independently.',
+    'Modular Monolith (bounded modules, single deploy)': 'Modular monolith for balance. Benefit: clear module boundaries, one deploy, easier refactor path. Risk: one release train — one failing module blocks all deployments.',
+    'Microservices (independent services per domain)':   'Microservices for autonomy and scale. Benefit: independent deployments and scaling per domain. Risk: distributed system complexity, network overhead, eventual consistency, and high ops burden.',
+    'Event-Driven Architecture (EDA)':                   'Event-driven for resilience and decoupling. Benefit: loose coupling, async throughput. Risk: eventual consistency, harder debugging, message ordering complexity.',
+    'Serverless / FaaS':                                 'Serverless for cost efficiency. Benefit: zero infra management, pay-per-execution. Risk: cold starts (50ms–2s), vendor lock-in, stateless-only design constraint.',
+    'Hybrid (mix)':                                      'Hybrid — pragmatic fit-per-domain. Benefit: right tool per component. Risk: inconsistent deployment patterns, higher cognitive load, harder to enforce standards uniformly.'
+  }},
+  7: {
+    primaryDb: {
+      'PostgreSQL (OLTP)':                   'PostgreSQL: ACID, strong consistency, excellent ecosystem. Trade-off: harder to scale writes horizontally vs NoSQL.',
+      'SQL Server (OLTP)':                   'SQL Server: ACID, mature enterprise ecosystem. Trade-off: licensing cost, limited horizontal scale.',
+      'Azure Cosmos DB (multi-model)':       'Cosmos DB: global distribution, elastic scale, 5 consistency levels. Trade-off: expensive at scale, no complex JOINs, eventual consistency by default.',
+      'MongoDB (document)':                  'MongoDB: flexible schema, horizontal scaling. Trade-off: no ACID across documents by default — denormalise proactively, no JOIN support.',
+      'Cassandra / HBase (wide-column)':     'Cassandra: millions of writes per second. Trade-off: extremely rigid query model — design tables around queries, not data shape.',
+      'DynamoDB (key-value)':                'DynamoDB: millisecond latency, auto-scaling. Trade-off: queries limited to primary key + GSIs, no ad-hoc queries, expensive for high read loads.',
+      'Redis (cache / KV)':                  'Redis: sub-millisecond, in-memory. Trade-off: volatile by nature — never a primary store, expensive at high memory footprint.',
+      'Neo4j (graph)':                       'Neo4j: relationship traversal is O(relationships), not O(total data). Trade-off: poor fit for non-graph queries, specialist ops skills required.',
+      'InfluxDB / TimescaleDB (time-series)':'Time-series: write-optimised for ordered data, built-in retention policies. Trade-off: poor fit for relational or document queries.'
+    },
+    consistencyModel: {
+      'Strong Consistency (ACID)':    'Strong consistency: reads always see latest write. Trade-off: synchronous replication adds latency; significantly harder to scale across regions.',
+      'Eventual Consistency (BASE)':  'Eventual consistency: reads may be stale by ms to seconds. Trade-off: higher availability and lower latency, but application must handle conflict resolution.',
+      'Causal Consistency':           'Causal consistency: causally related operations are seen in order. Trade-off: good balance between strong and eventual — well suited for collaborative systems.'
+    }
+  },
+  9: { cachingStrategy: {
+    'No caching':                                'No caching: simplest setup. Trade-off: every request hits the DB — acceptable only below ~100 RPS or for internal tooling.',
+    'Distributed cache (Redis / Memcached)':     'Distributed cache: removes DB hotspot pressure. Trade-off: cache invalidation complexity — risk of stale reads and thundering herd on cold cache.',
+    'CDN (static + edge API caching)':           'CDN: lowest latency for global users. Trade-off: cache purge propagation delay, API responses must be idempotent and safe to cache publicly.',
+    'Cache-aside (lazy loading)':                'Cache-aside: only cache what is read. Trade-off: cache miss = 2× DB load, thundering herd on startup.',
+    'Read-through cache':                        'Read-through: cache fills automatically on miss. Trade-off: first request is always slow; cold-start problem in elastically-scaling environments.',
+    'Write-through cache':                       'Write-through: writes go to cache and DB together. Trade-off: every write is slower; cache may hold data that is never read.'
+  }},
+  11: { authN: {
+    'JWT (stateless tokens)':              'JWT: stateless, scales horizontally. Trade-off: tokens cannot be revoked before expiry — use short TTL + refresh token rotation.',
+    'OAuth 2.0 + OIDC':                   'OAuth 2.0 + OIDC: industry standard delegated auth. Trade-off: added complexity of authorization server, token exchange flows, and secret management.',
+    'Azure AD / Entra ID':                'Azure AD: enterprise identity, MFA + conditional access built-in. Trade-off: Azure lock-in, more complex RBAC configuration.',
+    'Certificate-based (mTLS)':           'mTLS: strongest service-to-service auth — mutual certificate verification. Trade-off: certificate lifecycle automation required; rotation errors = service outage.'
+  }},
+  13: { deployStrategy: {
+    'Rolling update (gradual pod replacement)': 'Rolling update: gradual, zero-downtime. Trade-off: old and new versions coexist — requires backward-compatible APIs and DB schema migrations.',
+    'Blue/Green (instant switchover)':          'Blue/Green: instant rollback at load-balancer level. Trade-off: 2× infra cost at peak, DB schema must be compatible with both blue and green simultaneously.',
+    'Canary (%-based traffic shift)':           'Canary: validates with real traffic before full rollout. Trade-off: observability must detect regressions at 5% traffic volume — alerting must be excellent.',
+    'Feature flags (LaunchDarkly / Azure App Config)': 'Feature flags: decouples deploy from release. Trade-off: flag debt accumulates — enforce a cleanup process, flags add conditional branches throughout the code.',
+    'Immutable infrastructure':                  'Immutable infra: no config drift, deterministic deploys. Trade-off: longer deploy cycle (full image rebuild), stateful data migration is more complex.'
+  }},
+  17: { tenantIsolation: {
+    'Shared database, shared schema (row-level security)': 'Shared schema: cheapest, simplest. Trade-off: RLS misconfiguration leaks cross-tenant data — critical security risk, hard to pass SOC 2 audit for enterprise customers.',
+    'Shared database, schema-per-tenant':                  'Schema-per-tenant: balance of cost and isolation. Benefit: DB-level boundary without infra overhead. Trade-off: migrations must run N times (once per tenant).',
+    'Database-per-tenant (dedicated instance)':            'Database-per-tenant: strongest isolation. Benefit: compliance-friendly, easy tenant offboarding. Trade-off: high infra cost and operational complexity at scale.',
+    'Silo model (fully isolated stack per tenant)':        'Full silo: maximum isolation. Trade-off: highest cost, slowest provisioning, hardest to update uniformly — justified only for regulated enterprise customers.'
+  }}
+};
+
+function getDynamicTradeoff(sec) {
+  const mapping = CHOICE_TRADEOFF_MAP[sec.id];
+  if (!mapping) return null;
+  const st = state.sections[sec.id];
+  if (!st) return null;
+  for (const [key, choices] of Object.entries(mapping)) {
+    const val = st.inputs[key];
+    if (val && choices[val]) return choices[val];
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// P3-3 — CROSS-SECTION CONSISTENCY VALIDATION
+// ═══════════════════════════════════════════════════
+const VALIDATION_RULES = [
+  { id:'V1', msg:'⚠️ Saga pattern + Monolith: Saga is designed for distributed services. Consider "None" for saga strategy or switch to a microservices architecture.',
+    test:() => { const a=state.sections[5]?.inputs?.archStyle||''; const sg=state.sections[10]?.inputs?.sagaStrategy||''; return a.includes('Monolith') && sg && sg!=='-- Select --' && sg!=='None (no long transactions)'; }},
+  { id:'V2', msg:'⚠️ KEDA + Monolith: KEDA is a Kubernetes-native autoscaler. Use Kubernetes HPA or Azure VMSS for a monolithic workload.',
+    test:() => { const a=state.sections[5]?.inputs?.archStyle||''; const cs=state.sections[9]?.inputs?.computeScaling||''; return a.includes('Monolith') && cs.includes('KEDA'); }},
+  { id:'V3', msg:'⚠️ Read-heavy bottleneck + No caching: Database will be overloaded under read load. Add Redis, CDN, or cache-aside strategy.',
+    test:() => { const b=state.sections[9]?.inputs?.bottleneck||''; const c=state.sections[9]?.inputs?.cachingStrategy||''; return b==='Read-heavy (CDN + cache)' && c==='No caching'; }},
+  { id:'V4', msg:'⚠️ Serverless + Sticky sessions: Serverless functions are stateless by design. Move session state to Redis or an external session store.',
+    test:() => { const a=state.sections[5]?.inputs?.archStyle||''; const sl=state.sections[6]?.inputs?.stateless||''; return a.includes('Serverless') && sl==='No — sticky sessions required'; }},
+  { id:'V5', msg:'⚠️ NoSQL database + Strong ACID consistency: Cosmos DB, Cassandra, DynamoDB, and MongoDB have limited full-ACID support. Use a relational DB or apply optimistic concurrency at the application layer.',
+    test:() => { const db=state.sections[7]?.inputs?.primaryDb||''; const cm=state.sections[7]?.inputs?.consistencyModel||''; return (db.includes('Cosmos')||db.includes('Cassandra')||db.includes('DynamoDB')||db.includes('MongoDB')) && cm==='Strong Consistency (ACID)'; }},
+  { id:'V6', msg:'⚠️ Microservices + Shared database: This is the "Shared Database" anti-pattern — it creates tight coupling and prevents independent deployments. Use Database-per-service.',
+    test:() => { const a=state.sections[5]?.inputs?.archStyle||''; const db=state.sections[7]?.inputs?.dbOwnership||''; return a.includes('Microservices') && db==='Single shared DB (all services — anti-pattern for microservices)'; }}
+];
+
+function validateConsistency() {
+  return VALIDATION_RULES.filter(r => { try { return r.test(); } catch(e) { return false; } }).map(r => r.msg);
+}
+
+// ═══════════════════════════════════════════════════
+// ARCH TRADE-OFF LOOKUP — P0.2 fix for hardcoded statement
+// ═══════════════════════════════════════════════════
+const ARCH_STATEMENT_MAP = {
+  'Monolith (single deployable)':                     ['delivery simplicity and fast iteration',                     'horizontal scalability and team autonomy'],
+  'Modular Monolith (bounded modules, single deploy)': ['modularity and delivery velocity with a single deploy unit', 'independent scaling of individual modules'],
+  'Microservices (independent services per domain)':   ['independent scalability and team autonomy',                  'operational complexity and distributed systems overhead'],
+  'Event-Driven Architecture (EDA)':                   ['resilience and loose coupling between services',             'eventual consistency and observability complexity'],
+  'Serverless / FaaS':                                 ['cost efficiency and zero infrastructure management',         'cold starts and vendor lock-in'],
+  'Hybrid (mix)':                                      ['pragmatic balance between simplicity and scale',             'architectural consistency across the system'],
+};
+function archTradeoff(style) {
+  const t = ARCH_STATEMENT_MAP[style] || ['scalability and delivery velocity', 'operational complexity'];
+  return { gain: t[0], risk: t[1] };
+}
+
+// ═══════════════════════════════════════════════════
+// REPORT GENERATION
+// ═══════════════════════════════════════════════════
+function generateReport() {
+  switchTab('report');
+  const pn = state.projectName || 'Unnamed System';
+  const today = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const s = state.sections;
+  const get = (sid, key) => { const v = s[sid]?.inputs[key]; return Array.isArray(v) ? v.join(', ') : (v || '—'); };
+  const def = v => v && v !== '-- Select --' ? v : null;
+
+  // 7-step architect template
+  const archStyle = def(get(5,'archStyle')) || 'to be decided';
+  const availability = def(get(2,'availability')) || 'target availability';
+  const latency = def(get(2,'latency')) || 'target latency';
+  const teamSize = def(get(3,'teamSize')) || 'the team';
+  const evolutionTrigger = def(get(15,'evolutionTrigger')) || 'as scale demands';
+  const migrationStrategy = def(get(15,'migrationStrategy')) || 'gradual evolution';
+  const riskAppetite = def(get(4,'riskAppetite')) || 'balanced';
+  const cachingStrategy = def(get(9,'cachingStrategy')) || 'caching';
+  const dbScaling = def(get(9,'dbScaling')) || 'database scaling';
+  const resPatterns = get(10,'resiliencePatterns') || 'resilience patterns';
+  const authN = def(get(11,'authN')) || 'token-based authentication';
+  const authZ = def(get(11,'authZ')) || 'RBAC';
+  const futureCapabilities = get(15,'futureCapabilities') || 'future requirements';
+  const { gain: archGain, risk: archRisk } = archTradeoff(archStyle);
+
+  const steps = [
+    { num:'Step 1', title:'Clarify Vision', body:`Users: <strong>${get(1,'users')||'identified stakeholders'}</strong>. Domain: <strong>${get(1,'domain')||'—'}</strong>. Problem: ${get(1,'problem')||'—'}. Success: ${get(1,'success')||'—'}. Out of scope: ${get(1,'outOfScope')||'—'}.` },
+    { num:'Step 2', title:'Define Requirements', body:`We need <strong>${availability}</strong> and <strong>${latency}</strong> response time based on business impact. Functional flows: <strong>${get(2,'flows')||'—'}</strong>. Non-functional priorities: <strong>${get(2,'nfrPriority')||'—'}</strong>. User scale: <strong>${get(2,'userScale')||'—'}</strong>.` },
+    { num:'Step 3', title:'Choose Architecture', body:`Given constraints (${teamSize}, ${get(3,'timeline')||'—'} timeline, $${get(3,'budget')||'—'} budget), we choose <strong>${archStyle}</strong>. Communication: <strong>${get(5,'commPattern')||'—'}</strong>. Deployment: <strong>${get(5,'deployTarget')||'—'}</strong>. Core services: <strong>${get(6,'coreServices')||'—'}</strong>.${def(get(16,'apiProtocol')) ? ` API protocol: <strong>${get(16,'apiProtocol')}</strong>. Pagination: <strong>${get(16,'pagination')||'—'}</strong>. Error standard: <strong>${get(16,'errorStandard')||'—'}</strong>.` : ''}` },
+    { num:'Step 4', title:'Address Scaling', body:`We scale reads via <strong>${cachingStrategy}</strong> and writes via <strong>${dbScaling}</strong>. Primary bottleneck: <strong>${get(9,'bottleneck')||'—'}</strong>. Compute scaling: <strong>${get(9,'computeScaling')||'—'}</strong>. CDN: <strong>${get(9,'cdnUsage')||'—'}</strong>.` },
+    { num:'Step 5', title:'Ensure Resilience', body:`We apply <strong>${resPatterns||'—'}</strong> to prevent cascading failures. Distributed transaction strategy: <strong>${get(10,'sagaStrategy')||'—'}</strong>. Health checks: <strong>${get(10,'healthChecks')||'—'}</strong>. Idempotency: <strong>${get(8,'idempotency')||'—'}</strong>.${def(get(4,'mitigation')) ? ` Risk mitigations: ${get(4,'mitigation')}.` : ''}` },
+    { num:'Step 6', title:'Secure the System', body:`We enforce <strong>${authN}</strong> for authentication and <strong>${authZ}</strong> for authorization. Secret management: <strong>${get(11,'secretMgmt')||'—'}</strong>. Encryption: <strong>${get(11,'encryption')||'—'}</strong>. Audit logging: <strong>${get(11,'auditLogging')||'—'}</strong>.` },
+    { num:'Step 7', title:'Plan Evolution', body:`When <strong>${evolutionTrigger}</strong>, we evolve via <strong>${migrationStrategy}</strong>. Planned capabilities: <strong>${futureCapabilities}</strong>. API versioning: <strong>${get(15,'apiVersioning')||'—'}</strong>.` }
+  ];
+
+  const stepsHtml = steps.map(step => `<div class="report-step">
+    <span class="report-step-num">${step.num}</span>
+    <div><div class="report-step-title">${step.title}</div><div class="report-step-body">${step.body}</div></div>
+  </div>`).join('');
+
+  // Section summaries
+  let sectionCards = '';
+  SECTIONS.forEach(sec => {
+    const st = state.sections[sec.id];
+    const pct = getSectionProgress(sec.id);
+    const checks = sec.checklist.map((item, i) => `<li class="${st.checklist[i]?'':'unchecked'}">${item}</li>`).join('');
+    const riskCls = {'Low':'risk-low','Medium':'risk-med','High':'risk-high','Critical':'risk-critical'}[st.risk]||'risk-med';
+    sectionCards += `<div class="report-card">
+      <h4>${sec.icon} ${sec.id}. ${sec.title} <span class="risk-badge ${riskCls}">${st.risk}</span></h4>
+      <div style="font-size:0.75rem;color:var(--text2);margin-bottom:6px">Score: ${st.score}/5 · Checklist: ${pct}%</div>
+      <ul>${checks}</ul>
+      ${st.notes ? `<div style="margin-top:6px;font-size:0.75rem;color:var(--text2);font-style:italic">📝 ${st.notes}</div>` : ''}
+    </div>`;
+  });
+
+  // Eval summary
+  let totalScore = 0;
+  EVAL_ITEMS.forEach(e => { totalScore += state.eval[e.id]?.score || 3; });
+  const avgScore = (totalScore/20).toFixed(1);
+  const evalRows = EVAL_ITEMS.map(e => {
+    const ev = state.eval[e.id];
+    const riskCls = {'Low':'risk-low','Medium':'risk-med','High':'risk-high','Critical':'risk-critical'}[ev.risk]||'risk-med';
+    return `<tr>
+      <td>${e.id}. ${e.item}</td>
+      <td><span class="cat-pill ${CAT_CSS[e.catKey]||'cat-arch'}">${e.cat}</span></td>
+      <td>${ev.options.length ? ev.options.join(', ') : '—'}</td>
+      <td style="text-align:center;font-weight:700;color:var(--accent)">${ev.score}/5</td>
+      <td><span class="risk-badge ${riskCls}">${ev.risk}</span></td>
+      <td style="font-size:0.75rem;color:var(--text2)">${ev.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const overallPct = (() => {
+    let t=0,d=0;
+    SECTIONS.forEach(s => { s.checklist.forEach((_,i) => { t++; if(state.sections[s.id]?.checklist?.[i]) d++; }); });
+    return t ? Math.round(d/t*100) : 0;
+  })();
+
+  document.getElementById('report-wrap').innerHTML = `
+    <div class="report-actions">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
+      <button class="btn btn-ghost" onclick="copyReport()">📋 Copy to Clipboard</button>
+      <button class="btn btn-ghost" onclick="downloadReport()">💾 Download .txt</button>
+      <button class="btn btn-ghost" onclick="downloadMarkdown()">⬇️ Download .md</button>
+      <button class="btn btn-ghost" id="btn-text-view" onclick="toggleTextView()">📝 View as Text</button>
+      <button class="btn btn-ghost" onclick="generateReport()">🔄 Refresh</button>
+    </div>
+    <div class="report-text-view" id="report-text-view">
+      <textarea class="report-text-area" id="report-text-area" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="report-content" id="report-printable">
+      <div class="report-title">🏗️ System Design Report: ${escHtml(pn)}</div>
+      <div class="report-meta">Generated: ${today} · Wizard Progress: ${overallPct}% · Avg Eval Score: ${avgScore}/5</div>
+
+      ${(()=>{ const w=validateConsistency(); return w.length ? `<div style="background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.3);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px"><div style="font-size:0.8rem;font-weight:700;color:var(--danger);margin-bottom:8px">⚠️ Consistency Warnings — Review Before Presenting</div>${w.map(m=>`<div style="font-size:0.8rem;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(220,38,38,0.1)">${m}</div>`).join('')}</div>` : ''; })()}
+      <div class="arch-template">
+        <p>"Based on the <strong>SLA (${availability})</strong>, expected scale (<strong>${get(2,'userScale')||'—'}</strong>), and <strong>team (${teamSize})</strong>,
+        we chose <strong>${archStyle}</strong>.
+        This improves <strong>${archGain}</strong>, but we accept risk in <strong>${archRisk}</strong>.
+        We mitigate through <strong>${resPatterns ? resPatterns.split(',')[0] : 'resilience patterns'}</strong>.
+        If <strong>${evolutionTrigger}</strong>, we evolve toward <strong>${migrationStrategy}</strong>."</p>
+      </div>
+
+      <div class="report-section">
+        <div class="report-section-title">🧭 7-Step Architect Communication Template</div>
+        ${stepsHtml}
+      </div>
+
+      <div class="report-section">
+        <div class="report-section-title">📋 Layer-by-Layer Design Summary</div>
+        <div class="report-grid">${sectionCards}</div>
+      </div>
+
+      <div class="report-section">
+        <div class="report-section-title">📊 Evaluation Checklist Summary (20 Items)</div>
+        <div style="overflow-x:auto">
+        <table class="eval-summary-table">
+          <thead><tr><th>Item</th><th>Category</th><th>Selected Options</th><th>Score</th><th>Risk</th><th>Notes</th></tr></thead>
+          <tbody>${evalRows}</tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <div class="report-section-title">⚖️ Key Trade-offs Accepted</div>
+        <div class="report-grid">
+          ${SECTIONS.map(sec => { const dyn=getDynamicTradeoff(sec); return `<div class="report-card"><h4>${sec.icon} ${sec.title}</h4><p>${dyn||sec.tradeoff}</p>${dyn?`<div style="font-size:0.7rem;color:var(--text3);margin-top:4px">★ Based on your selection</div>`:''}</div>`; }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function generatePlainText() {
+  const pn = state.projectName || 'Unnamed System';
+  const today = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const s = state.sections;
+  const get = (sid, key) => { const v = s[sid]?.inputs[key]; return Array.isArray(v) ? v.join(', ') : (v || '—'); };
+  const def = v => v && v !== '-- Select --' ? v : null;
+  const line = (char, len) => char.repeat(len || 80);
+  const overallPct = (() => { let t=0,d=0; SECTIONS.forEach(sec => { sec.checklist.forEach((_,i) => { t++; if(state.sections[sec.id]?.checklist?.[i]) d++; }); }); return t ? Math.round(d/t*100) : 0; })();
+  let totalScore = 0; EVAL_ITEMS.forEach(e => { totalScore += state.eval[e.id]?.score || 3; });
+  const avgScore = (totalScore/20).toFixed(1);
+
+  const archStyle = def(get(5,'archStyle')) || 'to be decided';
+  const availability = def(get(2,'availability')) || 'target availability';
+  const latency = def(get(2,'latency')) || 'target latency';
+  const teamSize = def(get(3,'teamSize')) || 'the team';
+  const evolutionTrigger = def(get(15,'evolutionTrigger')) || 'as scale demands';
+  const migrationStrategy = def(get(15,'migrationStrategy')) || 'gradual evolution';
+  const resPatterns = get(10,'resiliencePatterns') || 'resilience patterns';
+  const authN = def(get(11,'authN')) || 'token-based authentication';
+  const authZ = def(get(11,'authZ')) || 'RBAC';
+  const { gain: ptGain, risk: ptRisk } = archTradeoff(archStyle);
+
+  let out = '';
+  out += line('=') + '\n';
+  out += `FORMAT_VERSION: 1\n`;
+  out += `SYSTEM DESIGN REPORT: ${pn}\n`;
+  out += `Generated: ${today}  |  Wizard Progress: ${overallPct}%  |  Avg Eval Score: ${avgScore}/5\n`;
+  out += line('=') + '\n\n';
+
+  const ptWarnings = validateConsistency();
+  if (ptWarnings.length) {
+    out += 'CONSISTENCY WARNINGS\n' + line('-', 40) + '\n';
+    ptWarnings.forEach(w => { out += '  ' + w + '\n'; });
+    out += '\n';
+  }
+
+  out += 'ARCHITECT STATEMENT\n' + line('-', 40) + '\n';
+  out += `"Based on the SLA (${availability}), expected scale (${get(2,'userScale')||'—'}), and team (${teamSize}),\n`;
+  out += `we chose ${archStyle}.\n`;
+  out += `This improves ${ptGain}, but we accept risk in ${ptRisk}.\n`;
+  out += `We mitigate through ${resPatterns ? resPatterns.split(',')[0].trim() : 'resilience patterns'}.\n`;
+  out += `If ${evolutionTrigger}, we evolve toward ${migrationStrategy}."\n\n`;
+
+  out += '7-STEP ARCHITECT COMMUNICATION TEMPLATE\n' + line('-', 40) + '\n';
+  const steps = [
+    ['Step 1: Clarify Vision', `Users: ${get(1,'users')||'—'}\nDomain: ${get(1,'domain')||'—'}\nProblem: ${get(1,'problem')||'—'}\nSuccess: ${get(1,'success')||'—'}\nOut of scope: ${get(1,'outOfScope')||'—'}`],
+    ['Step 2: Define Requirements', `Availability SLA: ${availability}\nLatency target: ${latency}\nFunctional flows: ${get(2,'flows')||'—'}\nNon-functional priorities: ${get(2,'nfrPriority')||'—'}\nUser scale: ${get(2,'userScale')||'—'}`],
+    ['Step 3: Choose Architecture', `Architecture style: ${archStyle}\nTeam size: ${teamSize}  |  Timeline: ${get(3,'timeline')||'—'}  |  Budget: ${get(3,'budget')||'—'}\nCommunication: ${get(5,'commPattern')||'—'}\nDeployment: ${get(5,'deployTarget')||'—'}\nCore services: ${get(6,'coreServices')||'—'}${def(get(16,'apiProtocol')) ? '\nAPI protocol: '+get(16,'apiProtocol')+'  |  Pagination: '+get(16,'pagination')+'  |  Error standard: '+get(16,'errorStandard') : ''}`],
+    ['Step 4: Address Scaling', `Primary bottleneck: ${get(9,'bottleneck')||'—'}\nCaching: ${def(get(9,'cachingStrategy'))||'—'}\nDB scaling: ${def(get(9,'dbScaling'))||'—'}\nCompute scaling: ${get(9,'computeScaling')||'—'}\nCDN: ${get(9,'cdnUsage')||'—'}`],
+    ['Step 5: Ensure Resilience', `Patterns applied: ${resPatterns||'—'}\nDistributed transaction: ${get(10,'sagaStrategy')||'—'}\nHealth checks: ${get(10,'healthChecks')||'—'}\nIdempotency: ${get(8,'idempotency')||'—'}${def(get(4,'mitigation')) ? '\nRisk mitigations: '+get(4,'mitigation') : ''}`],
+    ['Step 6: Secure the System', `Authentication: ${authN}\nAuthorization: ${authZ}\nSecret management: ${get(11,'secretMgmt')||'—'}\nEncryption: ${get(11,'encryption')||'—'}\nAudit logging: ${get(11,'auditLogging')||'—'}`],
+    ['Step 7: Plan Evolution', `Evolution trigger: ${evolutionTrigger}\nMigration strategy: ${migrationStrategy}\nPlanned capabilities: ${get(15,'futureCapabilities')||'—'}\nAPI versioning: ${get(15,'apiVersioning')||'—'}`]
+  ];
+  steps.forEach(([title, body]) => {
+    out += '\n' + title + '\n';
+    body.split('\n').forEach(l => out += '  ' + l + '\n');
+  });
+
+  out += '\n' + line('=') + '\n';
+  out += 'LAYER-BY-LAYER DESIGN SUMMARY\n' + line('-', 40) + '\n';
+  SECTIONS.forEach(sec => {
+    const st = state.sections[sec.id];
+    const pct = getSectionProgress(sec.id);
+    out += `\n[${sec.id}] ${sec.title}  |  Risk: ${st.risk}  |  Score: ${st.score}/5  |  Checklist: ${pct}%\n`;
+    sec.checklist.forEach((item, i) => {
+      out += `  ${st.checklist[i] ? '[x]' : '[ ]'} ${item}\n`;
+    });
+    const inputs = st.inputs;
+    const filled = Object.entries(inputs).filter(([,v]) => v && v !== '-- Select --' && !(Array.isArray(v) && v.length === 0));
+    if (filled.length) {
+      out += '  Decisions:\n';
+      filled.forEach(([k,v]) => {
+        const label = sec.inputs.find(i => i.key === k)?.label || k;
+        const val = Array.isArray(v) ? v.join(', ') : v;
+        out += `    ${label}: ${val}\n`;
+      });
+    }
+    if (st.notes) out += `  Notes: ${st.notes}\n`;
+  });
+
+  out += '\n' + line('=') + '\n';
+  out += 'EVALUATION CHECKLIST SUMMARY (20 Items)\n' + line('-', 40) + '\n';
+  const col = (s, w) => (s + '').padEnd(w).slice(0, w);
+  out += '\n' + col('#', 3) + col('Item', 38) + col('Cat', 16) + col('Score', 7) + col('Risk', 10) + 'Selected Options\n';
+  out += line('-') + '\n';
+  EVAL_ITEMS.forEach(e => {
+    const ev = state.eval[e.id] || {options:[],score:3,risk:'Medium',notes:''};
+    const opts = ev.options.length ? ev.options.join(', ') : '—';
+    out += col(e.id, 3) + col(e.item, 38) + col(e.cat, 16) + col(ev.score+'/5', 7) + col(ev.risk, 10) + opts + '\n';
+    if (ev.notes) out += '    Notes: ' + ev.notes + '\n';
+  });
+
+  out += '\n' + line('=') + '\n';
+  out += 'KEY TRADE-OFFS ACCEPTED\n' + line('-', 40) + '\n\n';
+  SECTIONS.forEach(sec => {
+    const dyn = getDynamicTradeoff(sec);
+    out += `${sec.icon} ${sec.title}${dyn?' [★ based on your selection]':''}\n  ${dyn||sec.tradeoff}\n\n`;
+  });
+
+  out += line('=') + '\n';
+  out += 'Generated by System Design Assistant — Architect\'s Field Manual\n';
+  out += line('=') + '\n';
+  return out;
+}
+
+// ═══════════════════════════════════════════════════
+// P3-4 — MARKDOWN EXPORT
+// ═══════════════════════════════════════════════════
+function generateMarkdown() {
+  const pn = state.projectName || 'Unnamed System';
+  const today = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const s = state.sections;
+  const get = (sid, key) => { const v = s[sid]?.inputs[key]; return Array.isArray(v) ? v.join(', ') : (v || '—'); };
+  const def = v => v && v !== '-- Select --' ? v : null;
+  const archStyle = def(get(5,'archStyle')) || 'to be decided';
+  const availability = def(get(2,'availability')) || 'target availability';
+  const latency = def(get(2,'latency')) || 'target latency';
+  const teamSize = def(get(3,'teamSize')) || 'the team';
+  const evolutionTrigger = def(get(15,'evolutionTrigger')) || 'as scale demands';
+  const migrationStrategy = def(get(15,'migrationStrategy')) || 'gradual evolution';
+  const resPatterns = get(10,'resiliencePatterns') || 'resilience patterns';
+  const authN = def(get(11,'authN')) || 'token-based authentication';
+  const authZ = def(get(11,'authZ')) || 'RBAC';
+  const { gain: mdGain, risk: mdRisk } = archTradeoff(archStyle);
+  let totalScore = 0; EVAL_ITEMS.forEach(e => { totalScore += state.eval[e.id]?.score || 3; });
+  const avgScore = (totalScore/20).toFixed(1);
+  const overallPct = (() => { let t=0,d=0; SECTIONS.forEach(sec => { const p=getSectionProgress(sec.id); const n=sec.checklist.length+sec.inputs.length; t+=n; d+=Math.round(p/100*n); }); return t ? Math.round(d/t*100) : 0; })();
+
+  let md = `# 🏗️ System Design Report: ${pn}\n\n`;
+  md += `> Generated: ${today} | Progress: ${overallPct}% | Avg Score: ${avgScore}/5\n\n---\n\n`;
+
+  const warnings = validateConsistency();
+  if (warnings.length) {
+    md += `## ⚠️ Consistency Warnings\n\n`;
+    warnings.forEach(w => { md += `- ${w}\n`; });
+    md += '\n---\n\n';
+  }
+
+  md += `## Architect Statement\n\n`;
+  md += `> "Based on the SLA (**${availability}**), expected scale (**${get(2,'userScale')||'—'}**), and team (**${teamSize}**), we chose **${archStyle}**.\n`;
+  md += `> This improves **${mdGain}**, but we accept risk in **${mdRisk}**.\n`;
+  md += `> We mitigate through **${resPatterns ? resPatterns.split(',')[0].trim() : 'resilience patterns'}**.\n`;
+  md += `> If **${evolutionTrigger}**, we evolve toward **${migrationStrategy}**."\n\n---\n\n`;
+
+  md += `## 7-Step Architect Communication Template\n\n`;
+  const steps = [
+    ['Step 1: Clarify Vision',      `- **Users:** ${get(1,'users')||'—'}\n- **Domain:** ${get(1,'domain')||'—'}\n- **Problem:** ${get(1,'problem')||'—'}\n- **Success:** ${get(1,'success')||'—'}\n- **Out of scope:** ${get(1,'outOfScope')||'—'}`],
+    ['Step 2: Define Requirements', `- **Availability SLA:** ${availability}\n- **Latency target:** ${latency}\n- **Functional flows:** ${get(2,'flows')||'—'}\n- **NFR priorities:** ${get(2,'nfrPriority')||'—'}\n- **User scale:** ${get(2,'userScale')||'—'}`],
+    ['Step 3: Choose Architecture', `- **Style:** ${archStyle}\n- **Team/Timeline/Budget:** ${teamSize} | ${get(3,'timeline')||'—'} | ${get(3,'budget')||'—'}\n- **Communication:** ${get(5,'commPattern')||'—'}\n- **Deployment:** ${get(5,'deployTarget')||'—'}\n- **Core services:** ${get(6,'coreServices')||'—'}${def(get(16,'apiProtocol')) ? `\n- **API protocol:** ${get(16,'apiProtocol')} | Pagination: ${get(16,'pagination')||'—'} | Error standard: ${get(16,'errorStandard')||'—'}` : ''}`],
+    ['Step 4: Address Scaling',     `- **Bottleneck:** ${get(9,'bottleneck')||'—'}\n- **Caching:** ${def(get(9,'cachingStrategy'))||'—'}\n- **DB scaling:** ${def(get(9,'dbScaling'))||'—'}\n- **Compute:** ${get(9,'computeScaling')||'—'}\n- **CDN:** ${get(9,'cdnUsage')||'—'}`],
+    ['Step 5: Ensure Resilience',   `- **Patterns:** ${resPatterns||'—'}\n- **Distributed tx:** ${get(10,'sagaStrategy')||'—'}\n- **Health checks:** ${get(10,'healthChecks')||'—'}\n- **Idempotency:** ${get(8,'idempotency')||'—'}${def(get(4,'mitigation')) ? `\n- **Mitigations:** ${get(4,'mitigation')}` : ''}`],
+    ['Step 6: Secure the System',   `- **AuthN:** ${authN}\n- **AuthZ:** ${authZ}\n- **Secrets:** ${get(11,'secretMgmt')||'—'}\n- **Encryption:** ${get(11,'encryption')||'—'}\n- **Audit logging:** ${get(11,'auditLogging')||'—'}${def(get(18,'zeroTrust')) ? `\n- **Zero Trust:** ${get(18,'zeroTrust')}` : ''}${def(get(17,'tenantIsolation')) ? `\n- **Tenant isolation:** ${get(17,'tenantIsolation')}` : ''}`],
+    ['Step 7: Plan Evolution',      `- **Trigger:** ${evolutionTrigger}\n- **Migration:** ${migrationStrategy}\n- **Future capabilities:** ${get(15,'futureCapabilities')||'—'}\n- **API versioning:** ${get(15,'apiVersioning')||'—'}`]
+  ];
+  steps.forEach(([title, body]) => { md += `### ${title}\n\n${body}\n\n`; });
+
+  md += `---\n\n## Layer-by-Layer Design Summary\n\n`;
+  SECTIONS.forEach((sec, i) => {
+    const st = state.sections[sec.id];
+    const pct = getSectionProgress(sec.id);
+    const riskIcon = {'Low':'🟢','Medium':'🟡','High':'🔴','Critical':'🟣'}[st.risk]||'🟡';
+    md += `### ${i+1}. ${sec.icon} ${sec.title} — ${riskIcon} ${st.risk} | ${st.score}/5\n\n`;
+    sec.checklist.forEach((item, ci) => { md += `- [${st.checklist[ci]?'x':' '}] ${item}\n`; });
+    const filled = Object.entries(st.inputs||{}).filter(([,v])=>v&&v!=='-- Select --'&&!(Array.isArray(v)&&v.length===0)&&v!=='');
+    if (filled.length) {
+      md += '\n**Decisions:**\n\n';
+      filled.forEach(([k,v]) => { const lbl=sec.inputs.find(inp=>inp.key===k)?.label||k; md += `- **${lbl}:** ${Array.isArray(v)?v.join(', '):v}\n`; });
+    }
+    if (st.notes) md += `\n> 📝 ${st.notes}\n`;
+    md += '\n';
+  });
+
+  md += `---\n\n## Evaluation Checklist (20 Items)\n\n`;
+  md += `| # | Item | Category | Score | Risk | Selected Options |\n|---|------|----------|-------|------|------------------|\n`;
+  EVAL_ITEMS.forEach(e => {
+    const ev = state.eval[e.id]||{options:[],score:3,risk:'Medium'};
+    md += `| ${e.id} | ${e.item} | ${e.cat} | ${ev.score}/5 | ${ev.risk} | ${ev.options.length?ev.options.join(', '):'—'} |\n`;
+  });
+
+  md += `\n---\n\n## Key Trade-offs Accepted\n\n`;
+  SECTIONS.forEach((sec, i) => {
+    const dyn = getDynamicTradeoff(sec);
+    md += `**${i+1}. ${sec.icon} ${sec.title}**${dyn?' ★':''}\n${dyn||sec.tradeoff}\n\n`;
+  });
+
+  md += `---\n*Generated by System Design Assistant — Architect's Field Manual*\n`;
+  return md;
+}
+
+function downloadMarkdown() {
+  const md = generateMarkdown();
+  const pn = (state.projectName || 'SystemDesignReport').replace(/[^a-z0-9_\-]/gi, '_').replace(/_+/g,'_');
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = pn + '.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function toggleTextView() {
+  const view = document.getElementById('report-text-view');
+  const btn = document.getElementById('btn-text-view');
+  const area = document.getElementById('report-text-area');
+  if (!view) return;
+  const isVisible = view.classList.toggle('visible');
+  btn.textContent = isVisible ? '🔼 Hide Text View' : '📝 View as Text';
+  if (isVisible && area) {
+    area.value = generatePlainText();
+    area.select();
+  }
+}
+
+function copyReport() {
+  const text = generatePlainText();
+  navigator.clipboard.writeText(text)
+    .then(() => alert('Report copied to clipboard as plain text!'))
+    .catch(() => {
+      // fallback: open text view and select all
+      const view = document.getElementById('report-text-view');
+      const btn = document.getElementById('btn-text-view');
+      const area = document.getElementById('report-text-area');
+      if (view && area) {
+        view.classList.add('visible');
+        if (btn) btn.textContent = '🔼 Hide Text View';
+        area.value = text;
+        area.focus();
+        area.select();
+        alert('Clipboard API unavailable — text is selected in the text view. Press Ctrl+C to copy.');
+      }
+    });
+}
+
+// ═══════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.stab-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('stab-' + tab).classList.add('active');
+  const subnav = document.getElementById('sidebar-subnav-wrap');
+  if (subnav) subnav.classList.toggle('hidden', tab !== 'wizard');
+  const divider = document.querySelector('.sidebar-divider');
+  if (divider) divider.style.display = tab === 'wizard' ? '' : 'none';
+  if (tab === 'eval') renderEval();
+  if (tab === 'tree') renderTree();
+  if (tab === 'help') renderHelp();
+}
+
+// ═══════════════════════════════════════════════════
+// HELP PAGE
+// ═══════════════════════════════════════════════════
+function renderHelp() {
+  const el = document.getElementById('help-wrap');
+  el.innerHTML = `
+    <div class="help-hero">
+      <h1>🏗️ System Design Assistant — User Guide</h1>
+      <p>A structured field manual that guides you through every layer of system design — from business vision to future evolution. Use it to prepare for architect interviews, plan real systems, or evaluate your design completeness.</p>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">🚀 Quick Start — 5 Steps</div>
+      <div class="help-steps">
+        <div class="help-step">
+          <div class="help-step-num">1</div>
+          <div class="help-step-body">
+            <h4>Name your system</h4>
+            <p>Type a project name in the <code>Project / System Name</code> field in the top-right header. This appears in your generated report. Example: <strong>"E-Commerce Platform"</strong> or <strong>"Healthcare Portal"</strong>.</p>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-num">2</div>
+          <div class="help-step-body">
+            <h4>Work through the 15-Layer Design Wizard</h4>
+            <p>Click <strong>🧭 Design Wizard</strong>. Use the left sidebar to navigate all 15 design layers — from Vision to Evolution. Each layer has a <em>Purpose</em>, <em>Real-World Scenario</em>, and <em>Trade-off</em> box to guide your thinking.</p>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-num">3</div>
+          <div class="help-step-body">
+            <h4>Fill in your decisions</h4>
+            <p>For each layer: select options from dropdowns, pick multi-select chips for patterns, tick checklist items as you confirm them, rate your <strong>Design Confidence (1–5)</strong>, and set the <strong>Risk Level</strong>. All data is saved automatically in your browser.</p>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-num">4</div>
+          <div class="help-step-body">
+            <h4>Score the 20-Item Evaluation Checklist</h4>
+            <p>Click <strong>📊 Evaluation Checklist</strong>. For each of the 20 items (Requirements, Security, Scaling, etc.) select the approaches you're using, set a score, and mark risk. This gives you an objective readiness score.</p>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-num">5</div>
+          <div class="help-step-body">
+            <h4>Generate and share your report</h4>
+            <p>Click <strong>📄 Generate Report</strong> (header or last wizard step). The report includes a 7-Step Architect Communication Template, layer summaries, evaluation table, and key trade-offs. Use <strong>🖨️ Print</strong> or <strong>📋 Copy</strong> to export.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">🗂️ Tab Reference</div>
+      <div class="help-grid">
+        <div class="help-card">
+          <h4>🧭 Design Wizard</h4>
+          <ul>
+            <li>15 design layers in order</li>
+            <li>Left sidebar shows progress per layer</li>
+            <li>Green ✓ badge = 100% checklist done</li>
+            <li>Prev / Next buttons to move between layers</li>
+            <li>Top progress bar shows overall wizard %</li>
+          </ul>
+        </div>
+        <div class="help-card">
+          <h4>🌳 Decision Tree</h4>
+          <ul>
+            <li>Visual flow: Vision → Evolution</li>
+            <li>Each node shows key decision points</li>
+            <li>Trade-off shown at bottom of each card</li>
+            <li>Architecture style comparison table</li>
+            <li>Advanced patterns and emerging trends</li>
+          </ul>
+        </div>
+        <div class="help-card">
+          <h4>📊 Evaluation Checklist</h4>
+          <ul>
+            <li>20 universal system design items</li>
+            <li>Select specific approaches per item</li>
+            <li>Score confidence (1–5) and risk level</li>
+            <li>Stats bar: avg score + high-risk count</li>
+            <li>Notes column for interview talking points</li>
+          </ul>
+        </div>
+        <div class="help-card">
+          <h4>📄 Report</h4>
+          <ul>
+            <li>Auto-generates from all your inputs</li>
+            <li>7-Step communication template filled in</li>
+            <li>Layer-by-layer design summary cards</li>
+            <li>Evaluation table + trade-off section</li>
+            <li>Print-ready (hides UI chrome on print)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">💡 Tips for Best Results</div>
+      <div class="help-tip">
+        <span class="help-tip-icon">🎯</span>
+        <p><strong>Interview prep:</strong> Work through all 15 layers for your target system (e.g., "Design Twitter"). The Decision Tree tab shows the architect vs developer mental model — review it before your interview.</p>
+      </div>
+      <div class="help-tip">
+        <span class="help-tip-icon">💾</span>
+        <p><strong>Auto-save:</strong> All your inputs are saved automatically to your browser's local storage. You can close the tab and return later — everything will be restored. Use the <strong>🗑 Clear</strong> button in the header to start fresh.</p>
+      </div>
+      <div class="help-tip">
+        <span class="help-tip-icon">⚖️</span>
+        <p><strong>Trade-offs are the key:</strong> Every section ends with a trade-off. The best architects don't just pick options — they articulate <em>what they gain and what they sacrifice</em>. Use the Notes field to capture your trade-off reasoning per layer.</p>
+      </div>
+      <div class="help-tip">
+        <span class="help-tip-icon">📊</span>
+        <p><strong>Risk level usage:</strong> Mark a layer <strong>High/Critical</strong> when you've identified a real risk but haven't fully mitigated it. This surfaces in the report so reviewers can see your risk awareness.</p>
+      </div>
+      <div class="help-tip">
+        <span class="help-tip-icon">🔄</span>
+        <p><strong>Iterative use:</strong> You don't have to fill everything in one pass. Come back to refine. The progress bar and green checkmarks help you track what's been decided vs. what's still open.</p>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">⌨️ Quick Reference</div>
+      <table class="help-shortcut-table">
+        <thead><tr><th>Action</th><th>How</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Navigate layers</td><td>Left sidebar click, or <strong>Prev / Next</strong> buttons</td><td>Design Wizard</td></tr>
+          <tr><td>Save project name</td><td>Type in the top-right input field</td><td>Header (all tabs)</td></tr>
+          <tr><td>Generate report</td><td>Click <strong>📄 Generate Report</strong></td><td>Header or last wizard layer</td></tr>
+          <tr><td>Download report as .txt</td><td>Click <strong>💾 Download .txt</strong></td><td>Report tab</td></tr>
+          <tr><td>Upload & restore a report</td><td>Click <strong>📁 Upload Report</strong>, pick the .txt file — all 15 layers, checklist, evaluation scores and notes are restored instantly</td><td>Header (all tabs)</td></tr>
+          <tr><td>Print report</td><td>Click <strong>🖨️ Print Report</strong></td><td>Report tab</td></tr>
+          <tr><td>Copy report text</td><td>Click <strong>📋 Copy to Clipboard</strong></td><td>Report tab</td></tr>
+          <tr><td>Reset all data</td><td>Click <strong>🗑</strong> trash icon</td><td>Header (all tabs)</td></tr>
+          <tr><td>Select multiple options</td><td>Click chips to toggle on/off (blue = selected)</td><td>Wizard inputs / Eval table</td></tr>
+          <tr><td>Mark checklist item</td><td>Click any checklist row to toggle</td><td>Each wizard layer</td></tr>
+          <tr><td>Refresh report</td><td>Click <strong>🔄 Refresh</strong></td><td>Report tab</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="help-section">
+      <div class="help-section-title">🏛️ The 18 Design Layers at a Glance</div>
+      <div class="help-grid">
+        ${[
+          ['Foundation (1–4)','🎯 Vision & Business','📋 Requirements','⚙️ Constraints','⚠️ Risk Identification'],
+          ['Architecture (5–9)','🏛️ Architecture Style','🗺️ Component Design','📡 API Design','🗄️ Data Architecture','🔗 Integration & Comms'],
+          ['Reliability (10–14)','📈 Scaling Strategy','🛡️ Failure & Resilience','🔒 Security Architecture','🏢 Multi-Tenancy & SaaS','🌐 Network Architecture'],
+          ['Delivery (15–18)','👁️ Observability & Ops','🚀 Deployment & DevOps','💰 Cost Awareness','🔮 Evolution & Future Proofing','']
+        ].map(([group, ...items]) => `
+          <div class="help-card">
+            <h4>${group}</h4>
+            <ul>${items.filter(Boolean).map(i => `<li>${i}</li>`).join('')}</ul>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════
+// UPLOAD / IMPORT / DOWNLOAD
+// ═══════════════════════════════════════════════════
+
+function triggerUpload() {
+  document.getElementById('report-upload-input').click();
+}
+
+function handleReportUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = ''; // allow re-uploading same file
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      importReportFromText(evt.target.result);
+    } catch(err) {
+      alert('Failed to parse report file.\n\nMake sure you upload a .txt file exported via "Download .txt" or "Copy to Clipboard" from this tool.\n\nError: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function downloadReport() {
+  const text = generatePlainText();
+  const pn = (state.projectName || 'SystemDesignReport').replace(/[^a-z0-9_\-]/gi, '_').replace(/_+/g,'_');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = pn + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importReportFromText(text) {
+  const lines = text.split('\n');
+  // P1.4 — reject silently-corrupt imports from old/incompatible exports
+  const hasVersion = lines.some(l => l.startsWith('FORMAT_VERSION:'));
+  if (!hasVersion && !confirm('This file has no version tag and may have been exported from an older version of this tool. Some fields may not restore correctly.\n\nContinue anyway?')) return;
+
+  // ── 1. Extract project name ─────────────────────────
+  for (const line of lines) {
+    const m = line.match(/^SYSTEM DESIGN REPORT:\s*(.+)$/);
+    if (m) { state.projectName = m[1].trim(); break; }
+  }
+
+  // ── 2. Reset state to clean defaults ────────────────
+  state.sections = {};
+  state.eval = {};
+  SECTIONS.forEach(s => {
+    state.sections[s.id] = {
+      inputs: {},
+      checklist: new Array(s.checklist.length).fill(false),
+      score: 3, risk: 'Medium', notes: ''
+    };
+  });
+  EVAL_ITEMS.forEach(e => {
+    state.eval[e.id] = { options: [], score: 3, risk: 'Medium', notes: '' };
+  });
+
+  // ── 3. Locate section boundaries ────────────────────
+  const layerIdx  = lines.findIndex(l => l.trim() === 'LAYER-BY-LAYER DESIGN SUMMARY');
+  const evalIdx   = lines.findIndex(l => l.trim() === 'EVALUATION CHECKLIST SUMMARY (20 Items)');
+  const tradeIdx  = lines.findIndex((l, i) => i > Math.max(0, evalIdx) && l.trim() === 'KEY TRADE-OFFS ACCEPTED');
+
+  if (layerIdx !== -1) {
+    parseLayerLines(lines.slice(layerIdx + 2, evalIdx !== -1 ? evalIdx : undefined));
+  }
+  if (evalIdx !== -1) {
+    parseEvalLines(lines.slice(evalIdx + 2, tradeIdx !== -1 ? tradeIdx : undefined));
+  }
+
+  // ── 4. Re-render everything ──────────────────────────
+  saveState();
+  document.getElementById('project-name').value = state.projectName || '';
+  state.currentSection = 1;
+  switchTab('wizard');
+  renderNav();
+  renderSection();
+  updateProgress();
+
+  showImportToast('✅ Report imported — all layers, checklist and eval data restored.');
+}
+
+// Parses the LAYER-BY-LAYER DESIGN SUMMARY block back into state.sections
+function parseLayerLines(lines) {
+  // Build label → {sid, key, type} lookup for every section input
+  const labelMap = {};
+  SECTIONS.forEach(sec => {
+    sec.inputs.forEach(inp => {
+      labelMap[inp.label] = { sid: sec.id, key: inp.key, type: inp.type };
+    });
+  });
+
+  let curSid = null, mode = '', checkIdx = 0, lastMapping = null;
+
+  for (const line of lines) {
+    // ── Section header: [N] Title  |  Risk: X  |  Score: N/5  |  Checklist: N%
+    const sh = line.match(/^\[(\d+)\]\s+.+?\|\s*Risk:\s*(\w+)\s*\|\s*Score:\s*(\d+)\/5/);
+    if (sh) {
+      curSid = parseInt(sh[1]);
+      const sec = SECTIONS.find(s => s.id === curSid);
+      state.sections[curSid] = {
+        inputs: {},
+        checklist: new Array(sec ? sec.checklist.length : 0).fill(false),
+        score: parseInt(sh[3]),
+        risk: sh[2],
+        notes: ''
+      };
+      mode = 'checklist'; checkIdx = 0; lastMapping = null;
+      continue;
+    }
+    if (curSid === null) continue;
+
+    // ── Checklist item: "  [x] ..." or "  [ ] ..."
+    if (/^  \[[ x]\] /.test(line)) {
+      state.sections[curSid].checklist[checkIdx++] = line[3] === 'x';
+      mode = 'checklist'; lastMapping = null;
+      continue;
+    }
+
+    // ── Decisions block header
+    if (line === '  Decisions:') { mode = 'decisions'; lastMapping = null; continue; }
+
+    // ── Notes line
+    const nm = line.match(/^  Notes:\s*(.*)/);
+    if (nm) { state.sections[curSid].notes = nm[1]; mode = ''; lastMapping = null; continue; }
+
+    // ── Decision key:value (4-space indent, non-space after)
+    if (mode === 'decisions' && /^    \S/.test(line)) {
+      const ci = line.indexOf(':', 4);
+      if (ci > 4) {
+        const label = line.substring(4, ci);
+        const val   = line.substring(ci + 2); // skip ": "
+        const mapping = labelMap[label];
+        if (mapping && mapping.sid === curSid) {
+          state.sections[curSid].inputs[mapping.key] =
+            mapping.type === 'multiselect'
+              ? (val === '—' ? [] : val.split(', ').filter(Boolean))
+              : (val === '—' ? '' : val);
+          lastMapping = mapping;
+        } else {
+          lastMapping = null;
+        }
+        continue;
+      }
+    }
+
+    // ── Continuation line (multi-line textarea value — no leading spaces)
+    if (mode === 'decisions' && lastMapping && lastMapping.type !== 'multiselect'
+        && line.trim() !== '' && !line.startsWith(' ') && !line.startsWith('[')) {
+      state.sections[curSid].inputs[lastMapping.key] += '\n' + line;
+    }
+  }
+}
+
+// Parses the EVALUATION CHECKLIST SUMMARY block back into state.eval
+// Fixed-width columns: [0:3] id  [3:41] item  [41:57] cat  [57:64] score  [64:74] risk  [74:] opts
+function parseEvalLines(lines) {
+  let dataStarted = false, lastId = null;
+
+  for (const line of lines) {
+    if (/^-{4,}/.test(line)) { dataStarted = true; continue; }
+    if (!dataStarted) continue;
+    if (!line.trim() || /^={4,}/.test(line)) continue;
+
+    // Notes continuation for last eval item
+    if (line.startsWith('    Notes:') && lastId !== null) {
+      state.eval[lastId].notes = line.substring('    Notes:'.length).trim();
+      continue;
+    }
+
+    // Data row — first 3 chars are the numeric id
+    const idStr = line.substring(0, 3).trim();
+    const id = parseInt(idStr);
+    if (isNaN(id) || id < 1 || id > 20) continue;
+
+    const scoreRaw = line.length > 57 ? line.substring(57, 64).trim() : '';
+    const riskRaw  = line.length > 64 ? line.substring(64, 74).trim() : '';
+    const optsRaw  = line.length > 74 ? line.substring(74).trim() : '';
+
+    const score = parseInt(scoreRaw); // parseInt("3/5") → 3
+    const validRisks = ['Low', 'Medium', 'High', 'Critical'];
+
+    state.eval[id].score   = (!isNaN(score) && score >= 1 && score <= 5) ? score : 3;
+    state.eval[id].risk    = validRisks.includes(riskRaw) ? riskRaw : 'Medium';
+    state.eval[id].options = (!optsRaw || optsRaw === '—') ? [] : optsRaw.split(', ').filter(Boolean);
+    state.eval[id].notes   = '';
+    lastId = id;
+  }
+}
+
+function showImportToast(msg) {
+  let toast = document.getElementById('sda-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'sda-toast';
+    toast.style.cssText = [
+      'position:fixed', 'bottom:28px', 'left:50%', 'transform:translateX(-50%)',
+      'background:#16a34a', 'color:#fff', 'padding:12px 28px', 'border-radius:8px',
+      'font-size:0.875rem', 'font-weight:600', 'z-index:9999',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.22)', 'transition:opacity 0.4s',
+      'pointer-events:none', 'white-space:nowrap'
+    ].join(';');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+initState();
+document.getElementById('project-name').value = state.projectName || '';
+try {
+  if (localStorage.getItem('navCollapsed') === '1') {
+    document.getElementById('app-sidebar').classList.add('collapsed');
+    document.getElementById('sidebar-toggle-btn').innerHTML = '&#8250;';
+    document.getElementById('sidebar-toggle-btn').title = 'Expand menu';
+  }
+} catch(e) {}
+// Restore active tab if not wizard (subnav should be hidden)
+if (state.currentTab && state.currentTab !== 'wizard') {
+  document.querySelectorAll('.stab-item').forEach(b => b.classList.remove('active'));
+  const stab = document.getElementById('stab-' + state.currentTab);
+  if (stab) stab.classList.add('active');
+  const panel = document.getElementById('tab-' + state.currentTab);
+  if (panel) { document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active')); panel.classList.add('active'); }
+  const subnav = document.getElementById('sidebar-subnav-wrap');
+  if (subnav) subnav.classList.add('hidden');
+  const divider = document.querySelector('.sidebar-divider');
+  if (divider) divider.style.display = 'none';
+}
+renderNav();
+renderSection();
+updateProgress();
+</script>
+</body>
+</html>
