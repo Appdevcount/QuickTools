@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADR Tool — Architecture Decision Records</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sb:#0f172a;--sb-border:#1e293b;--sb-hover:#1e293b;
+  --accent:#3b82f6;--accent-h:#2563eb;--accent-light:#eff6ff;
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;
+  --text:#0f172a;--muted:#64748b;--danger:#ef4444;
+  --green:#22c55e;--amber:#f59e0b;--purple:#8b5cf6;
+  --r:8px;--lc:#0f172a;
+}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden}
+
+/* ── Sidebar ─────────────────────────────── */
+#sidebar{width:264px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;height:100vh}
+.sb-head{padding:13px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--sb-border);flex-shrink:0}
+.logo{color:#f1f5f9;font-size:15px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.logo-icon{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.btn-new{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-new:hover{background:var(--accent-h)}
+.sb-search{padding:9px 12px;border-bottom:1px solid var(--sb-border);flex-shrink:0}
+.sb-search input{width:100%;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#cbd5e1;font-size:12px;outline:none;transition:border .15s}
+.sb-search input::placeholder{color:#475569}
+.sb-search input:focus{border-color:var(--accent)}
+.sb-filters{padding:6px 10px;border-bottom:1px solid var(--sb-border);display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0}
+.sf-chip{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid #334155;color:#64748b;cursor:pointer;transition:all .12s;background:transparent;font-weight:600}
+.sf-chip:hover,.sf-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.adr-list{flex:1;overflow-y:auto;padding:5px}
+.adr-item{padding:9px 11px;border-radius:6px;cursor:pointer;transition:background .12s;margin-bottom:2px}
+.adr-item:hover{background:var(--sb-hover)}
+.adr-item.active{background:#1e3a8a}
+.adr-num{font-size:10px;color:#475569;font-family:ui-monospace,monospace;letter-spacing:.05em}
+.adr-item.active .adr-num{color:#93c5fd}
+.adr-title{color:#94a3b8;font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+.adr-item.active .adr-title{color:#f1f5f9}
+.adr-meta{display:flex;align-items:center;gap:5px;margin-top:4px}
+.chip{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.ch-new{background:#1e3a5f;color:#93c5fd}
+.ch-proposed{background:#451a03;color:#fbbf24}
+.ch-accepted{background:#052e16;color:#4ade80}
+.ch-deprecated{background:#450a0a;color:#f87171}
+.ch-superseded{background:#1c1c2a;color:#a78bfa}
+.adr-date{font-size:10px;color:#334155}
+.sb-empty{padding:20px 10px;text-align:center;color:#334155;font-size:12px}
+.sb-footer{padding:9px 10px;border-top:1px solid var(--sb-border);flex-shrink:0;display:flex;gap:5px;flex-wrap:wrap}
+.btn-ghost{flex:1;background:transparent;color:#475569;border:1px solid #1e293b;border-radius:6px;padding:5px 6px;font-size:10.5px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;min-width:60px}
+.btn-ghost:hover{background:#1e293b;color:#94a3b8;border-color:#334155}
+
+/* ── Main ────────────────────────────────── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:40px;gap:12px}
+.empty-icon{width:72px;height:72px;background:#f1f5f9;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:4px}
+.empty-state h2{font-size:20px;color:var(--text);font-weight:700}
+.empty-state p{font-size:13px;max-width:320px;line-height:1.6;color:var(--muted)}
+.empty-btn{margin-top:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.empty-btn:hover{background:var(--accent-h)}
+
+/* ── Editor ──────────────────────────────── */
+#editor{flex:1;display:none;flex-direction:column;overflow:hidden}
+#editor.visible{display:flex}
+.ed-topbar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;gap:10px;flex-wrap:wrap}
+.ed-label{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace;font-weight:700;letter-spacing:.04em;flex-shrink:0}
+.tabs{display:flex;background:#f1f5f9;border-radius:7px;padding:3px;gap:2px}
+.tab{padding:5px 13px;border:none;background:transparent;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .12s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.ed-actions{display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-save:hover{background:var(--accent-h)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-outline:hover{background:#f8fafc;border-color:#94a3b8}
+.btn-del{background:transparent;color:var(--danger);border:1px solid #fecaca;border-radius:6px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-del:hover{background:#fef2f2;border-color:var(--danger)}
+.dirty-dot{width:6px;height:6px;background:var(--amber);border-radius:50%;display:inline-block;margin-left:3px;flex-shrink:0}
+
+/* ── Form Panel ──────────────────────────── */
+#formPanel{flex:1;overflow-y:auto;padding:18px 22px;background:var(--bg)}
+.fc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}
+.fc-title{font-size:10.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.fc-icon{width:20px;height:20px;background:var(--accent-light);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.form-row{display:flex;gap:11px;margin-bottom:11px}
+.form-row:last-child{margin-bottom:0}
+.field{display:flex;flex-direction:column;flex:1}
+.field.w13{flex:0 0 calc(33.3% - 7px)}
+.field.w23{flex:0 0 calc(66.6% - 4px)}
+.field.half{flex:0 0 calc(50% - 6px)}
+.field.w25{flex:0 0 calc(40% - 6px)}
+.field.w35{flex:0 0 calc(60% - 5px)}
+label{font-size:12px;font-weight:700;color:var(--lc);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+label .req{color:var(--danger)}
+label .hint{font-size:10px;font-weight:400;color:var(--muted);margin-left:3px}
+input[type=text],select,textarea{border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13.5px;font-family:inherit;background:#fff;color:var(--text);transition:border .15s,box-shadow .15s;outline:none;width:100%}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.sf{border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--muted);background:#f8fafc;font-family:ui-monospace,monospace;letter-spacing:.02em}
+
+/* Dynamic list rows */
+.list-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.list-row input{flex:1}
+.btn-rm{width:26px;height:26px;border:none;background:#fee2e2;color:var(--danger);border-radius:5px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s}
+.btn-rm:hover{background:#fecaca}
+.btn-add{width:100%;background:transparent;border:1px dashed var(--border);border-radius:6px;padding:6px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;margin-top:2px;font-weight:600}
+.btn-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* Option cards */
+.opt-card{border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;background:#fafbfc;border-left:3px solid var(--accent)}
+.opt-header{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.opt-header-fields{flex:1;display:flex;gap:8px}
+.opt-name{flex:1;font-weight:600}
+.opt-desc{flex:2}
+.opt-pc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.sub-label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.opt-pro-con-item{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.opt-pro-con-item input{flex:1;font-size:12.5px;padding:5px 8px}
+.opt-reason{min-height:60px;font-size:13px}
+
+/* Risk rows */
+.risk-row{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px;align-items:start;margin-bottom:8px}
+.risk-row textarea{min-height:60px;font-size:13px}
+
+/* Alt header */
+.list-header{display:flex;gap:5px;padding-right:32px;margin-bottom:4px}
+.list-header span{flex:1;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── Markdown / Preview Panels ───────────── */
+#markdownPanel,#previewPanel{flex:1;display:none;flex-direction:column;overflow:hidden;background:var(--bg)}
+.md-toolbar{display:flex;align-items:center;gap:8px;padding:9px 18px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.md-toolbar span{font-size:11px;color:var(--muted);flex:1;font-weight:600}
+#mdOutput{flex:1;overflow-y:auto;padding:18px 22px}
+#mdPre{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;font-family:ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;word-break:break-word;tab-size:2}
+#previewOutput{flex:1;overflow-y:auto;padding:18px 22px}
+.md-rendered{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 32px;max-width:860px;margin:0 auto}
+.md-rendered h1{font-size:22px;font-weight:800;margin-bottom:16px;color:#0f172a;padding-bottom:10px;border-bottom:2px solid var(--border)}
+.md-rendered h2{font-size:16px;font-weight:800;margin:22px 0 10px;color:#1e293b;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.md-rendered h3{font-size:14px;font-weight:700;margin:14px 0 7px;color:#334155}
+.md-rendered p{margin-bottom:10px;line-height:1.7;color:#334155}
+.md-rendered ul,.md-rendered ol{margin-left:22px;margin-bottom:10px}
+.md-rendered li{margin-bottom:4px;line-height:1.6;color:#334155}
+.md-rendered table{border-collapse:collapse;width:100%;margin-bottom:14px;font-size:13px}
+.md-rendered th,.md-rendered td{border:1px solid var(--border);padding:7px 12px;text-align:left}
+.md-rendered th{background:#f8fafc;font-weight:700;color:#1e293b}
+.md-rendered td{color:#334155}
+.md-rendered code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:11.5px;font-family:ui-monospace,monospace;color:#e11d48}
+.md-rendered pre{background:#1e293b;color:#e2e8f0;padding:14px 16px;border-radius:6px;overflow-x:auto;margin-bottom:14px}
+.md-rendered pre code{background:none;color:inherit;padding:0;font-size:12px}
+.md-rendered strong{font-weight:700;color:#0f172a}
+.md-rendered em{font-style:italic}
+.md-rendered blockquote{border-left:3px solid var(--accent);padding-left:14px;color:var(--muted);margin:10px 0;font-style:italic}
+.md-rendered hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+
+/* ── Help Panel ──────────────────────────── */
+#helpPanel{flex:1;display:none;flex-direction:column;overflow:hidden;background:var(--bg)}
+#helpOutput{flex:1;overflow-y:auto;padding:18px 22px}
+.help-doc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 32px;max-width:960px;margin:0 auto}
+.help-doc h1{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:6px}
+.help-doc .help-subtitle{color:var(--muted);font-size:13px;margin-bottom:24px}
+.help-doc h2{font-size:15px;font-weight:800;margin:26px 0 10px;color:#1e293b;padding-bottom:6px;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.06em}
+.help-doc h3{font-size:13.5px;font-weight:700;margin:16px 0 7px;color:#334155}
+.help-doc p,.help-doc li{font-size:13px;line-height:1.7;color:#334155;margin-bottom:6px}
+.help-doc ul,.help-doc ol{margin-left:22px;margin-bottom:10px}
+.help-doc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
+.help-doc th,.help-doc td{border:1px solid var(--border);padding:7px 12px;text-align:left}
+.help-doc th{background:#f8fafc;font-weight:700;color:#1e293b}
+.help-doc td{color:#334155}
+.help-doc strong{font-weight:700;color:#0f172a}
+.status-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:12px 0}
+.sf-box{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;text-align:center}
+.sf-arrow{color:var(--muted);font-size:16px;font-weight:700}
+.adr-sample{background:#f8fafc;border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:14px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;word-break:break-word;overflow-x:auto;color:#1e293b}
+.field-table{width:100%;border-collapse:collapse;margin:10px 0}
+.field-table th{background:#eff6ff;color:#1e40af;font-size:11.5px;font-weight:700;padding:7px 12px;text-align:left;border:1px solid #bfdbfe}
+.field-table td{padding:7px 12px;border:1px solid var(--border);font-size:12.5px;vertical-align:top}
+.field-table td:first-child{font-weight:700;color:#1e293b;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-right:3px}
+.badge-req{background:#fee2e2;color:#b91c1c}
+.badge-opt{background:#dcfce7;color:#15803d}
+.tip-box{background:var(--accent-light);border:1px solid #bfdbfe;border-radius:var(--r);padding:12px 16px;margin:12px 0;font-size:13px;color:#1e40af;line-height:1.6}
+.tip-box strong{font-weight:700}
+
+/* ── Toast ───────────────────────────────── */
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#f1f5f9;padding:10px 16px;border-radius:8px;font-size:12.5px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;animation:toastIn .2s ease}
+@keyframes toastIn{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ── Scrollbars ──────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.adr-list::-webkit-scrollbar-thumb{background:#1e293b}
+.adr-list::-webkit-scrollbar-thumb:hover{background:#334155}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside id="sidebar">
+  <div class="sb-head">
+    <div class="logo"><div class="logo-icon">&#9776;</div>ADR Tool</div>
+    <button class="btn-new" onclick="newAdr()">+ New</button>
+  </div>
+  <div class="sb-search">
+    <input type="text" id="searchInput" placeholder="&#128269; Search ADRs..." oninput="renderSidebar()">
+  </div>
+  <div class="sb-filters" id="statusFilters">
+    <button class="sf-chip" data-s="">All</button>
+    <button class="sf-chip" data-s="New">New</button>
+    <button class="sf-chip" data-s="Proposed">Proposed</button>
+    <button class="sf-chip" data-s="Accepted">Accepted</button>
+    <button class="sf-chip" data-s="Superseded">Superseded</button>
+    <button class="sf-chip" data-s="Deprecated">Deprecated</button>
+  </div>
+  <div class="adr-list" id="adrList"></div>
+  <div class="sb-footer">
+    <button class="btn-ghost" onclick="exportAll()">Export All MD</button>
+    <button class="btn-ghost" onclick="exportJson()">Backup JSON</button>
+    <button class="btn-ghost" onclick="importJson()">Import JSON</button>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main id="main">
+
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">&#128196;</div>
+    <h2>Architecture Decision Records</h2>
+    <p>Capture significant architectural decisions, their context, trade-offs, and consequences. Click <strong>Help</strong> tab for a comprehensive guide and sample ADR.</p>
+    <button class="empty-btn" onclick="newAdr()">+ Create First ADR</button>
+  </div>
+
+  <div id="editor">
+
+    <!-- Top bar -->
+    <div class="ed-topbar">
+      <span class="ed-label" id="editorLabel">ADR-0001</span>
+      <div class="tabs">
+        <button class="tab active" id="tabForm"     onclick="switchTab('form')">&#9998; Form</button>
+        <button class="tab"        id="tabPreview"  onclick="switchTab('preview')">&#128065; Preview</button>
+        <button class="tab"        id="tabMarkdown" onclick="switchTab('markdown')">{ } Raw MD</button>
+        <button class="tab"        id="tabHelp"     onclick="switchTab('help')">&#10067; Help</button>
+      </div>
+      <div class="ed-actions">
+        <span id="dirtyDot" class="dirty-dot" style="display:none" title="Unsaved changes"></span>
+        <button class="btn-save"    onclick="saveAdr()">&#10003; Save</button>
+        <button class="btn-outline" onclick="downloadCurrent()">&#8595; Export .md</button>
+        <button class="btn-outline" onclick="triggerImportMd()">&#8593; Import .md</button>
+        <button class="btn-del"     onclick="deleteAdr()">&#128465; Delete</button>
+      </div>
+    </div>
+
+    <!-- ══ FORM PANEL ══ -->
+    <div id="formPanel">
+
+      <!-- 1. Identification -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#127991;</div>Identification</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Title <span class="req">*</span><span class="hint">Short phrase describing the architecture decision</span></label>
+            <input type="text" id="fTitle" placeholder="e.g. Use Azure Event Hubs for IoT telemetry ingestion">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field w13"><label>ADR Number</label><input type="text" id="fNumber" placeholder="ADR-0001"></div>
+          <div class="field w13"><label>Date <span class="hint">Decision finalized</span></label><div class="sf" id="fDate">—</div></div>
+          <div class="field w13">
+            <label>Status <span class="req">*</span></label>
+            <select id="fStatus">
+              <option value="New">New — Draft, no decision yet</option>
+              <option value="Proposed">Proposed — Awaiting approval</option>
+              <option value="Accepted" selected>Accepted — Approved, ready for implementation</option>
+              <option value="Superseded">Superseded — Replaced by another ADR</option>
+              <option value="Deprecated">Deprecated — No longer applicable</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field w13">
+            <label>Priority</label>
+            <select id="fPriority">
+              <option value="">— Select —</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="field w13">
+            <label>Revision <span class="hint">e.g. 1.0, 1.1</span></label>
+            <input type="text" id="fRevision" placeholder="1.0">
+          </div>
+          <div class="field w13">
+            <label>Tags <span class="hint">comma-separated</span></label>
+            <input type="text" id="fTags" placeholder="database, security, cloud">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field half">
+            <label>Superseded By <span class="hint">if status = Superseded</span></label>
+            <input type="text" id="fSupersededBy" placeholder="ADR-0012">
+          </div>
+          <div class="field half">
+            <label>Superseded Date</label>
+            <input type="text" id="fSupersededDate" placeholder="YYYY-MM-DD">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Stakeholders -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#128101;</div>Stakeholders</div>
+        <div class="form-row">
+          <div class="field half">
+            <label>Deciders <span class="hint">People who make the final decision — add each individually</span></label>
+            <div id="decidersContainer"></div>
+            <button class="btn-add" onclick="addPersonRow('decidersContainer','decider',true)">+ Add Decider</button>
+          </div>
+          <div class="field half">
+            <label>Consulted <span class="hint">Subject matter experts and teams consulted</span></label>
+            <div id="consultedContainer"></div>
+            <button class="btn-add" onclick="addPersonRow('consultedContainer','consulted',true)">+ Add Consulted</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field w13"><label>Owner <span class="hint">Accountable person</span></label><input type="text" id="fOwner" placeholder="e.g. Jane Smith"></div>
+          <div class="field w13"><label>Author <span class="hint">ADR author</span></label><input type="text" id="fAuthor" placeholder="e.g. John Doe"></div>
+          <div class="field w13"><label>Approved By</label><input type="text" id="fApprovedBy" placeholder="e.g. VP Engineering"></div>
+        </div>
+        <div class="form-row">
+          <div class="field half"><label>Approval Date</label><input type="text" id="fApprovalDate" placeholder="YYYY-MM-DD"></div>
+          <div class="field half"><label>Last Modified By</label><input type="text" id="fLastModBy" placeholder="e.g. Jane Smith"></div>
+        </div>
+      </div>
+
+      <!-- 3. Context & Drivers -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#128270;</div>Context &amp; Decision Drivers</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Context / Problem Statement <span class="req">*</span><span class="hint">What forces are at play? What is driving this decision?</span></label>
+            <textarea id="fContext" style="min-height:110px" placeholder="Describe the situation, problem, constraints, and business/technical forces. Include metrics, scale, and pain points. Example: Our IoT platform ingests 500K sensor readings/sec from 50,000 devices. Write latency is 500ms against a 100ms SLA..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Assumptions <span class="hint">What are we assuming to be true? Document dependencies on external decisions</span></label>
+            <textarea id="fAssumptions" style="min-height:70px" placeholder="e.g. Team will receive training before implementation. Current infrastructure supports the chosen approach. Budget approval will be granted within Q1..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Decision Drivers <span class="hint">Functional and non-functional requirements that shape this decision</span></label>
+            <div id="driversContainer"></div>
+            <button class="btn-add" onclick="addListItem('driversContainer','driver',true)">+ Add Decision Driver</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Considered Options -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#9878;</div>Considered Options <span style="font-weight:400;font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">&nbsp;— include ALL alternatives evaluated, even rejected ones</span></div>
+        <div id="optionsContainer"></div>
+        <button class="btn-add" style="margin-top:6px" onclick="addOptionCard({},true)">+ Add Option</button>
+      </div>
+
+      <!-- 5. Decision & Outcome -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#9989;</div>Decision &amp; Outcome</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Decision <span class="req">*</span><span class="hint">What was decided? Start with "We will…" to keep it action-oriented</span></label>
+            <textarea id="fDecision" style="min-height:100px" placeholder="We will adopt TimescaleDB as our primary time-series database. This replaces the existing PostgreSQL solution for all IoT sensor data storage and querying..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Justification / Rationale <span class="hint">Why this option over the alternatives? Key reasons and trade-offs accepted</span></label>
+            <textarea id="fJustification" style="min-height:80px" placeholder="TimescaleDB provides the best balance of performance, PostgreSQL compatibility, and team familiarity. Our team has deep PostgreSQL expertise (7 years), so learning curve is minimal. Native compression reduces storage by 60%..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Discussion Outcome / Stakeholder Feedback &amp; Suggestions <span class="hint">Capture key discussion points, objections raised, feedback received, and how they were addressed</span></label>
+            <textarea id="fDiscussion" style="min-height:90px" placeholder="Architecture Review Board session (2025-11-10): DevOps team raised concerns about operational overhead — addressed by choosing managed TimescaleDB on AWS RDS. Analytics team confirmed Grafana integration works natively. Security team approved after confirming encryption-at-rest support. Final vote: 4/5 approved, 1 abstained (preferred InfluxDB but accepted team expertise argument)..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Consequences -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#9878;</div>Consequences <span style="font-weight:400;font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">&nbsp;— document trade-off analysis honestly</span></div>
+        <div class="form-row">
+          <div class="field">
+            <label>Positive Consequences <span class="hint">Benefits, improvements, opportunities enabled</span></label>
+            <div id="posContainer"></div>
+            <button class="btn-add" onclick="addListItem('posContainer','pos',true)">+ Add Positive</button>
+          </div>
+          <div class="field">
+            <label>Negative Consequences / Trade-offs <span class="hint">Drawbacks, risks, mitigation strategies</span></label>
+            <div id="negContainer"></div>
+            <button class="btn-add" onclick="addListItem('negContainer','neg',true)">+ Add Negative</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Compliance & Risk -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#128737;</div>Compliance &amp; Risk</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Compliance Notes <span class="hint">How will this decision be measured and governed? GDPR, HIPAA, SOC2, internal policies</span></label>
+            <textarea id="fCompliance" style="min-height:75px" placeholder="All time-series data must remain within GDPR-compliant EU regions. Database encryption at rest (AES-256) is mandatory per SOC2 requirements. Access must be logged via Azure Monitor for audit trail. Quarterly compliance review scheduled..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Risk Assessment <span class="hint">Identify risks and mitigation strategies — both technical and business risks</span></label>
+            <div class="list-header" style="padding-right:32px">
+              <span>Risk Description</span>
+              <span>Mitigation Strategy</span>
+            </div>
+            <div id="risksContainer"></div>
+            <button class="btn-add" onclick="addRiskRow({},true)">+ Add Risk</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Implementation & Metrics -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#128640;</div>Implementation &amp; Success Metrics</div>
+        <div class="form-row">
+          <div class="field">
+            <label>Implementation Plan <span class="hint">Phases, milestones, resource allocation, timeline</span></label>
+            <textarea id="fImplementation" style="min-height:100px" placeholder="Phase 1 (Weeks 1-2): Set up TimescaleDB on staging, migrate schema to hypertables, benchmark with production-like data&#10;Phase 2 (Weeks 3-4): Implement parallel writes (PostgreSQL + TimescaleDB), backfill 30 days historical data, validate consistency&#10;Phase 3 (Weeks 5-6): Switch reads to TimescaleDB, monitor for 1 week, decommission old tables"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Success Metrics <span class="hint">How will we measure that this decision achieved its goals?</span></label>
+            <textarea id="fMetrics" style="min-height:75px" placeholder="Write latency: &lt;100ms p95 (baseline: 500ms)&#10;Query aggregations: &lt;1 second (baseline: 30+ sec)&#10;Storage cost reduction: &gt;50% within 3 months&#10;Team productivity: Feature velocity unchanged after 4-week ramp period"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. References & Notes -->
+      <div class="fc">
+        <div class="fc-title"><div class="fc-icon">&#128279;</div>References, Links &amp; Notes</div>
+        <div class="form-row">
+          <div class="field half">
+            <label>Related ADRs <span class="hint">ADRs that influenced or are affected by this decision</span></label>
+            <input type="text" id="fRelated" placeholder="e.g. ADR-0003, ADR-0007">
+          </div>
+          <div class="field half">
+            <label>Gist / Requirement Reference <span class="hint">Ticket, PRD, or requirements doc</span></label>
+            <input type="text" id="fGist" placeholder="e.g. JIRA-1234, PRD-database-v2">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Links &amp; References <span class="hint">Technical docs, RFCs, benchmarks, design docs, blog posts that influenced decision</span></label>
+            <div id="linksContainer"></div>
+            <button class="btn-add" onclick="addListItem('linksContainer','link',true)">+ Add Link / Reference</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Notes <span class="hint">Supplementary metadata: review dates, open questions, follow-up actions, amendments</span></label>
+            <textarea id="fNotes" style="min-height:70px" placeholder="Original author: Jane Smith&#10;Review date: 2026-03-01&#10;Open question: Re-evaluate if device count exceeds 500K&#10;Follow-up: Benchmark report to be shared in wiki within 2 weeks of implementation"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /formPanel -->
+
+    <!-- ══ PREVIEW PANEL (rendered markdown) ══ -->
+    <div id="previewPanel">
+      <div class="md-toolbar">
+        <span>&#128065; Rendered Preview — live view of the generated markdown</span>
+        <button class="btn-outline" onclick="copyMarkdown()">Copy MD</button>
+        <button class="btn-outline" onclick="downloadCurrent()">&#8595; Export .md</button>
+      </div>
+      <div id="previewOutput">
+        <div class="md-rendered" id="mdRendered"></div>
+      </div>
+    </div>
+
+    <!-- ══ RAW MARKDOWN PANEL ══ -->
+    <div id="markdownPanel">
+      <div class="md-toolbar">
+        <span>{ } Raw Markdown — copy or download the generated .md file</span>
+        <button class="btn-outline" onclick="copyMarkdown()">Copy</button>
+        <button class="btn-outline" onclick="downloadCurrent()">&#8595; Download .md</button>
+      </div>
+      <div id="mdOutput"><pre id="mdPre"></pre></div>
+    </div>
+
+    <!-- ══ HELP PANEL ══ -->
+    <div id="helpPanel">
+      <div class="md-toolbar">
+        <span>&#10067; ADR Guide — field reference, lifecycle, and comprehensive sample ADR</span>
+      </div>
+      <div id="helpOutput">
+        <div class="help-doc" id="helpContent"></div>
+      </div>
+    </div>
+
+  </div><!-- /editor -->
+</main>
+
+<!-- Hidden file inputs -->
+<input type="file" id="importInput"   accept=".json" style="display:none" onchange="handleImportJson(event)">
+<input type="file" id="importMdInput" accept=".md,.txt" style="display:none" onchange="handleImportMd(event)">
+
+<script>
+// ════════════════════════════════════════════════
+// State & Persistence
+// ════════════════════════════════════════════════
+const STORAGE_KEY = 'adr-tool-v2';
+let adrs = [];
+let currentId = null;
+let isDirty = false;
+let statusFilter = '';
+
+function loadAdrs() {
+  try { adrs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { adrs = []; }
+}
+function persistAdrs() { localStorage.setItem(STORAGE_KEY, JSON.stringify(adrs)); }
+
+// ════════════════════════════════════════════════
+// Utilities
+// ════════════════════════════════════════════════
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function nextNumber() { return adrs.length === 0 ? 1 : Math.max(...adrs.map(a => a.number)) + 1; }
+function padNum(n) { return String(n).padStart(4, '0'); }
+function slugify(s) { return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,60)||'untitled'; }
+function escHtml(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function chipClass(st) {
+  return ({New:'ch-new',Proposed:'ch-proposed',Accepted:'ch-accepted',Deprecated:'ch-deprecated',Superseded:'ch-superseded'})[st]??'ch-proposed';
+}
+function toast(msg, dur=2400) {
+  const el = document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el); setTimeout(()=>el.remove(), dur);
+}
+function download(filename, content, mime='text/markdown') {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download = filename; a.click();
+}
+function createEmptyAdr() {
+  return {
+    id:uuid(), number:nextNumber(), date:today(),
+    title:'', status:'Accepted', priority:'Medium', revision:'1.0', tags:'',
+    supersededBy:'', supersededDate:'',
+    owner:'', author:'', approvedBy:'', approvalDate:'', lastModBy:'',
+    deciders:[], consulted:[],
+    context:'', assumptions:'', decisionDrivers:[],
+    options:[],
+    decision:'', justification:'', discussion:'',
+    positives:[], negatives:[],
+    compliance:'',
+    risks:[],
+    implementationPlan:'', successMetrics:'',
+    related:'', gist:'',
+    links:[],
+    notes:''
+  };
+}
+
+// ════════════════════════════════════════════════
+// Markdown Generation
+// ════════════════════════════════════════════════
+function toMarkdown(adr) {
+  const num = `ADR-${padNum(adr.number)}`;
+  const bullets = arr => (arr||[]).filter(Boolean).map(s=>`- ${s}`).join('\n') || '- _None recorded._';
+  const opt = (label,val) => val?.trim() ? `\n## ${label}\n\n${val.trim()}` : '';
+
+  const optionsMd = (adr.options||[]).filter(o=>o.name).map((o,i)=>{
+    const pros = (o.pros||[]).filter(Boolean).map(p=>`- ${p}`).join('\n') || '- _None listed._';
+    const cons = (o.cons||[]).filter(Boolean).map(c=>`- ${c}`).join('\n') || '- _None listed._';
+    const reason = o.reasonNotChosen?.trim() || '_This is the chosen option._';
+    return `### Option ${i+1}: ${o.name}\n\n**Description:** ${o.description||'—'}\n\n**Pros:**\n${pros}\n\n**Cons:**\n${cons}\n\n**Reason Not Chosen:**\n${reason}`;
+  }).join('\n\n');
+
+  const risksMd = (() => {
+    const valid = (adr.risks||[]).filter(r=>r.risk);
+    if (!valid.length) return '';
+    const rows = valid.map(r=>`| ${r.risk} | ${r.mitigation||'—'} |`).join('\n');
+    return `\n### Risks\n\n| Risk | Mitigation |\n|------|------------|\n${rows}`;
+  })();
+
+  const lines = [
+    `# ${num}: ${adr.title||'Untitled'}`,
+    '',
+    '| Field | Value |',
+    '|-------|-------|',
+    `| **Date** | ${adr.date} |`,
+    `| **Status** | ${adr.status} |`,
+    `| **Priority** | ${adr.priority||'—'} |`,
+    `| **Revision** | ${adr.revision||'1.0'} |`,
+    `| **Owner** | ${adr.owner||'—'} |`,
+    `| **Author** | ${adr.author||'—'} |`,
+    `| **Approved By** | ${adr.approvedBy||'—'} |`,
+    `| **Approval Date** | ${adr.approvalDate||'—'} |`,
+    `| **Superseded By** | ${adr.supersededBy||'—'} |`,
+    `| **Tags** | ${adr.tags||'—'} |`,
+  ];
+
+  if ((adr.deciders||[]).filter(Boolean).length) {
+    lines.push('','## Deciders','',bullets(adr.deciders));
+  }
+  if ((adr.consulted||[]).filter(Boolean).length) {
+    lines.push('','## Consulted','',bullets(adr.consulted));
+  }
+
+  lines.push(
+    '','## Context and Problem Statement','',adr.context||'_Not provided._',
+  );
+
+  if (adr.assumptions?.trim()) lines.push('','## Assumptions','',adr.assumptions.trim());
+
+  if ((adr.decisionDrivers||[]).filter(Boolean).length) {
+    lines.push('','## Decision Drivers','',bullets(adr.decisionDrivers));
+  }
+
+  if (optionsMd) lines.push('','## Considered Options','',optionsMd);
+
+  lines.push('','## Decision Outcome','',adr.decision||'_Not provided._');
+
+  if (adr.justification?.trim()) lines.push('','### Justification','',adr.justification.trim());
+  if (adr.discussion?.trim())    lines.push('','### Discussion Outcome / Stakeholder Feedback','',adr.discussion.trim());
+
+  lines.push(
+    '','## Consequences','',
+    '### Positive Consequences','',bullets(adr.positives),
+    '','### Negative Consequences / Trade-offs','',bullets(adr.negatives),
+  );
+
+  if (adr.compliance?.trim() || (adr.risks||[]).filter(r=>r.risk).length) {
+    lines.push('','## Compliance and Risk');
+    if (adr.compliance?.trim()) lines.push('','### Compliance Notes','',adr.compliance.trim());
+    if (risksMd) lines.push(risksMd);
+  }
+
+  if (adr.implementationPlan?.trim()) lines.push('','## Implementation Plan','',adr.implementationPlan.trim());
+  if (adr.successMetrics?.trim())     lines.push('','## Success Metrics','',adr.successMetrics.trim());
+
+  const linksList = (adr.links||[]).filter(Boolean);
+  if (linksList.length) lines.push('','## Links and References','',bullets(linksList));
+
+  const notesMeta = [
+    adr.related   ? `**Related ADRs:** ${adr.related}` : '',
+    adr.gist      ? `**Requirement:** ${adr.gist}` : '',
+    adr.lastModBy ? `**Last Modified By:** ${adr.lastModBy}` : '',
+  ].filter(Boolean).join('\n');
+
+  if (notesMeta || adr.notes?.trim()) {
+    lines.push('','## Notes','',notesMeta,adr.notes?.trim()||'');
+  }
+
+  return lines.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+// ════════════════════════════════════════════════
+// Simple Markdown → HTML Renderer
+// ════════════════════════════════════════════════
+function renderMd(md) {
+  if (!md) return '';
+  const blocks = [];
+
+  // fenced code blocks
+  md = md.replace(/```[\w]*\n?([\s\S]*?)```/g, (_,c) => {
+    blocks.push(`<pre><code>${escHtml(c.trimEnd())}</code></pre>`);
+    return `\x00BLOCK${blocks.length-1}\x00`;
+  });
+
+  // tables
+  md = md.replace(/((?:\|.+\|\n)+)/g, match => {
+    const rows = match.trim().split('\n').filter(r => !/^[\|\s\-:]+$/.test(r));
+    if (rows.length < 1) return match;
+    const parse = row => row.split('|').slice(1,-1).map(c=>c.trim());
+    const hcells = parse(rows[0]).map(c=>`<th>${inlineMd(c)}</th>`).join('');
+    const brows  = rows.slice(1).map(r=>`<tr>${parse(r).map(c=>`<td>${inlineMd(c)}</td>`).join('')}</tr>`).join('');
+    return `<table><thead><tr>${hcells}</tr></thead><tbody>${brows}</tbody></table>`;
+  });
+
+  // headings
+  md = md.replace(/^#{1,6} (.+)$/gm, (_, t, o, s, g, depth) => {
+    const level = _.match(/^#+/)[0].length;
+    return `<h${level}>${inlineMd(t)}</h${level}>`;
+  });
+  // horizontal rules
+  md = md.replace(/^---$/gm, '<hr>');
+
+  // unordered lists (group consecutive)
+  md = md.replace(/(^- .+$\n?)+/gm, m => {
+    const items = m.trim().split('\n').map(l=>`<li>${inlineMd(l.replace(/^- /,''))}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+  // ordered lists
+  md = md.replace(/(^\d+\. .+$\n?)+/gm, m => {
+    const items = m.trim().split('\n').map(l=>`<li>${inlineMd(l.replace(/^\d+\. /,''))}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+  // blockquote
+  md = md.replace(/^> (.+)$/gm, (_,t)=>`<blockquote>${inlineMd(t)}</blockquote>`);
+  // paragraphs
+  md = md.replace(/\n\n+/g, '\n\n');
+  md = md.replace(/^(?!<[huo\x00]|<t|<b|<hr)(.+)$/gm, (_,t) => `<p>${inlineMd(t)}</p>`);
+  // restore code blocks
+  md = md.replace(/\x00BLOCK(\d+)\x00/g, (_,i)=>blocks[+i]);
+  return md;
+}
+
+function inlineMd(t) {
+  if (!t) return '';
+  t = t.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  t = t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+  t = t.replace(/_([^_]+)_/g,'<em>$1</em>');
+  return t;
+}
+
+// ════════════════════════════════════════════════
+// Dynamic DOM Helpers
+// ════════════════════════════════════════════════
+function addPersonRow(containerId, cls, focus=false, value='') {
+  const c = document.getElementById(containerId);
+  const row = document.createElement('div'); row.className='list-row';
+  const placeholder = cls==='decider' ? 'e.g. Principal Engineer, Jane Smith' : 'e.g. DevOps team, Security lead';
+  row.innerHTML = `<input type="text" class="${cls}-val" placeholder="${placeholder}" value="${escHtml(value)}">` +
+    `<button class="btn-rm" onclick="this.parentElement.remove();markDirty()" title="Remove">&#x2715;</button>`;
+  c.appendChild(row);
+  if (focus) row.querySelector('input').focus();
+}
+
+function addListItem(containerId, cls, focus=false, value='') {
+  const c = document.getElementById(containerId);
+  const row = document.createElement('div'); row.className='list-row';
+  const ph = {driver:'e.g. Performance: must handle 1M+ events/sec',pos:'e.g. Reduces write latency by 80%',neg:'e.g. Requires team training (2-week ramp)',link:'e.g. https://docs.example.com or internal-wiki/design-doc'}[cls]||'Add item...';
+  row.innerHTML = `<input type="text" class="${cls}-val" placeholder="${ph}" value="${escHtml(value)}">` +
+    `<button class="btn-rm" onclick="this.parentElement.remove();markDirty()" title="Remove">&#x2715;</button>`;
+  c.appendChild(row);
+  if (focus) row.querySelector('input').focus();
+}
+
+function addOptionCard(opt={}, focus=false) {
+  const c = document.getElementById('optionsContainer');
+  const div = document.createElement('div'); div.className='opt-card';
+  div.innerHTML = `
+    <div class="opt-header">
+      <div class="opt-header-fields">
+        <input type="text" class="opt-name" placeholder="Option name (e.g. TimescaleDB, Event Hubs, Kafka)" value="${escHtml(opt.name||'')}">
+        <input type="text" class="opt-desc" placeholder="One-line description" value="${escHtml(opt.description||'')}">
+      </div>
+      <button class="btn-rm" style="align-self:center" onclick="this.closest('.opt-card').remove();markDirty()" title="Remove option">&#x2715;</button>
+    </div>
+    <div class="opt-pc">
+      <div>
+        <span class="sub-label">&#10003; Pros / Advantages</span>
+        <div class="pro-container"></div>
+        <button class="btn-add" style="font-size:11px;padding:4px" onclick="addOptItem(this.previousElementSibling,'pro')">+ Add Pro</button>
+      </div>
+      <div>
+        <span class="sub-label">&#10007; Cons / Disadvantages</span>
+        <div class="con-container"></div>
+        <button class="btn-add" style="font-size:11px;padding:4px" onclick="addOptItem(this.previousElementSibling,'con')">+ Add Con</button>
+      </div>
+    </div>
+    <div>
+      <label class="sub-label" style="font-size:11.5px;color:#7c3aed;display:block;margin-bottom:4px">&#10006; Reason Not Chosen <span style="font-weight:400;color:var(--muted)">(leave empty if this IS the chosen option)</span></label>
+      <textarea class="opt-reason" placeholder="Explain specifically why this option was not selected. Be honest about trade-offs. e.g. Enterprise license costs $12K/year. Team would need to learn InfluxQL/Flux query language — estimated 6-month ramp. Smaller ecosystem than PostgreSQL-based solutions...">${escHtml(opt.reasonNotChosen||'')}</textarea>
+    </div>`;
+  c.appendChild(div);
+  (opt.pros||[]).forEach(p=>addOptItem(div.querySelector('.pro-container'),'pro',p));
+  (opt.cons||[]).forEach(p=>addOptItem(div.querySelector('.con-container'),'con',p));
+  if (focus) div.querySelector('.opt-name').focus();
+}
+
+function addOptItem(container, cls, value='') {
+  const row = document.createElement('div'); row.className='opt-pro-con-item';
+  row.innerHTML = `<input type="text" class="${cls}-val" placeholder="${cls==='pro'?'Advantage...':'Disadvantage...'}" value="${escHtml(value)}">` +
+    `<button class="btn-rm" style="width:22px;height:22px;font-size:13px" onclick="this.parentElement.remove();markDirty()">&#x2715;</button>`;
+  container.appendChild(row);
+}
+
+function addRiskRow(risk={}, focus=false) {
+  const c = document.getElementById('risksContainer');
+  const row = document.createElement('div'); row.className='risk-row';
+  row.innerHTML = `<textarea class="risk-desc" style="min-height:56px" placeholder="Risk: e.g. Migration downtime during cutover could affect production IoT data ingestion">${escHtml(risk.risk||'')}</textarea>` +
+    `<textarea class="risk-mit" style="min-height:56px" placeholder="Mitigation: e.g. Implement parallel write period — write to both systems for 1 week before cutover">${escHtml(risk.mitigation||'')}</textarea>` +
+    `<button class="btn-rm" style="margin-top:4px" onclick="this.parentElement.remove();markDirty()">&#x2715;</button>`;
+  c.appendChild(row);
+  if (focus) row.querySelector('textarea').focus();
+}
+
+// ════════════════════════════════════════════════
+// Form Read / Write
+// ════════════════════════════════════════════════
+function readList(cls) {
+  return [...document.querySelectorAll(`.${cls}-val`)].map(i=>i.value.trim()).filter(Boolean);
+}
+function readOptions() {
+  return [...document.querySelectorAll('.opt-card')].map(card=>({
+    name:        card.querySelector('.opt-name')?.value.trim()||'',
+    description: card.querySelector('.opt-desc')?.value.trim()||'',
+    pros:        [...card.querySelectorAll('.pro-val')].map(i=>i.value.trim()).filter(Boolean),
+    cons:        [...card.querySelectorAll('.con-val')].map(i=>i.value.trim()).filter(Boolean),
+    reasonNotChosen: card.querySelector('.opt-reason')?.value.trim()||'',
+  })).filter(o=>o.name);
+}
+function readRisks() {
+  return [...document.querySelectorAll('.risk-row')].map(r=>({
+    risk:       r.querySelector('.risk-desc')?.value.trim()||'',
+    mitigation: r.querySelector('.risk-mit')?.value.trim()||'',
+  })).filter(r=>r.risk);
+}
+function g(id) { return document.getElementById(id); }
+function gv(id) { return g(id)?.value.trim()||''; }
+
+function parseNumberField() {
+  const raw = gv('fNumber').replace(/^adr-?0*/i, '');
+  const n = parseInt(raw, 10);
+  return isNaN(n) || n < 1 ? null : n;
+}
+
+function readForm() {
+  return {
+    number:          parseNumberField(),
+    title:           gv('fTitle'),
+    status:          gv('fStatus'),
+    priority:        gv('fPriority'),
+    revision:        gv('fRevision'),
+    tags:            gv('fTags'),
+    supersededBy:    gv('fSupersededBy'),
+    supersededDate:  gv('fSupersededDate'),
+    owner:           gv('fOwner'),
+    author:          gv('fAuthor'),
+    approvedBy:      gv('fApprovedBy'),
+    approvalDate:    gv('fApprovalDate'),
+    lastModBy:       gv('fLastModBy'),
+    deciders:        readList('decider'),
+    consulted:       readList('consulted'),
+    context:         gv('fContext'),
+    assumptions:     gv('fAssumptions'),
+    decisionDrivers: readList('driver'),
+    options:         readOptions(),
+    decision:        gv('fDecision'),
+    justification:   gv('fJustification'),
+    discussion:      gv('fDiscussion'),
+    positives:       readList('pos'),
+    negatives:       readList('neg'),
+    compliance:      gv('fCompliance'),
+    risks:           readRisks(),
+    implementationPlan: gv('fImplementation'),
+    successMetrics:  gv('fMetrics'),
+    related:         gv('fRelated'),
+    gist:            gv('fGist'),
+    links:           readList('link'),
+    notes:           gv('fNotes'),
+  };
+}
+
+function fillForm(adr) {
+  const set = (id, val) => { const el=g(id); if(el) el.value=val??''; };
+  set('fTitle',         adr.title);
+  set('fStatus',        adr.status||'Accepted');
+  set('fPriority',      adr.priority||'Medium');
+  set('fRevision',      adr.revision||'1.0');
+  set('fTags',          adr.tags);
+  set('fSupersededBy',  adr.supersededBy);
+  set('fSupersededDate',adr.supersededDate);
+  set('fOwner',         adr.owner);
+  set('fAuthor',        adr.author);
+  set('fApprovedBy',    adr.approvedBy);
+  set('fApprovalDate',  adr.approvalDate);
+  set('fLastModBy',     adr.lastModBy);
+  set('fContext',       adr.context);
+  set('fAssumptions',   adr.assumptions);
+  set('fDecision',      adr.decision);
+  set('fJustification', adr.justification);
+  set('fDiscussion',    adr.discussion);
+  set('fCompliance',    adr.compliance);
+  set('fImplementation',adr.implementationPlan);
+  set('fMetrics',       adr.successMetrics);
+  set('fRelated',       adr.related);
+  set('fGist',          adr.gist);
+  set('fNotes',         adr.notes);
+
+  g('fNumber').value       = `ADR-${padNum(adr.number)}`;
+  g('fDate').textContent   = adr.date||today();
+
+  ['decidersContainer','consultedContainer','driversContainer','optionsContainer',
+   'posContainer','negContainer','risksContainer','linksContainer'].forEach(id=>{ g(id).innerHTML=''; });
+
+  (adr.deciders?.length?adr.deciders:['']).forEach(v=>addPersonRow('decidersContainer','decider',false,v));
+  (adr.consulted?.length?adr.consulted:[]).forEach(v=>addPersonRow('consultedContainer','consulted',false,v));
+  (adr.decisionDrivers?.length?adr.decisionDrivers:['']).forEach(v=>addListItem('driversContainer','driver',false,v));
+  (adr.options?.length?adr.options:[]).forEach(o=>addOptionCard(o));
+  (adr.positives?.length?adr.positives:['']).forEach(v=>addListItem('posContainer','pos',false,v));
+  (adr.negatives?.length?adr.negatives:['']).forEach(v=>addListItem('negContainer','neg',false,v));
+  (adr.risks?.length?adr.risks:[]).forEach(r=>addRiskRow(r));
+  (adr.links?.length?adr.links:[]).forEach(v=>addListItem('linksContainer','link',false,v));
+
+  if (!adr.options?.length) addOptionCard({});
+  if (!adr.risks?.length)   addRiskRow({});
+}
+
+// ════════════════════════════════════════════════
+// Sidebar Rendering
+// ════════════════════════════════════════════════
+function renderSidebar() {
+  const query  = g('searchInput').value.toLowerCase();
+  const list   = g('adrList');
+  const sorted = [...adrs].sort((a,b)=>a.number-b.number);
+  const filtered = sorted.filter(a=>{
+    const matchesStatus = !statusFilter || a.status===statusFilter;
+    const matchesQuery  = !query || (a.title||'').toLowerCase().includes(query)
+      || (a.status||'').toLowerCase().includes(query)
+      || (a.tags||'').toLowerCase().includes(query);
+    return matchesStatus && matchesQuery;
+  });
+
+  if (!filtered.length) {
+    list.innerHTML=`<div class="sb-empty">${query||statusFilter?'No matches':'No ADRs yet<br><br>Click + New to create one'}</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(adr=>`
+    <div class="adr-item ${currentId===adr.id?'active':''}" onclick="openAdr('${adr.id}')">
+      <div class="adr-num">ADR-${padNum(adr.number)}</div>
+      <div class="adr-title">${escHtml(adr.title||'Untitled')}</div>
+      <div class="adr-meta">
+        <span class="chip ${chipClass(adr.status)}">${adr.status}</span>
+        ${adr.priority?`<span class="chip" style="background:#1e293b;color:#94a3b8">${adr.priority}</span>`:''}
+        <span class="adr-date">${adr.date}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// View Switching
+// ════════════════════════════════════════════════
+function showEmpty() {
+  currentId=null;
+  g('emptyState').style.display='flex';
+  g('editor').classList.remove('visible');
+  renderSidebar();
+}
+
+function openAdr(id) {
+  const adr=adrs.find(a=>a.id===id); if(!adr) return;
+  currentId=id; fillForm(adr); markClean();
+  g('emptyState').style.display='none';
+  g('editor').classList.add('visible');
+  g('editorLabel').textContent=`ADR-${padNum(adr.number)}`;
+  switchTab('form'); renderSidebar();
+}
+
+function switchTab(tab) {
+  ['form','preview','markdown','help'].forEach(t=>{
+    g('tab'+t.charAt(0).toUpperCase()+t.slice(1))?.classList.toggle('active',t===tab);
+  });
+  g('formPanel').style.display      = tab==='form'     ?'block':'none';
+  g('previewPanel').style.display   = tab==='preview'  ?'flex':'none';
+  g('markdownPanel').style.display  = tab==='markdown' ?'flex':'none';
+  g('helpPanel').style.display      = tab==='help'     ?'flex':'none';
+
+  if (tab==='preview'||tab==='markdown') {
+    const adr=currentAdr(); if(!adr) return;
+    const data=Object.assign({},adr,readForm());
+    const md=toMarkdown(data);
+    g('mdPre').textContent=md;
+    if (tab==='preview') g('mdRendered').innerHTML=renderMd(md);
+  }
+  if (tab==='help') renderHelp();
+}
+
+// ════════════════════════════════════════════════
+// Dirty Tracking
+// ════════════════════════════════════════════════
+function markDirty() { isDirty=true; g('dirtyDot').style.display='inline-block'; }
+function markClean() { isDirty=false; g('dirtyDot').style.display='none'; }
+
+// ════════════════════════════════════════════════
+// CRUD
+// ════════════════════════════════════════════════
+function currentAdr() { return adrs.find(a=>a.id===currentId)??null; }
+
+function newAdr() {
+  const adr=createEmptyAdr(); adrs.push(adr); persistAdrs();
+  openAdr(adr.id); g('fTitle').focus();
+}
+
+function saveAdr() {
+  const adr=currentAdr(); if(!adr) return;
+  const data=readForm();
+  if (!data.title) { toast('Title is required.'); g('fTitle').focus(); return; }
+  if (data.number === null) { toast('ADR number must be a valid integer ≥ 1.'); g('fNumber').focus(); return; }
+  if (data.number !== adr.number && adrs.some(a=>a.id!==adr.id&&a.number===data.number)) {
+    toast(`ADR-${padNum(data.number)} already exists — choose a different number.`); g('fNumber').focus(); return;
+  }
+  Object.assign(adr,data); persistAdrs(); markClean();
+  g('editorLabel').textContent=`ADR-${padNum(adr.number)}`;
+  g('fNumber').value=`ADR-${padNum(adr.number)}`;
+  renderSidebar(); toast('✓ Saved');
+}
+
+function deleteAdr() {
+  const adr=currentAdr(); if(!adr) return;
+  if (!confirm(`Delete "${adr.title||'this ADR'}"? Cannot be undone.`)) return;
+  adrs=adrs.filter(a=>a.id!==adr.id); persistAdrs(); showEmpty(); toast('ADR deleted');
+}
+
+function downloadCurrent() {
+  const adr=currentAdr(); if(!adr) return;
+  const data=Object.assign({},adr,readForm());
+  download(`ADR-${padNum(data.number)}-${slugify(data.title)}.md`, toMarkdown(data));
+  toast('Downloaded');
+}
+
+function copyMarkdown() {
+  const adr=currentAdr(); if(!adr) return;
+  const md=toMarkdown(Object.assign({},adr,readForm()));
+  navigator.clipboard?.writeText(md).then(()=>toast('Copied!')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=md; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied!');
+  });
+}
+
+function exportAll() {
+  if (!adrs.length) { toast('No ADRs to export'); return; }
+  const sorted=[...adrs].sort((a,b)=>a.number-b.number);
+  const idx=['# Architecture Decision Records — Index','','| # | Title | Date | Status | Priority |','|---|-------|------|--------|---------|',
+    ...sorted.map(a=>`| ADR-${padNum(a.number)} | ${a.title||'Untitled'} | ${a.date} | ${a.status} | ${a.priority||'—'} |`)].join('\n');
+  download('adr-index-export.md',`${idx}\n\n---\n\n${sorted.map(toMarkdown).join('\n\n---\n\n')}`);
+  toast(`Exported ${sorted.length} ADR(s)`);
+}
+
+function exportJson() {
+  if (!adrs.length) { toast('No ADRs to export'); return; }
+  download('adr-backup.json', JSON.stringify(adrs,null,2), 'application/json');
+  toast('JSON backup downloaded');
+}
+
+function importJson() { g('importInput').click(); }
+function triggerImportMd() { g('importMdInput').click(); }
+
+function handleImportJson(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const imported=JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error('Expected array');
+      if (!confirm(`Import ${imported.length} ADR(s)? Existing ADRs with same ID will be overwritten.`)) return;
+      imported.forEach(imp=>{ const idx=adrs.findIndex(a=>a.id===imp.id); if(idx>=0) adrs[idx]=imp; else adrs.push(imp); });
+      persistAdrs(); renderSidebar(); toast(`Imported ${imported.length} ADR(s)`);
+    } catch { toast('Import failed — invalid JSON'); }
+  };
+  reader.readAsText(file); e.target.value='';
+}
+
+// ════════════════════════════════════════════════
+// Import Markdown
+// ════════════════════════════════════════════════
+function handleImportMd(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ importMdText(ev.target.result); };
+  reader.readAsText(file); e.target.value='';
+}
+
+function importMdText(text) {
+  try {
+    const adr=parseMdToAdr(text);
+    const existing=adrs.find(a=>a.number===adr.number);
+    if (existing) {
+      if (!confirm(`ADR-${padNum(adr.number)} already exists. Overwrite?`)) return;
+      Object.assign(existing,adr); persistAdrs(); openAdr(existing.id);
+    } else {
+      adrs.push(adr); persistAdrs(); openAdr(adr.id);
+    }
+    toast(`✓ Imported ADR-${padNum(adr.number)}`);
+  } catch(err) { toast('Import failed — could not parse markdown'); console.error(err); }
+}
+
+function parseMdToAdr(text) {
+  const adr=createEmptyAdr();
+
+  // title + number
+  const titleM=text.match(/^# ADR-(\d+):\s*(.+)/m);
+  if (titleM) { adr.number=parseInt(titleM[1],10)||adr.number; adr.title=titleM[2].trim(); }
+
+  // metadata table
+  [...text.matchAll(/\|\s*\*\*(.+?)\*\*\s*\|\s*([^|\n]+?)\s*\|/g)].forEach(([,field,val])=>{
+    const v=val.trim().replace(/^—$/,'');
+    const f=field.toLowerCase().trim();
+    if (f==='date')          adr.date=v;
+    else if (f==='status')   adr.status=v;
+    else if (f==='priority') adr.priority=v;
+    else if (f==='revision') adr.revision=v;
+    else if (f==='owner')    adr.owner=v;
+    else if (f==='author')   adr.author=v;
+    else if (f==='approved by')   adr.approvedBy=v;
+    else if (f==='approval date') adr.approvalDate=v;
+    else if (f==='superseded by') adr.supersededBy=v;
+    else if (f==='tags')          adr.tags=v;
+  });
+
+  // split into ## sections
+  const sections=[];
+  let curH='',curC=[];
+  text.split('\n').forEach(line=>{
+    const h2=line.match(/^## (.+)/);
+    if (h2) { if(curH) sections.push({h:curH,c:curC.join('\n')}); curH=h2[1]; curC=[]; }
+    else if (curH) curC.push(line);
+  });
+  if (curH) sections.push({h:curH,c:curC.join('\n')});
+
+  const extractList=c=>c.split('\n').filter(l=>/^[-*] /.test(l)).map(l=>l.replace(/^[-*] /,'').trim()).filter(Boolean);
+
+  sections.forEach(({h,c})=>{
+    const hl=h.toLowerCase().trim();
+    if (hl==='deciders')             adr.deciders=extractList(c);
+    else if (hl==='consulted')       adr.consulted=extractList(c);
+    else if (hl.includes('context')) adr.context=c.trim();
+    else if (hl==='assumptions')     adr.assumptions=c.trim();
+    else if (hl.includes('decision drivers')) adr.decisionDrivers=extractList(c);
+    else if (hl.includes('considered options')) adr.options=parseOptionsSection(c);
+    else if (hl==='decision outcome') {
+      // main decision + subsections
+      const parts=c.split(/^### /m);
+      adr.decision=parts[0].trim();
+      parts.slice(1).forEach(p=>{
+        const nl=p.indexOf('\n'); const sh=p.substring(0,nl).toLowerCase(); const sc=p.substring(nl+1).trim();
+        if (sh.includes('justification'))           adr.justification=sc;
+        else if (sh.includes('discussion')||sh.includes('feedback')) adr.discussion=sc;
+      });
+    }
+    else if (hl==='consequences') {
+      const parts=c.split(/^### /m);
+      parts.slice(1).forEach(p=>{
+        const nl=p.indexOf('\n'); const sh=p.substring(0,nl).toLowerCase(); const sc=p.substring(nl+1);
+        if (sh.includes('positive'))  adr.positives=extractList(sc);
+        else if (sh.includes('negative')) adr.negatives=extractList(sc);
+      });
+    }
+    else if (hl.includes('compliance')) {
+      const parts=c.split(/^### /m);
+      parts.slice(1).forEach(p=>{
+        const nl=p.indexOf('\n'); const sh=p.substring(0,nl).toLowerCase(); const sc=p.substring(nl+1).trim();
+        if (sh.includes('compliance')) adr.compliance=sc;
+        else if (sh.includes('risk'))  adr.risks=parseRisksTable(sc);
+      });
+      if (parts.length===1) adr.compliance=c.trim();
+    }
+    else if (hl==='risks') adr.risks=parseRisksTable(c);
+    else if (hl.includes('implementation')) adr.implementationPlan=c.trim();
+    else if (hl.includes('success metrics')) adr.successMetrics=c.trim();
+    else if (hl.includes('links')||hl.includes('references')) adr.links=extractList(c);
+    else if (hl==='notes') {
+      const relM=c.match(/\*\*Related ADRs:\*\*\s*(.+)/);  if(relM) adr.related=relM[1].trim();
+      const reqM=c.match(/\*\*Requirement:\*\*\s*(.+)/);    if(reqM) adr.gist=reqM[1].trim();
+      const modM=c.match(/\*\*Last Modified By:\*\*\s*(.+)/);if(modM) adr.lastModBy=modM[1].trim();
+      adr.notes=c.replace(/\*\*Related ADRs:\*\*\s*.+\n?/,'')
+                 .replace(/\*\*Requirement:\*\*\s*.+\n?/,'')
+                 .replace(/\*\*Last Modified By:\*\*\s*.+\n?/,'').trim();
+    }
+  });
+  return adr;
+}
+
+function parseOptionsSection(content) {
+  return content.split(/(?=^### )/m).filter(s=>s.trim().startsWith('###')).map(s=>{
+    const lines=s.split('\n');
+    const name=lines[0].replace(/^### (Option \d+:\s*)?/,'').trim();
+    const rest=lines.slice(1).join('\n');
+    const descM=rest.match(/\*\*Description:\*\*\s*([^\n]+)/);
+    const desc=descM?descM[1].trim():'';
+    const prosM=rest.match(/\*\*Pros:\*\*([\s\S]*?)(?=\*\*Cons:|$)/);
+    const consM=rest.match(/\*\*Cons:\*\*([\s\S]*?)(?=\*\*Reason|$)/);
+    const reaM =rest.match(/\*\*Reason Not Chosen:\*\*\n?([\s\S]*)/);
+    const parseList=t=>(t||'').split('\n').filter(l=>/^[-*]/.test(l.trim())).map(l=>l.replace(/^[-*]\s*/,'').trim()).filter(Boolean);
+    return {
+      name, description:desc,
+      pros:parseList(prosM?prosM[1]:''),
+      cons:parseList(consM?consM[1]:''),
+      reasonNotChosen:(reaM?reaM[1].trim():'').replace(/^_This is the chosen option\._$/,''),
+    };
+  });
+}
+
+function parseRisksTable(content) {
+  const rows=[...content.matchAll(/^\|([^|]+)\|([^|]+)\|/gm)];
+  return rows.filter(r=>{
+    const c=r[1].trim().toLowerCase(); return c&&!c.startsWith('-')&&c!=='risk'&&c!=='**risk**';
+  }).map(r=>({ risk:r[1].trim(), mitigation:r[2].trim() }));
+}
+
+// ════════════════════════════════════════════════
+// Status Filter Chips
+// ════════════════════════════════════════════════
+document.querySelectorAll('.sf-chip').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sf-chip').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); statusFilter=btn.dataset.s; renderSidebar();
+  });
+});
+
+// ════════════════════════════════════════════════
+// Keyboard Shortcuts
+// ════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if ((e.ctrlKey||e.metaKey)&&e.key==='s') { e.preventDefault(); if(currentId) saveAdr(); }
+  if ((e.ctrlKey||e.metaKey)&&e.key==='n') { e.preventDefault(); newAdr(); }
+});
+
+// ════════════════════════════════════════════════
+// Auto-save
+// ════════════════════════════════════════════════
+let autoSaveTimer;
+g('formPanel').addEventListener('input',()=>{
+  markDirty(); clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>{
+    if (isDirty&&currentId) {
+      const adr=currentAdr(); const data=readForm();
+      if (adr&&data.title&&data.number!==null&&!adrs.some(a=>a.id!==adr.id&&a.number===data.number)) {
+        Object.assign(adr,data); persistAdrs(); markClean();
+        g('editorLabel').textContent=`ADR-${padNum(adr.number)}`;
+        g('fNumber').value=`ADR-${padNum(adr.number)}`;
+        renderSidebar();
+      }
+    }
+  },1800);
+});
+
+// ════════════════════════════════════════════════
+// Help Page
+// ════════════════════════════════════════════════
+function renderHelp() {
+  const el=g('helpContent');
+  if (el.dataset.rendered) return;
+  el.dataset.rendered='1';
+  el.innerHTML=`
+<h1>&#128196; Architecture Decision Records</h1>
+<p class="help-subtitle">A complete guide to writing effective ADRs — field reference, lifecycle, frameworks, and a comprehensive sample ADR from an Azure event-driven architecture scenario.</p>
+
+<h2>What is an ADR?</h2>
+<p>An Architecture Decision Record documents a significant architectural decision: <strong>what was decided, why, what alternatives were considered, and what consequences follow.</strong> ADRs preserve institutional knowledge, prevent repeated debates, and create accountability.</p>
+<div class="tip-box"><strong>When to create an ADR:</strong> Any decision that is difficult to reverse, significantly impacts system structure, affects multiple teams, involves substantial cost or risk, or sets technical direction. Do <em>not</em> create ADRs for trivial implementation details or easily reversible decisions.</div>
+
+<h2>ADR Lifecycle</h2>
+<div class="status-flow">
+  <div class="sf-box ch-new" style="padding:6px 14px">New<br><span style="font-size:10px;font-weight:400">Draft — no decision yet</span></div>
+  <div class="sf-arrow">→</div>
+  <div class="sf-box ch-proposed" style="padding:6px 14px">Proposed<br><span style="font-size:10px;font-weight:400">Awaiting approval</span></div>
+  <div class="sf-arrow">→</div>
+  <div class="sf-box ch-accepted" style="padding:6px 14px">Accepted<br><span style="font-size:10px;font-weight:400">Approved, in effect</span></div>
+  <div class="sf-arrow">→</div>
+  <div class="sf-box ch-superseded" style="padding:6px 14px">Superseded<br><span style="font-size:10px;font-weight:400">Replaced by newer ADR</span></div>
+</div>
+<p><strong>Deprecated</strong> means the decision is no longer applicable (e.g., the system was retired). A <em>Proposed</em> ADR is never directly Superseded — it is refined until Accepted first.</p>
+
+<h2>Field Reference</h2>
+<table class="field-table">
+<tr><th>Field</th><th>Required</th><th>Purpose &amp; Guidance</th></tr>
+<tr><td>Title</td><td><span class="badge badge-req">Required</span></td><td>Short phrase, descriptive enough to remove ambiguity. e.g. <em>"Use Azure Event Hubs for IoT telemetry ingestion"</em></td></tr>
+<tr><td>Status</td><td><span class="badge badge-req">Required</span></td><td>New → Proposed → Accepted → Superseded/Deprecated</td></tr>
+<tr><td>Priority</td><td><span class="badge badge-opt">Optional</span></td><td>Critical / High / Medium / Low — helps triage which ADRs to review first</td></tr>
+<tr><td>Revision</td><td><span class="badge badge-opt">Optional</span></td><td>Semantic version (1.0, 1.1) — increment when materially updated without superseding</td></tr>
+<tr><td>Deciders</td><td><span class="badge badge-req">Required</span></td><td>Named individuals who made the final decision — accountability and contact</td></tr>
+<tr><td>Consulted</td><td><span class="badge badge-opt">Optional</span></td><td>Teams/individuals whose expertise was sought but who do not hold decision authority</td></tr>
+<tr><td>Context</td><td><span class="badge badge-req">Required</span></td><td>Forces at play. Include pain points with metrics, business drivers, constraints, scale. <em>"What situation is forcing us to make this decision?"</em></td></tr>
+<tr><td>Assumptions</td><td><span class="badge badge-opt">Optional</span></td><td>What must be true for this decision to remain valid. Document dependencies on external decisions.</td></tr>
+<tr><td>Decision Drivers</td><td><span class="badge badge-opt">Optional</span></td><td>Functional and non-functional requirements that shape the decision. Use weighted criteria for decision matrices.</td></tr>
+<tr><td>Considered Options</td><td><span class="badge badge-req">Required</span></td><td>ALL alternatives evaluated — including the chosen option. Document pros/cons and reason not chosen for each. Shows you considered alternatives, not just your favorite.</td></tr>
+<tr><td>Decision</td><td><span class="badge badge-req">Required</span></td><td>What was decided. Start with <em>"We will…"</em> to keep it action-oriented.</td></tr>
+<tr><td>Justification</td><td><span class="badge badge-opt">Optional</span></td><td>Why this option over the alternatives. Key reasons, trade-offs explicitly accepted.</td></tr>
+<tr><td>Discussion Outcome</td><td><span class="badge badge-opt">Optional</span></td><td>Key points from Architecture Review Board, objections raised and addressed, stakeholder feedback, vote results.</td></tr>
+<tr><td>Consequences</td><td><span class="badge badge-req">Required</span></td><td>Both positive AND negative. Honest trade-off analysis. Forces the architect to think whether impacts outweigh benefits.</td></tr>
+<tr><td>Compliance / Risk</td><td><span class="badge badge-opt">Recommended</span></td><td>How will this be governed? GDPR, HIPAA, SOC2. Risk table with mitigation strategies.</td></tr>
+<tr><td>Implementation Plan</td><td><span class="badge badge-opt">Optional</span></td><td>Phased approach, milestones, resource allocation, timeline. Answers: how do we execute this?</td></tr>
+<tr><td>Success Metrics</td><td><span class="badge badge-opt">Optional</span></td><td>Measurable outcomes that confirm the decision achieved its goals. Include baselines and targets.</td></tr>
+</table>
+
+<h2>Decision Frameworks</h2>
+<h3>1. Decision Matrix (weighted scoring)</h3>
+<p>Score each option against weighted criteria. Prevents decisions based on gut feeling alone.</p>
+<table>
+<tr><th>Criteria (Weight)</th><th>TimescaleDB</th><th>InfluxDB</th><th>Amazon Timestream</th></tr>
+<tr><td>Team expertise (25%)</td><td>9 (2.25)</td><td>3 (0.75)</td><td>4 (1.00)</td></tr>
+<tr><td>Write throughput (20%)</td><td>7 (1.40)</td><td>9 (1.80)</td><td>8 (1.60)</td></tr>
+<tr><td>Cost (20%)</td><td>8 (1.60)</td><td>5 (1.00)</td><td>6 (1.20)</td></tr>
+<tr><td>Operational complexity (20%)</td><td>7 (1.40)</td><td>6 (1.20)</td><td>9 (1.80)</td></tr>
+<tr><td>Ecosystem/tooling (15%)</td><td>9 (1.35)</td><td>6 (0.90)</td><td>5 (0.75)</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>8.00 ✓</strong></td><td><strong>5.65</strong></td><td><strong>6.35</strong></td></tr>
+</table>
+
+<h3>2. Reversibility Assessment (One-way vs Two-way door)</h3>
+<ul>
+<li><strong>One-way door</strong> — expensive to reverse (cloud provider, database engine, messaging platform) → Analyze deeply, document thoroughly</li>
+<li><strong>Two-way door</strong> — easy to reverse (monitoring tool, logging library) → Decide quickly, lightweight ADR</li>
+</ul>
+
+<h3>3. Pre-mortem Analysis</h3>
+<p><em>"It's 12 months from now. This decision was a disaster. What went wrong?"</em> — Identify risks proactively before committing.</p>
+
+<h2>Comprehensive Sample ADR</h2>
+<p>The following sample ADR demonstrates all fields, drawn from a real Azure event-driven architecture optimization scenario. Use this as a template reference.</p>
+<pre class="adr-sample"># ADR-0001: Event-Driven Architecture Optimization — Kafka, Cosmos DB & Observability on Azure
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-01-15 |
+| **Status** | Accepted |
+| **Priority** | Critical |
+| **Revision** | 1.2 |
+| **Owner** | Principal Cloud Architect |
+| **Author** | Jane Smith |
+| **Approved By** | VP Engineering, CTO |
+| **Approval Date** | 2026-01-20 |
+| **Superseded By** | — |
+| **Tags** | azure, event-driven, kafka, cosmos-db, observability, performance |
+
+## Deciders
+
+- Principal Cloud Architect (Jane Smith)
+- Engineering Manager — Platform Team (Bob Chen)
+- CTO (Dr. Priya Nair)
+
+## Consulted
+
+- DevOps & SRE team
+- Data Analytics team
+- Security & Compliance team
+- End-user representatives (3 product teams)
+
+## Context and Problem Statement
+
+The event-driven architecture deployed on Azure, utilizing Apache Kafka (via
+Azure HDInsight), Cosmos DB (SQL API), and Application Insights, is experiencing
+critical performance bottlenecks and inconsistent data processing.
+
+Current observed metrics:
+- Kafka consumer lag: 2M+ messages during peak hours (SLA: <10K)
+- End-to-end event processing latency: 8–12 seconds p95 (SLA: <2 seconds)
+- Cosmos DB hot partition rate: 40% of requests hitting single partition
+- Real-time analytics accuracy: 94% (SLA: >99.5%)
+- MTTD (Mean Time To Detect) anomalies: 45 minutes (target: <5 minutes)
+- Business impact: $180K/month in delayed reporting penalties
+
+Scale context: 50,000 IoT devices, 500K events/sec peak, 8TB/month data volume.
+
+## Assumptions
+
+- Azure Event Hubs (Kafka-compatible) is available and approved by procurement
+- Cosmos DB partition key redesign can be done without full data migration
+- Application Insights upgrade budget ($15K/month) is pre-approved
+- Team will receive 2-week Kafka tuning training before Phase 2
+
+## Decision Drivers
+
+- Reduce end-to-end event processing latency from 12s to <2s (p95)
+- Eliminate Cosmos DB hot partitions — achieve uniform load distribution
+- Reduce anomaly MTTD from 45 minutes to <5 minutes
+- Achieve >99.5% real-time analytics accuracy
+- Maintain GDPR compliance for all EU-origin device telemetry
+
+## Considered Options
+
+### Option 1: Optimize Kafka Configuration (Tuning-Only)
+
+**Description:** Tune existing Kafka cluster — partition count, consumer group
+config, batch sizes, compression — without infrastructure changes.
+
+**Pros:**
+- Lowest cost (no infrastructure change, ~40 engineering hours)
+- Minimal risk — no topology change
+- Reversible within hours
+
+**Cons:**
+- Does not address Cosmos DB hot partition issue
+- Maximum throughput improvement estimated at 30% — insufficient for 6x target
+- Operational expertise gap: team lacks Kafka internals knowledge
+
+**Reason Not Chosen:**
+Tuning alone delivers at most 30% throughput improvement, falling far short
+of the required 6x improvement. Does not address Cosmos DB or observability
+deficiencies which account for 60% of the SLA breach. Would require re-doing
+this decision within 6 months as scale increases.
+
+### Option 2: Migrate to Azure Event Hubs (Kafka-compatible surface)
+
+**Description:** Replace Azure HDInsight Kafka with Azure Event Hubs using the
+Kafka-compatible endpoint. Existing producers/consumers require minimal code change.
+
+**Pros:**
+- Fully managed — no Kafka cluster ops overhead
+- Auto-inflate partitions scale from 10 to 10,000 dynamically
+- 99.99% SLA vs 99.9% for self-managed Kafka
+- Built-in Capture to ADLS Gen2 for analytical workloads
+- Cost: $8K/month vs $18K/month self-managed (55% reduction)
+
+**Cons:**
+- Migration effort: estimated 6 weeks, 3 engineers
+- Kafka API compatibility is ~90% — some admin APIs not supported
+- Requires testing all 14 consumer applications
+
+**Reason Not Chosen:**
+_This is the chosen primary option — see Decision Outcome._
+
+### Option 3: Re-partition Cosmos DB with Composite Key
+
+**Description:** Redesign Cosmos DB partition key from single deviceId to a
+composite key: {region}/{deviceType}/{YYYYMMDD} to distribute load.
+
+**Pros:**
+- Eliminates hot partitions — distributes 40% hotspot across ~200 partitions
+- No application topology change — just partition strategy
+- Estimated 5x query performance improvement for time-range aggregations
+
+**Cons:**
+- Requires full container re-index (estimated 72-hour downtime window)
+- All read queries must be updated to include partition key in filter
+- Risk of data consistency during migration
+
+**Reason Not Chosen:**
+This IS chosen as a parallel initiative (Option 2 + Option 3 combined).
+See Implementation Plan for phasing.
+
+### Option 4: Replace Kafka with Azure Service Bus Premium
+
+**Description:** Migrate to Azure Service Bus for all event processing.
+
+**Pros:**
+- Simpler programming model
+- Superior dead-letter and poison-message handling
+- Native Azure integration (no compatibility layer)
+
+**Cons:**
+- Maximum throughput: 10M messages/day — insufficient (current: 43M/day)
+- No built-in replay capability (needed for reprocessing analytics)
+- Full application rewrite required — estimated 6 months, $400K
+
+**Reason Not Chosen:**
+Service Bus throughput ceiling is 10M messages/day. We process 43M messages/day
+at peak. This architectural mismatch makes Service Bus unsuitable even with
+Premium tier. Full rewrite cost and timeline are not acceptable given business
+urgency.
+
+### Option 5: Full Platform Replacement with Databricks + Event Hubs
+
+**Description:** Replace entire stack with Azure Databricks Structured Streaming
+consuming from Event Hubs, writing to Delta Lake.
+
+**Pros:**
+- Industry-leading streaming analytics performance
+- Unified batch + streaming model eliminates lambda complexity
+- ML-native — directly enables predictive analytics roadmap
+
+**Cons:**
+- 12–18 month implementation timeline
+- $600K migration cost (Databricks licenses + engineering)
+- Requires complete retraining of 12-person platform team
+- Cannot meet the immediate 90-day business deadline
+
+**Reason Not Chosen:**
+Excellent long-term architecture but fails the immediate business requirement.
+Recommended for evaluation as ADR-0002 (18-month strategic roadmap).
+
+## Decision Outcome
+
+We will implement a phased optimization combining Azure Event Hubs migration
+(replacing self-managed Kafka) with Cosmos DB partition key redesign and
+comprehensive Application Insights observability uplift.
+
+### Justification
+
+This three-pronged approach addresses all root causes identified in the RCA:
+(1) Event Hubs eliminates Kafka operational overhead and provides elastic scaling
+for the immediate throughput bottleneck. (2) Cosmos DB composite partition key
+eliminates the 40% hot-partition rate causing query latency. (3) Application
+Insights + distributed tracing closes the observability gap driving 45-minute MTTD.
+Combined, these changes achieve the required SLA within the 90-day business deadline
+at $180K — compared to $400K for Option 4 or $600K for Option 5.
+
+### Discussion Outcome / Stakeholder Feedback
+
+Architecture Review Board session (2026-01-12, 3 hours):
+- Security team: Approved after confirming Event Hubs supports VNet injection
+  and CMK encryption. Requirement: all data must use customer-managed keys.
+- DevOps/SRE team: Raised concern about 72-hour Cosmos DB re-index window.
+  Resolution: Schedule during Q1 maintenance window (Jan 25–27). Parallel
+  read from old container during migration.
+- Analytics team: Requested Capture feature for ADLS Gen2 — confirmed as
+  native Event Hubs capability, no additional cost.
+- Finance: Approved $180K budget. Note: $8K/month Event Hubs saves $10K/month
+  vs current Kafka, so net cost is $0 over 18 months.
+- Vote: 6/6 approved. No objections after security and downtime concerns addressed.
+
+## Consequences
+
+### Positive Consequences
+
+- End-to-end latency target: <2s p95 (from 12s) — enables real-time SLA
+- Kafka operational overhead eliminated — 3 FTE-weeks/month freed
+- Cosmos DB query performance: 5x improvement on time-range aggregations
+- MTTD improvement: 45 min → <5 min via distributed tracing dashboards
+- Infrastructure cost reduction: $10K/month (Event Hubs vs self-managed Kafka)
+- 99.99% SLA guarantee from Azure Event Hubs (from 99.9% self-managed)
+- Foundation for ADR-0002 Databricks strategic migration
+
+### Negative Consequences
+
+- 6-week migration effort (3 engineers, 50% allocation) — feature work delayed
+- 72-hour Cosmos DB maintenance window required — coordinate with 14 product teams
+- 10% Kafka API surface incompatibility — 3 admin tools require rewrite
+- Team ramp-up on Event Hubs SDK — estimated 1-week per engineer
+- Application Insights costs increase $15K/month — offset by Kafka savings
+
+## Compliance and Risk
+
+All EU-origin device telemetry must remain within Azure West Europe / North Europe
+regions per GDPR Article 44. Event Hubs configured with geo-redundancy within EU
+only. Customer-managed keys (CMK) mandatory for Cosmos DB and Event Hubs — Azure
+Key Vault integration required before go-live.
+SOC2 Type II audit trail: all schema changes logged to immutable Azure Monitor
+workspace (90-day retention). Quarterly compliance review with Security team.
+
+### Risks
+
+| Risk | Mitigation |
+|------|------------|
+| Kafka API incompatibility breaks consumer apps | Spike 2 days before migration. Compatibility matrix documented. 3 admin tools rewritten in Phase 1. |
+| Cosmos DB re-index causes data inconsistency | Parallel read from old + new container during 72hr window. Consistency validation script runs hourly. |
+| Event Hubs throughput insufficient at peak | Load test at 2x peak (1M events/sec) before cutover. Auto-inflate enabled. |
+| Team knowledge gap causes delays | 2-week Event Hubs training (Phase 0). Pair programming with Azure FastTrack engineer. |
+| Budget overrun if migration extends beyond 6 weeks | Weekly steering review. Scope reduction fallback: defer Cosmos DB work to Phase 3. |
+
+## Implementation Plan
+
+Phase 0 (Week 1): Training and preparation
+- Event Hubs SDK training for 3 platform engineers
+- Document Kafka API compatibility matrix for all 14 consumer apps
+- Provision Event Hubs Premium tier in staging environment
+
+Phase 1 (Weeks 2-3): Event Hubs migration
+- Migrate all 14 consumer applications to Event Hubs Kafka endpoint
+- Parallel run: both Kafka and Event Hubs receive events for 5 days
+- Validate consumer lag metrics, message ordering, and dead-letter behavior
+- Cutover: DNS/connection string switch (zero-downtime)
+
+Phase 2 (Week 4): Cosmos DB re-partitioning
+- Execute during maintenance window (Jan 25-27)
+- Run partition migration script with parallel-read from old container
+- Update all query filters to include composite partition key
+- Performance validation: run 48-hour load test
+
+Phase 3 (Weeks 5-6): Observability uplift
+- Deploy Application Insights distributed tracing across all 14 services
+- Configure custom dashboards: consumer lag, partition heatmap, MTTD tracker
+- Set up alert rules: consumer lag >50K triggers PagerDuty P1
+- Runbook: standard operating procedures for each alert type
+
+## Success Metrics
+
+- End-to-end event processing latency: <2s p95 (baseline: 12s) — measured Week 7
+- Kafka consumer lag at peak: <10K messages (baseline: 2M+)
+- Cosmos DB hot partition rate: <5% (baseline: 40%)
+- Real-time analytics accuracy: >99.5% (baseline: 94%)
+- Anomaly MTTD: <5 minutes (baseline: 45 min) — 30-day average post-go-live
+- Infrastructure cost: ≤$165K/month (baseline: $175K/month)
+- Team NPS on migration experience: >7/10
+
+## Links and References
+
+- Azure Event Hubs Kafka Compatibility Matrix: https://learn.microsoft.com/azure/event-hubs/event-hubs-for-kafka-ecosystem-overview
+- Cosmos DB Partition Design Guide: internal-wiki/cosmos-partitioning-best-practices
+- Performance Benchmark Results: drive/event-hubs-benchmark-jan2026
+- Load Test Report: confluence/kafka-cosmos-load-test-2026-01
+- Related: ADR-0002 — Databricks Strategic Migration (18-month roadmap)
+- Related: ADR-0003 — IoT Device Identity and Security (prerequisite)
+
+## Notes
+
+**Related ADRs:** ADR-0002, ADR-0003
+**Requirement:** JIRA-4892, PRD-platform-performance-v3
+**Last Modified By:** Jane Smith
+
+Review checkpoint: 2026-04-15 — validate all success metrics achieved.
+Open question: If device count exceeds 200K before ADR-0002 is executed,
+escalate Event Hubs tier to Dedicated cluster ($25K/month).
+Amendment 1.1 (2026-01-18): Security team added CMK requirement.
+Amendment 1.2 (2026-01-20): Finance confirmed budget approval.</pre>
+
+<h2>Keyboard Shortcuts</h2>
+<table>
+<tr><th>Shortcut</th><th>Action</th></tr>
+<tr><td><code>Ctrl+S</code></td><td>Save current ADR</td></tr>
+<tr><td><code>Ctrl+N</code></td><td>Create new ADR</td></tr>
+</table>
+
+<h2>Tips for Effective ADRs</h2>
+<ul>
+<li><strong>Context is king</strong> — include specific metrics, scale, and business impact. Avoid vague statements.</li>
+<li><strong>Explain rejected options</strong> — this is what separates good ADRs from great ones. Show your work.</li>
+<li><strong>Be honest about negatives</strong> — every architectural decision has downsides. Document them and their mitigations.</li>
+<li><strong>Quantify consequences</strong> — "reduces latency" is weak; "reduces p95 latency from 12s to 2s" is powerful.</li>
+<li><strong>Update, don't delete</strong> — when a decision changes, create a new ADR that Supersedes the old one. Preserve history.</li>
+<li><strong>Link liberally</strong> — connect related ADRs, design docs, benchmarks, and tickets.</li>
+</ul>
+`;
+}
+
+// ════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════
+(function init() {
+  loadAdrs();
+  // init filter chips
+  document.querySelector('.sf-chip[data-s=""]').classList.add('on');
+  renderSidebar();
+  g('emptyState').style.display='flex';
+})();
+</script>
+</body>
+</html>

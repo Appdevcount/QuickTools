@@ -151,6 +151,9 @@ nav {
 .card-4::before { background: linear-gradient(90deg, #1558b0, #6d28d9); }
 .card-4:hover   { border-color: #1558b0; }
 
+.card-5::before { background: linear-gradient(90deg, #0d9488, #34d399); }
+.card-5:hover   { border-color: #0d9488; }
+
 .card-icon {
   width: 48px;
   height: 48px;
@@ -165,6 +168,7 @@ nav {
 .card-2 .card-icon { background: rgba(37,99,235,0.15); }
 .card-3 .card-icon { background: rgba(124,58,237,0.15); }
 .card-4 .card-icon { background: rgba(21,88,176,0.15); }
+.card-5 .card-icon { background: rgba(13,148,136,0.15); }
 
 .card-meta { flex: 1; }
 .card-meta h2 {
@@ -196,6 +200,7 @@ nav {
 .card-2 .tag { background: rgba(37,99,235,0.12); color: #818cf8; border-color: rgba(37,99,235,0.25); }
 .card-3 .tag { background: rgba(124,58,237,0.12); color: #a78bfa; border-color: rgba(124,58,237,0.25); }
 .card-4 .tag { background: rgba(21,88,176,0.12); color: #60a5fa; border-color: rgba(21,88,176,0.25); }
+.card-5 .tag { background: rgba(13,148,136,0.12); color: #34d399; border-color: rgba(13,148,136,0.25); }
 
 .card-cta {
   display: flex;
@@ -210,6 +215,7 @@ nav {
 .card-2 .card-cta { color: #818cf8; }
 .card-3 .card-cta { color: #a78bfa; }
 .card-4 .card-cta { color: #60a5fa; }
+.card-5 .card-cta { color: #34d399; }
 
 .arrow {
   font-size: 18px;
@@ -241,13 +247,13 @@ footer {
     <span class="icon">⚡</span>
     QuickTools
   </a>
-  <span class="nav-badge">4 tools</span>
+  <span class="nav-badge">5 tools</span>
 </nav>
 
 <section class="hero">
   <span class="hero-eyebrow">Engineering Toolkit</span>
   <h1>Tools that make<br><span>complex work faster</span></h1>
-  <p>A curated set of interactive utilities for cloud migration, system design, estimation, and interviewing — all running locally in your browser.</p>
+  <p>A curated set of interactive utilities for cloud migration, system design, estimation, interviewing, and architecture decisions — all running locally in your browser.</p>
 </section>
 
 <main class="grid">
@@ -314,6 +320,24 @@ footer {
       <span class="tag">Scalability</span>
       <span class="tag">Design</span>
       <span class="tag">Patterns</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+
+  <a class="card card-5" href="ADR-Tool.html">
+    <div class="card-icon">📝</div>
+    <div class="card-meta">
+      <h2>ADR Tool — Architecture Decision Records</h2>
+      <p>Create, search, and manage Architecture Decision Records. Track context, decisions, consequences, and status across your project's key technical choices.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">ADR</span>
+      <span class="tag">Architecture</span>
+      <span class="tag">Decisions</span>
+      <span class="tag">Docs</span>
     </div>
     <div class="card-cta">
       Open tool <span class="arrow">→</span>
