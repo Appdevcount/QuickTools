@@ -314,6 +314,28 @@
   .gs-marked-btn.active{background:#f59e0b!important;border-color:#d97706!important;color:#fff!important;}
   .gs-download-btn{background:#16a34a!important;border-color:#15803d!important;color:#fff!important;}
   .gs-upload-btn{background:#0369a1!important;border-color:#0284c7!important;color:#fff!important;}
+  .gs-preset-btn{background:#7c3aed!important;border-color:#6d28d9!important;color:#fff!important;}
+
+  /* ── Preset questions panel ─────────────────────────────────────────────── */
+  .preset-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:8000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .preset-overlay.show{display:flex;}
+  .preset-modal{background:#fff;border-radius:12px;width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;margin:auto;}
+  .preset-modal-hdr{background:var(--accent);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .preset-modal-hdr h3{font-size:15px;font-weight:700;}
+  .preset-modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-weight:600;}
+  .preset-modal-close:hover{background:rgba(255,255,255,.35);}
+  .preset-modal-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+  .preset-modal-body{overflow-y:auto;flex:1;padding:12px 16px;}
+  .preset-modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+  .preset-group{margin-bottom:16px;}
+  .preset-group-hdr{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding:5px 0;border-bottom:2px solid var(--accent-light);margin-bottom:6px;}
+  .preset-level{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:1px 8px;color:var(--muted);text-transform:none;letter-spacing:0;white-space:nowrap;}
+  .preset-gc-count{margin-left:auto;font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;white-space:nowrap;}
+  .preset-q-row{display:flex;align-items:flex-start;gap:10px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s;}
+  .preset-q-row:hover{background:var(--bg);}
+  .preset-q-row input[type=checkbox]{width:15px;height:15px;margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--accent);}
+  .preset-q-code{font-size:10px;font-weight:700;background:var(--accent-light);color:var(--accent);border-radius:4px;padding:1px 6px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+  .preset-q-text{font-size:12px;color:var(--text);line-height:1.5;}
 </style>
 </head>
 <body>
@@ -325,6 +347,7 @@
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
     <a href="index.html" class="btn-outline" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.5);text-decoration:none;">← Hub</a>
+    <button class="btn-outline interview-only" style="background:rgba(124,58,237,.85);color:#fff;border-color:rgba(255,255,255,.5);" onclick="openPresetPanel()">📋 Preset Qs</button>
     <button class="btn-randomize interview-only" id="btn-randomize" onclick="randomizeSuggestions()" title="Pick 7 random questions per section">🎲 Suggest 7 / Section</button>
     <button class="btn-outline interview-only" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.5);" onclick="showSection('report-section')">📋 Generate Report</button>
     <button class="btn-outline refresher-only" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.5);" onclick="showSection('refresher-report-section')">📊 My Report</button>
@@ -438,6 +461,29 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- Preset questions panel -->
+<div class="preset-overlay" id="preset-overlay" onclick="if(event.target===this)closePresetPanel()">
+  <div class="preset-modal">
+    <div class="preset-modal-hdr">
+      <h3>📋 Preset Questions — Select &amp; Mark as Asked</h3>
+      <button class="preset-modal-close" onclick="closePresetPanel()">✕ Close</button>
+    </div>
+    <div class="preset-modal-toolbar">
+      <span id="preset-sel-count" style="font-size:12px;color:var(--muted);font-weight:600;"></span>
+      <button class="btn-outline" style="font-size:11px;padding:4px 10px;" onclick="presetSelectAll(true)">Select All</button>
+      <button class="btn-outline" style="font-size:11px;padding:4px 10px;" onclick="presetSelectAll(false)">Deselect All</button>
+    </div>
+    <div class="preset-modal-body" id="preset-modal-body"></div>
+    <div class="preset-modal-footer">
+      <span style="font-size:11px;color:var(--muted);">Selected questions will be marked as <strong>Asked</strong> in the scorecard.</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-outline" onclick="closePresetPanel()">Cancel</button>
+        <button class="btn-green" id="preset-apply-btn" onclick="applyPresetMarks()">✓ Apply Marks</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Reload-protection modal -->
 <div class="reload-overlay" id="reload-overlay">
@@ -6121,6 +6167,136 @@ function buildRefresherReport(){
 
   html += '</div>';
   document.getElementById('refresher-report-content').innerHTML = html;
+}
+
+// ── Preset questions — static bank ───────────────────────────────────────────
+const PRESET_BANK = [
+  { section:'1. C# Language Fundamentals', level:'Beginner',
+    codes:['CF-3','CF-6'] },
+  { section:'2. Intermediate .NET', level:'Intermediate',
+    codes:['Q3','Q13','Q18','Q23'] },
+  { section:'3. Expert .NET / C#', level:'Expert',
+    codes:['Q11','Q12','Q15','QR-20','QX-N8'] },
+  { section:'4. Intermediate Azure', level:'Intermediate',
+    codes:['AZ-I2','AZ-I3','AZ-I9','AZ-I15','AZ-I28','AZ-I20'] },
+  { section:'5. Expert Azure', level:'Expert',
+    codes:['AZ-E3','AZ-E4','AZ-E9','AZF-2','AZCOS-1','AZCOS-3'] },
+  { section:'6. Team Lead Level', level:'Leadership',
+    codes:['TL-1'] },
+  { section:'7. C# Coding', level:'Coding',
+    codes:['CODE-22'] },
+  { section:'8. SQL', level:'SQL',
+    codes:['SQL-2'] },
+  { section:'Architect Level — .NET + Azure Integration', level:'Expert',
+    codes:['ARCH-1','ARCH-2','ARCH-3'] },
+  { section:'Real World .NET Practical', level:'Expert',
+    codes:['RNET-3','RNET-4','RNET-7','APIQ-3','APIQ-4','APIQ-15'] },
+  { section:'19. API Design & HTTP', level:'Expert',
+    codes:['API-4','API-7','API-9'] },
+  { section:'Real World Azure Practical', level:'Expert',
+    codes:['RAZ-7'] },
+  { section:'17. Containerization — Docker & Kubernetes', level:'Expert',
+    codes:['CT-1','CT-5'] },
+  { section:'16. SOLID Principles & GOF Patterns', level:'Expert',
+    codes:['SG-5','SG-18','SG-20'] },
+  { section:'17. Microservices Design Patterns', level:'Expert',
+    codes:['MP-2','MP-3'] },
+  { section:'18. Cloud Design Patterns', level:'Expert',
+    codes:['CP-1','CP-2'] },
+];
+
+function _presetCodeMap(){
+  const m = {};
+  SECTIONS.forEach(s => {
+    if(s.type === 'guide') return;
+    s.questions.forEach(q => { m[q.code] = q; });
+  });
+  return m;
+}
+
+function openPresetPanel(){
+  const codeMap = _presetCodeMap();
+  const body = document.getElementById('preset-modal-body');
+  let html = '';
+
+  PRESET_BANK.forEach((group, gi) => {
+    const qs = group.codes.map(c => ({ code:c, q:codeMap[c] })).filter(x => x.q);
+    if(!qs.length) return;
+    html += `<div class="preset-group">
+      <div class="preset-group-hdr">
+        ${esc(group.section)}
+        <span class="preset-level">${esc(group.level)}</span>
+        <span class="preset-gc-count" id="preset-gc-${gi}">${qs.length}/${qs.length}</span>
+      </div>`;
+    qs.forEach(({ code, q }) => {
+      const prompt = (q.prompt || q.title || '').replace(/<[^>]*>/g,'').trim();
+      html += `<label class="preset-q-row">
+        <input type="checkbox" class="preset-cb" data-code="${esc(code)}" data-gi="${gi}" checked onchange="_updatePresetCount()">
+        <span class="preset-q-code">${esc(code)}</span>
+        <span class="preset-q-text">${esc(prompt)}</span>
+      </label>`;
+    });
+    html += '</div>';
+  });
+
+  body.innerHTML = html;
+  _updatePresetCount();
+  document.getElementById('preset-overlay').classList.add('show');
+}
+
+function closePresetPanel(){
+  document.getElementById('preset-overlay').classList.remove('show');
+}
+
+function _updatePresetCount(){
+  const cbs = document.querySelectorAll('.preset-cb');
+  const checked = [...cbs].filter(c => c.checked).length;
+  const countEl = document.getElementById('preset-sel-count');
+  if(countEl) countEl.textContent = checked + ' of ' + cbs.length + ' selected';
+
+  PRESET_BANK.forEach((_, gi) => {
+    const gcbs = document.querySelectorAll(`.preset-cb[data-gi="${gi}"]`);
+    const el = document.getElementById('preset-gc-' + gi);
+    if(el && gcbs.length)
+      el.textContent = [...gcbs].filter(c => c.checked).length + '/' + gcbs.length;
+  });
+
+  const applyBtn = document.getElementById('preset-apply-btn');
+  if(applyBtn) applyBtn.textContent = '✓ Apply ' + checked + ' Mark' + (checked !== 1 ? 's' : '');
+}
+
+function presetSelectAll(on){
+  document.querySelectorAll('.preset-cb').forEach(cb => { cb.checked = on; });
+  _updatePresetCount();
+}
+
+function applyPresetMarks(){
+  const codeMap = _presetCodeMap();
+  const checked = [...document.querySelectorAll('.preset-cb:checked')];
+  if(!checked.length){ showToast('No questions selected.'); return; }
+
+  let applied = 0;
+  checked.forEach(cb => {
+    const q = codeMap[cb.dataset.code];
+    if(!q) return;
+    const qId = q.id;
+    if(!state[qId].asked){
+      state[qId].asked = true;
+      const card = document.getElementById('card-' + qId);
+      if(card) card.classList.add('asked');
+      const btn = document.getElementById('ta-' + qId);
+      if(btn){ btn.classList.add('on'); btn.textContent = '✓ Asked'; }
+      moveToMarkedZone(qId);
+      _syncGsCard(qId);
+    }
+    applied++;
+  });
+
+  updateKPIs();
+  buildSidebar();
+  if(globalMarkedMode) showGlobalMarked();
+  closePresetPanel();
+  showToast(applied + ' question' + (applied !== 1 ? 's' : '') + ' marked as asked.');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
