@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sprint Retrospective Board</title>
+<style>
+:root{
+  --bg:#f4f6f9;--card:#fff;--border:#dde2ea;
+  --accent:#2563eb;--text:#1e293b;--muted:#64748b;
+  --g:#059669;--g-bg:#ecfdf5;--g-bd:#a7f3d0;
+  --a:#d97706;--a-bg:#fffbeb;--a-bd:#fcd34d;
+  --b:#2563eb;--b-bg:#eff6ff;--b-bd:#bfdbfe;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;display:flex;flex-direction:column;}
+
+/* Header */
+header{background:var(--accent);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0;min-height:52px;}
+header h1{font-size:16px;font-weight:700;white-space:nowrap;}
+.hdr-sep{width:1px;height:20px;background:rgba(255,255,255,.3);flex-shrink:0;}
+.hdr-field{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;opacity:.85;}
+.hdr-field input{border:1.5px solid rgba(255,255,255,.35);border-radius:6px;background:rgba(255,255,255,.12);color:#fff;padding:4px 8px;font-size:12px;width:130px;outline:none;}
+.hdr-field input::placeholder{color:rgba(255,255,255,.55);}
+.hdr-field input:focus{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.2);}
+.hdr-right{display:flex;gap:7px;align-items:center;margin-left:auto;flex-wrap:wrap;}
+.btn{padding:5px 12px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;line-height:1.4;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.32);}
+.btn-ghost:hover{background:rgba(255,255,255,.22);}
+.btn-voting{background:#d97706;color:#fff;border:none;}
+.btn-voting:hover{background:#b45309;}
+.btn-voting.active{background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;}
+.btn-primary{background:#fff;color:var(--accent);}
+.btn-primary:hover{background:#e0eaff;}
+.btn-red{background:rgba(255,255,255,.12);color:#fca5a5;border:1.5px solid rgba(255,100,100,.3);}
+.btn-red:hover{background:rgba(220,38,38,.2);color:#fff;}
+
+/* Voting banner */
+.voting-banner{background:#fffbeb;border-bottom:2px solid #fcd34d;padding:6px 18px;font-size:12px;font-weight:700;color:#92400e;display:none;flex-shrink:0;align-items:center;gap:10px;}
+.voting-banner.show{display:flex;}
+.vote-counter{background:#d97706;color:#fff;border-radius:99px;padding:2px 10px;font-size:11px;}
+
+/* Board */
+.board{flex:1;display:flex;gap:12px;padding:12px 16px 14px;overflow:hidden;min-height:0;}
+@media(max-width:700px){.board{flex-direction:column;overflow-y:auto;overflow-x:hidden;}}
+
+/* Column */
+.col{flex:1;display:flex;flex-direction:column;min-width:0;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--col-bd);box-shadow:var(--shadow);}
+.col-hdr{padding:10px 13px 9px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.col-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.col-label{font-size:12px;font-weight:700;flex:1;}
+.col-count{font-size:10px;font-weight:700;background:rgba(0,0,0,.08);border-radius:99px;padding:1px 7px;}
+.col-body{flex:1;overflow-y:auto;padding:6px 8px 8px;background:var(--col-bg);display:flex;flex-direction:column;gap:7px;}
+.col-footer{flex-shrink:0;padding:6px 8px 8px;background:var(--col-bg);}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--col-bd);border-radius:8px;padding:10px 11px;transition:box-shadow .15s;}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.card-text{font-size:12.5px;line-height:1.5;color:var(--text);word-break:break-word;margin-bottom:7px;}
+.card-text.editable{cursor:pointer;}
+.card-text.editable:hover{color:var(--accent);}
+.card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.card-author{font-size:10px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vote-btn{display:flex;align-items:center;gap:4px;border:1.5px solid var(--col-bd);border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;background:#fff;color:var(--col-color);transition:all .15s;user-select:none;}
+.vote-btn:hover{background:var(--col-bg);}
+.vote-btn.voted{background:var(--col-bg);border-color:var(--col-color);}
+.vote-btn-lg{padding:5px 14px;font-size:13px;}
+.card-del{border:none;background:none;cursor:pointer;color:#cbd5e1;font-size:14px;padding:2px 4px;line-height:1;transition:color .15s;flex-shrink:0;}
+.card-del:hover{color:#dc2626;}
+.card-edit{border:none;background:none;cursor:pointer;color:#cbd5e1;font-size:11px;padding:2px 5px;line-height:1;transition:color .15s;flex-shrink:0;font-weight:600;}
+.card-edit:hover{color:var(--accent);}
+
+/* Inline edit */
+.edit-area{width:100%;border:1.5px solid var(--accent);border-radius:6px;padding:7px 9px;font-size:12.5px;font-family:inherit;resize:vertical;min-height:60px;outline:none;color:var(--text);}
+.edit-author{width:100%;border:1px solid var(--col-bd);border-radius:5px;padding:4px 7px;font-size:11px;font-family:inherit;outline:none;color:var(--text);margin-top:5px;}
+.edit-author:focus{border-color:var(--accent);}
+.edit-actions{display:flex;gap:6px;margin-top:6px;}
+.edit-save{padding:4px 12px;border:none;border-radius:5px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;}
+.edit-save:hover{background:#1d4ed8;}
+.edit-cancel{padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:#f1f5f9;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;}
+
+/* Add form */
+.add-btn{width:100%;padding:7px 10px;border:1.5px dashed var(--col-bd);border-radius:8px;background:transparent;font-size:11px;font-weight:700;color:var(--col-color);cursor:pointer;transition:all .15s;opacity:.7;}
+.add-btn:hover{background:rgba(255,255,255,.7);opacity:1;}
+.add-form{background:#fff;border:1.5px solid var(--col-bd);border-radius:8px;padding:9px 11px;}
+.add-textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12.5px;font-family:inherit;resize:none;min-height:65px;outline:none;color:var(--text);}
+.add-textarea:focus{border-color:var(--accent);}
+.add-author{width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:11px;font-family:inherit;outline:none;color:var(--text);margin-top:5px;}
+.add-author:focus{border-color:var(--accent);}
+.add-actions{display:flex;gap:6px;margin-top:7px;}
+.add-save{padding:5px 13px;border:none;border-radius:5px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;}
+.add-save:hover{background:#1d4ed8;}
+.add-cancel{padding:5px 10px;border:1px solid var(--border);border-radius:5px;background:#f1f5f9;color:var(--muted);font-size:11px;cursor:pointer;}
+
+/* Sort toggle */
+.sort-toggle{font-size:10px;font-weight:700;color:var(--muted);background:#f1f5f9;border:1px solid var(--border);border-radius:99px;padding:2px 8px;cursor:pointer;user-select:none;transition:all .15s;}
+.sort-toggle:hover,.sort-toggle.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:#1e293b;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sprint Retrospective</h1>
+  <div class="hdr-sep"></div>
+  <div class="hdr-field">Sprint <input id="sprintName" type="text" placeholder="Sprint 23" oninput="persist()"></div>
+  <div class="hdr-field">Date <input id="sprintDate" type="date" oninput="persist()"></div>
+  <div class="hdr-right">
+    <button class="btn btn-ghost sort-toggle" id="sortBtn" onclick="toggleSort()" title="Sort cards by votes or added order">Sort: Added</button>
+    <button class="btn btn-voting" id="votingBtn" onclick="toggleVoting()">Dot Voting</button>
+    <button class="btn btn-ghost" onclick="exportMarkdown()">Export</button>
+    <button class="btn btn-red" onclick="clearBoard()">Clear Board</button>
+  </div>
+</header>
+
+<div class="voting-banner" id="votingBanner">
+  <span>&#9679; Voting Mode — editing is locked. Click thumbs up to vote for items.</span>
+  <button class="btn" style="background:#d97706;color:#fff;padding:3px 10px;font-size:11px;" onclick="toggleVoting()">Done Voting</button>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK = 'retro_v1';
+
+const COLS = [
+  { key:'went_well',  label:'What Went Well',   icon:'+', color:'var(--g)', colColor:'#059669', bg:'var(--g-bg)', bd:'var(--g-bd)', cssColor:'#059669' },
+  { key:'to_improve', label:'What to Improve',  icon:'!', color:'var(--a)', colColor:'#d97706', bg:'var(--a-bg)', bd:'var(--a-bd)', cssColor:'#d97706' },
+  { key:'action_items',label:'Action Items',    icon:'>', color:'var(--b)', colColor:'#2563eb', bg:'var(--b-bg)', bd:'var(--b-bd)', cssColor:'#2563eb' },
+];
+
+let state = {
+  sprintName: '',
+  sprintDate: new Date().toISOString().slice(0,10),
+  sortByVotes: false,
+  votingMode: false,
+  columns: { went_well:[], to_improve:[], action_items:[] }
+};
+
+let activeAdd  = null; // colKey with open add form
+let activeEdit = null; // cardId being edited
+
+function load() {
+  const saved = localStorage.getItem(SK);
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e) {}
+  }
+  document.getElementById('sprintName').value = state.sprintName || '';
+  document.getElementById('sprintDate').value = state.sprintDate || new Date().toISOString().slice(0,10);
+}
+
+function persist() {
+  state.sprintName = document.getElementById('sprintName').value;
+  state.sprintDate = document.getElementById('sprintDate').value;
+  localStorage.setItem(SK, JSON.stringify(state));
+}
+
+function getCards(key) {
+  const cards = state.columns[key] || [];
+  if (state.sortByVotes) return [...cards].sort((a,b)=>b.votes-a.votes||(a.createdAt-b.createdAt));
+  return [...cards].sort((a,b)=>a.createdAt-b.createdAt);
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  COLS.forEach(col => board.appendChild(renderCol(col)));
+  document.getElementById('sortBtn').textContent = state.sortByVotes ? 'Sort: Votes' : 'Sort: Added';
+  document.getElementById('sortBtn').classList.toggle('active', state.sortByVotes);
+  document.getElementById('votingBtn').classList.toggle('active', state.votingMode);
+  document.getElementById('votingBanner').classList.toggle('show', state.votingMode);
+}
+
+function renderCol(col) {
+  const cards = getCards(col.key);
+  const div = document.createElement('div');
+  div.className = 'col';
+  div.style.cssText = `--col-color:${col.cssColor};--col-bg:${col.bg};--col-bd:${col.bd};`;
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'col-hdr';
+  hdr.style.background = col.bg;
+  hdr.style.borderBottom = `1.5px solid ${col.bd}`;
+  hdr.innerHTML = `
+    <div class="col-icon" style="background:${col.bd};color:${col.cssColor}">${col.icon}</div>
+    <div class="col-label" style="color:${col.cssColor}">${col.label}</div>
+    <div class="col-count" style="color:${col.cssColor}">${cards.length}</div>`;
+  div.appendChild(hdr);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'col-body';
+
+  cards.forEach(card => {
+    body.appendChild(renderCard(card, col));
+  });
+  div.appendChild(body);
+
+  // Footer (add button or add form)
+  const footer = document.createElement('div');
+  footer.className = 'col-footer';
+  footer.style.background = col.bg;
+
+  if (!state.votingMode) {
+    if (activeAdd === col.key) {
+      footer.appendChild(renderAddForm(col));
+    } else {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-btn';
+      addBtn.textContent = '+ Add card';
+      addBtn.onclick = () => { activeAdd = col.key; activeEdit = null; renderBoard(); setTimeout(()=>{ const ta=document.getElementById('addText_'+col.key); if(ta) ta.focus(); },30); };
+      footer.appendChild(addBtn);
+    }
+  }
+  div.appendChild(footer);
+
+  return div;
+}
+
+function renderCard(card, col) {
+  const div = document.createElement('div');
+  div.className = 'card';
+
+  if (activeEdit === card.id) {
+    // Edit mode
+    div.innerHTML = `
+      <textarea class="edit-area" id="editText_${card.id}">${esc(card.text)}</textarea>
+      <input class="edit-author" id="editAuthor_${card.id}" placeholder="${col.key==='action_items'?'Assignee (optional)':'Author (optional)'}" value="${esc(card.author||'')}">
+      <div class="edit-actions">
+        <button class="edit-save" onclick="saveEdit('${card.id}','${col.key}')">Save</button>
+        <button class="edit-cancel" onclick="cancelEdit()">Cancel</button>
+      </div>`;
+    setTimeout(()=>{ const ta=document.getElementById('editText_'+card.id); if(ta){ta.focus();ta.selectionStart=ta.value.length;} },30);
+  } else {
+    const totalVotes = card.votes || 0;
+    const metaItems = [];
+    if (!state.votingMode) {
+      metaItems.push(`<button class="card-edit" title="Edit" onclick="startEdit('${card.id}')">Edit</button>`);
+    }
+    if (card.author) {
+      metaItems.push(`<span class="card-author">${col.key==='action_items'?'&#8594;':'@'}${esc(card.author)}</span>`);
+    } else {
+      metaItems.push(`<span class="card-author"></span>`);
+    }
+    metaItems.push(`<button class="vote-btn${state.votingMode?' vote-btn-lg':''}" onclick="vote('${card.id}','${col.key}')">&#128077; ${totalVotes}</button>`);
+    if (!state.votingMode) {
+      metaItems.push(`<button class="card-del" title="Delete" onclick="deleteCard('${card.id}','${col.key}')">&#215;</button>`);
+    }
+
+    div.innerHTML = `
+      <div class="card-text${!state.votingMode?' editable':''}" ${!state.votingMode?`onclick="startEdit('${card.id}')" title="Click to edit"`:''}>${esc(card.text).replace(/\n/g,'<br>')}</div>
+      <div class="card-meta">${metaItems.join('')}</div>`;
+  }
+
+  return div;
+}
+
+function renderAddForm(col) {
+  const div = document.createElement('div');
+  div.className = 'add-form';
+  div.innerHTML = `
+    <textarea class="add-textarea" id="addText_${col.key}" placeholder="What happened? Be specific and constructive…" rows="3"></textarea>
+    <input class="add-author" id="addAuthor_${col.key}" placeholder="${col.key==='action_items'?'Assignee (optional)':'Your name (optional)'}">
+    <div class="add-actions">
+      <button class="add-save" onclick="saveCard('${col.key}')">Add</button>
+      <button class="add-cancel" onclick="cancelAdd()">Cancel</button>
+    </div>`;
+  return div;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function saveCard(colKey) {
+  const text = (document.getElementById('addText_'+colKey)||{}).value?.trim();
+  if (!text) return;
+  const author = (document.getElementById('addAuthor_'+colKey)||{}).value?.trim() || '';
+  state.columns[colKey].push({ id: Date.now().toString()+Math.random().toString(36).slice(2), text, author, votes:0, createdAt:Date.now() });
+  activeAdd = null;
+  persist();
+  renderBoard();
+}
+
+function cancelAdd() { activeAdd = null; renderBoard(); }
+
+function startEdit(id) {
+  if (state.votingMode) return;
+  activeEdit = id;
+  activeAdd = null;
+  renderBoard();
+}
+
+function saveEdit(id, colKey) {
+  const text = (document.getElementById('editText_'+id)||{}).value?.trim();
+  if (!text) return;
+  const author = (document.getElementById('editAuthor_'+id)||{}).value?.trim() || '';
+  const cards = state.columns[colKey];
+  const card = cards.find(c=>c.id===id);
+  if (card) { card.text = text; card.author = author; }
+  activeEdit = null;
+  persist();
+  renderBoard();
+}
+
+function cancelEdit() { activeEdit = null; renderBoard(); }
+
+function vote(id, colKey) {
+  const card = state.columns[colKey].find(c=>c.id===id);
+  if (card) card.votes = (card.votes||0) + 1;
+  persist();
+  renderBoard();
+}
+
+function deleteCard(id, colKey) {
+  state.columns[colKey] = state.columns[colKey].filter(c=>c.id!==id);
+  persist();
+  renderBoard();
+}
+
+function toggleSort() {
+  state.sortByVotes = !state.sortByVotes;
+  persist();
+  renderBoard();
+}
+
+function toggleVoting() {
+  state.votingMode = !state.votingMode;
+  activeAdd = null;
+  activeEdit = null;
+  persist();
+  renderBoard();
+}
+
+function clearBoard() {
+  if (!confirm('Clear all cards on the board? This cannot be undone.')) return;
+  state.columns = { went_well:[], to_improve:[], action_items:[] };
+  activeAdd = null; activeEdit = null;
+  persist();
+  renderBoard();
+}
+
+function exportMarkdown() {
+  const name = state.sprintName || 'Retrospective';
+  const date = state.sprintDate || new Date().toISOString().slice(0,10);
+  let md = `# Sprint Retrospective — ${name}\n**Date:** ${date}\n\n---\n\n`;
+
+  COLS.forEach(col => {
+    const cards = getCards(col.key);
+    const headers = { went_well:'What Went Well', to_improve:'What to Improve', action_items:'Action Items' };
+    const icons   = { went_well:'✓', to_improve:'△', action_items:'→' };
+    md += `## ${icons[col.key]} ${headers[col.key]}\n`;
+    if (!cards.length) { md += '_No items_\n\n'; return; }
+    cards.forEach((c, i) => {
+      const voteStr = c.votes > 0 ? ` *(${c.votes} vote${c.votes!==1?'s':''})* ` : ' ';
+      const authorStr = c.author ? ` — ${col.key==='action_items'?'Assignee':'@'}${c.author}` : '';
+      if (col.key === 'action_items') {
+        md += `- [ ] ${c.text}${authorStr}${voteStr}\n`;
+      } else {
+        md += `${i+1}. ${c.text}${voteStr}${authorStr}\n`;
+      }
+    });
+    md += '\n';
+  });
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(md).then(() => showToast('Copied to clipboard!'));
+  } else {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = md; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('Copied to clipboard!'); } catch(e) { showToast('Copy failed — check browser permissions'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (activeEdit) { cancelEdit(); return; }
+    if (activeAdd)  { cancelAdd();  return; }
+  }
+});
+
+load();
+renderBoard();
+</script>
+</body>
+</html>

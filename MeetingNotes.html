@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Notes — QuickTools</title>
+<style>
+:root{
+  --bg:#f5f3ff;--surface:#fff;--border:#e4e0f5;
+  --accent:#7c3aed;--accent2:#2563eb;
+  --green:#16a34a;--yellow:#d97706;--red:#dc2626;
+  --text:#1e293b;--muted:#64748b;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+.hdr{background:linear-gradient(135deg,#6d28d9,#7c3aed);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(109,40,217,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+
+.status-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:7px 24px;display:flex;gap:18px;align-items:center;font-size:11.5px;color:var(--muted);flex-shrink:0;}
+.st-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-green{background:#15803d;color:#fff;}
+.btn-green:hover{background:#166534;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#6d28d9;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:210px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn .lbl{display:flex;align-items:center;gap:8px;}
+.sb-btn:hover{background:#f5f3ff;color:var(--text);}
+.sb-btn.on{background:#f5f3ff;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.sb-count{font-size:10px;background:var(--border);border-radius:99px;padding:1px 6px;color:var(--muted);}
+.sb-btn.on .sb-count{background:#ddd6fe;color:var(--accent);}
+
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:920px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(124,58,237,.06);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;resize:vertical;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{min-height:72px;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+
+.item-card{background:#faf8ff;border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;margin-bottom:10px;}
+.item-rm{position:absolute;top:10px;right:10px;}
+
+.prio{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.prio-H{background:#fee2e2;color:#991b1b;}
+.prio-M{background:#fef3c7;color:#92400e;}
+.prio-L{background:#dcfce7;color:#166534;}
+
+.stat{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.stat-Open{background:#dbeafe;color:#1e40af;}
+.stat-InProgress{background:#fef3c7;color:#92400e;}
+.stat-Done{background:#dcfce7;color:#166534;}
+.stat-Blocked{background:#fee2e2;color:#991b1b;}
+
+.empty{text-align:center;padding:32px 20px;color:var(--muted);}
+.empty .ico{font-size:36px;margin-bottom:8px;}
+
+.present-lbl{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);user-select:none;}
+.present-lbl input{accent-color:var(--green);width:14px;height:14px;}
+
+@media(max-width:800px){.g2,.g3{grid-template-columns:1fr;}}
+
+@media print{
+  .sb,.hdr-actions,.status-bar,.btn,.no-print,.item-rm{display:none!important;}
+  .app{display:block;}
+  .main{overflow:visible;}
+  .content{padding:0;max-width:100%;}
+  .panel{display:block!important;}
+  body{height:auto;overflow:auto;font-size:12px;}
+  .item-card{break-inside:avoid;}
+  .card{break-inside:avoid;box-shadow:none;}
+  page-break-inside:avoid;
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-icon">📝</div>
+  <div>
+    <div class="hdr-title">Meeting Notes</div>
+    <div class="hdr-sub">Structured notes with decisions &amp; action items</div>
+  </div>
+  <div class="hdr-actions no-print">
+    <a href="index.html" class="btn btn-ghost" style="text-decoration:none;">← Home</a>
+    <button class="btn btn-ghost" onclick="exportHTML()">⬇ Export HTML</button>
+    <button class="btn btn-green" onclick="window.print()">🖨 Print / PDF</button>
+  </div>
+</header>
+
+<div class="status-bar no-print">
+  <span><span class="st-dot" style="background:#2563eb;"></span><span id="st-att">0 attendees</span></span>
+  <span><span class="st-dot" style="background:#7c3aed;"></span><span id="st-ag">0 agenda items</span></span>
+  <span><span class="st-dot" style="background:#16a34a;"></span><span id="st-dec">0 decisions</span></span>
+  <span><span class="st-dot" style="background:#d97706;"></span><span id="st-act">0 action items</span></span>
+  <span><span class="st-dot" style="background:#64748b;"></span><span id="st-pk">0 parking lot</span></span>
+</div>
+
+<div class="app">
+  <nav class="sb">
+    <div class="sb-lbl">Meeting</div>
+    <button class="sb-btn on" onclick="nav('info',this)"><span class="lbl">📌 Meeting Info</span></button>
+    <button class="sb-btn" onclick="nav('att',this)"><span class="lbl">👥 Attendees</span><span class="sb-count" id="nc-att">0</span></button>
+    <button class="sb-btn" onclick="nav('ag',this)"><span class="lbl">📋 Agenda</span><span class="sb-count" id="nc-ag">0</span></button>
+    <div class="sb-lbl">Outputs</div>
+    <button class="sb-btn" onclick="nav('dec',this)"><span class="lbl">✅ Decisions</span><span class="sb-count" id="nc-dec">0</span></button>
+    <button class="sb-btn" onclick="nav('act',this)"><span class="lbl">⚡ Action Items</span><span class="sb-count" id="nc-act">0</span></button>
+    <button class="sb-btn" onclick="nav('pk',this)"><span class="lbl">🅿 Parking Lot</span><span class="sb-count" id="nc-pk">0</span></button>
+    <div class="sb-lbl">Follow-up</div>
+    <button class="sb-btn" onclick="nav('next',this)"><span class="lbl">📅 Next Meeting</span></button>
+  </nav>
+
+  <div class="main">
+    <div class="content">
+
+      <!-- ── Meeting Info ── -->
+      <div class="panel on" id="p-info">
+        <div class="card">
+          <div class="card-hd">📌 Meeting Information</div>
+          <div class="g2" style="margin-bottom:14px;">
+            <div class="fg" style="grid-column:span 2;"><label>Meeting Title</label><input id="mTitle" placeholder="e.g. Sprint 12 Planning" oninput="upd()"></div>
+            <div class="fg"><label>Date</label><input type="date" id="mDate"></div>
+            <div class="fg"><label>Time</label><input type="time" id="mTime"></div>
+            <div class="fg">
+              <label>Duration</label>
+              <select id="mDur">
+                <option>15 minutes</option><option>30 minutes</option>
+                <option selected>1 hour</option><option>1.5 hours</option>
+                <option>2 hours</option><option>Half day</option><option>Full day</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Meeting Type</label>
+              <select id="mType">
+                <option>Sprint Planning</option><option>Sprint Review</option>
+                <option>Sprint Retrospective</option><option>Daily Standup</option>
+                <option>Architecture Review</option><option>Design Session</option>
+                <option>Stakeholder Update</option><option>One-on-One</option>
+                <option>Kick-off</option><option>Post-mortem / RCA</option>
+                <option>Workshop</option><option>Ad-hoc</option>
+              </select>
+            </div>
+            <div class="fg"><label>Location / Meeting Link</label><input id="mLoc" placeholder="Teams, Zoom, Room A…"></div>
+            <div class="fg"><label>Project / Team</label><input id="mProj" placeholder="Project Alpha"></div>
+            <div class="fg"><label>Facilitator</label><input id="mFac" placeholder="Name"></div>
+            <div class="fg"><label>Note Taker</label><input id="mNote" placeholder="Name"></div>
+          </div>
+          <div class="fg">
+            <label>Meeting Objective / Purpose</label>
+            <textarea id="mObj" placeholder="What is the goal of this meeting?"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Attendees ── -->
+      <div class="panel" id="p-att">
+        <div class="card">
+          <div class="card-hd">👥 Attendees <button class="btn btn-primary btn-sm" onclick="addAtt()">+ Add</button></div>
+          <div id="attList"></div>
+          <div class="empty" id="emAtt"><div class="ico">👤</div><p>No attendees yet. Click <strong>+ Add</strong>.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Agenda ── -->
+      <div class="panel" id="p-ag">
+        <div class="card">
+          <div class="card-hd">📋 Agenda Items <button class="btn btn-primary btn-sm" onclick="addAg()">+ Add Item</button></div>
+          <div id="agList"></div>
+          <div class="empty" id="emAg"><div class="ico">📋</div><p>No agenda items yet. Click <strong>+ Add Item</strong>.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Decisions ── -->
+      <div class="panel" id="p-dec">
+        <div class="card">
+          <div class="card-hd">✅ Key Decisions <button class="btn btn-primary btn-sm" onclick="addDec()">+ Add Decision</button></div>
+          <div id="decList"></div>
+          <div class="empty" id="emDec"><div class="ico">✅</div><p>No decisions recorded yet. Click <strong>+ Add Decision</strong>.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Action Items ── -->
+      <div class="panel" id="p-act">
+        <div class="card">
+          <div class="card-hd">⚡ Action Items <button class="btn btn-primary btn-sm" onclick="addAct()">+ Add Action</button></div>
+          <div id="actList"></div>
+          <div class="empty" id="emAct"><div class="ico">⚡</div><p>No action items yet. Click <strong>+ Add Action</strong>.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Parking Lot ── -->
+      <div class="panel" id="p-pk">
+        <div class="card">
+          <div class="card-hd">🅿 Parking Lot <button class="btn btn-primary btn-sm" onclick="addPk()">+ Add Item</button></div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Items raised during the meeting that are deferred for later discussion.</p>
+          <div id="pkList"></div>
+          <div class="empty" id="emPk"><div class="ico">🅿</div><p>No parking lot items. Click <strong>+ Add Item</strong>.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Next Meeting ── -->
+      <div class="panel" id="p-next">
+        <div class="card">
+          <div class="card-hd">📅 Next Meeting</div>
+          <div class="g2" style="margin-bottom:14px;">
+            <div class="fg"><label>Date</label><input type="date" id="nDate"></div>
+            <div class="fg"><label>Time</label><input type="time" id="nTime"></div>
+            <div class="fg">
+              <label>Duration</label>
+              <select id="nDur"><option>15 minutes</option><option>30 minutes</option><option selected>1 hour</option><option>1.5 hours</option><option>2 hours</option></select>
+            </div>
+            <div class="fg"><label>Location / Link</label><input id="nLoc" placeholder="Same as this meeting"></div>
+          </div>
+          <div class="fg">
+            <label>Proposed Agenda / Topics to Carry Forward</label>
+            <textarea id="nAg" rows="5" placeholder="List topics for next time…"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let seq=1;
+const D={att:[],ag:[],dec:[],act:[],pk:[]};
+
+function nav(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nb(s){return e(s).replace(/\n/g,'<br>');}
+function v(id){return document.getElementById(id)?.value||'';}
+
+function upd(){
+  const keys=['att','ag','dec','act','pk'];
+  const labels=['attendee','agenda item','decision','action item','parking lot item'];
+  keys.forEach((k,i)=>{
+    const n=D[k].length;
+    document.getElementById('st-'+k).textContent=`${n} ${labels[i]}${n!==1?'s':''}`;
+    document.getElementById('nc-'+k).textContent=n;
+  });
+}
+
+function show(listId,emId,html){
+  const list=document.getElementById(listId),em=document.getElementById(emId);
+  if(!html){list.innerHTML='';em.style.display='block';}
+  else{list.innerHTML=html;em.style.display='none';}
+}
+
+// ── ATTENDEES ────────────────────────────────────────
+function addAtt(){D.att.push({id:seq++,name:'',role:'',present:true});renderAtt();upd();}
+function rmAtt(id){D.att=D.att.filter(x=>x.id!==id);renderAtt();upd();}
+function setAtt(id,k,v2){const x=D.att.find(a=>a.id===id);if(x)x[k]=v2;}
+function renderAtt(){
+  show('attList','emAtt',D.att.map(a=>`
+    <div class="item-card">
+      <button class="btn btn-danger btn-sm item-rm" onclick="rmAtt(${a.id})">✕</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center;">
+        <div class="fg"><label>Name</label><input value="${e(a.name)}" placeholder="Full name" oninput="setAtt(${a.id},'name',this.value)"></div>
+        <div class="fg"><label>Role / Title</label><input value="${e(a.role)}" placeholder="e.g. Tech Lead" oninput="setAtt(${a.id},'role',this.value)"></div>
+        <label class="present-lbl" style="margin-top:18px;"><input type="checkbox" ${a.present?'checked':''} onchange="setAtt(${a.id},'present',this.checked)"> Present</label>
+      </div>
+    </div>`).join(''));
+}
+
+// ── AGENDA ───────────────────────────────────────────
+function addAg(){D.ag.push({id:seq++,item:'',mins:'',notes:''});renderAg();upd();}
+function rmAg(id){D.ag=D.ag.filter(x=>x.id!==id);renderAg();upd();}
+function setAg(id,k,v2){const x=D.ag.find(a=>a.id===id);if(x)x[k]=v2;}
+function renderAg(){
+  show('agList','emAg',D.ag.map((a,i)=>`
+    <div class="item-card">
+      <button class="btn btn-danger btn-sm item-rm" onclick="rmAg(${a.id})">✕</button>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);padding-bottom:9px;min-width:18px;">${i+1}.</span>
+        <div class="fg" style="flex:1;"><label>Agenda Item</label><input value="${e(a.item)}" placeholder="Topic or discussion point" oninput="setAg(${a.id},'item',this.value)"></div>
+        <div class="fg" style="width:90px;"><label>Mins</label><input type="number" value="${e(a.mins)}" placeholder="15" min="0" oninput="setAg(${a.id},'mins',this.value)"></div>
+      </div>
+      <div class="fg"><label>Discussion Notes</label><textarea rows="2" placeholder="Key discussion points…" oninput="setAg(${a.id},'notes',this.value)">${e(a.notes)}</textarea></div>
+    </div>`).join(''));
+}
+
+// ── DECISIONS ────────────────────────────────────────
+function addDec(){D.dec.push({id:seq++,decision:'',madeBy:'',context:''});renderDec();upd();}
+function rmDec(id){D.dec=D.dec.filter(x=>x.id!==id);renderDec();upd();}
+function setDec(id,k,v2){const x=D.dec.find(d=>d.id===id);if(x)x[k]=v2;}
+function renderDec(){
+  show('decList','emDec',D.dec.map((d,i)=>`
+    <div class="item-card" style="border-left:3px solid #16a34a;">
+      <button class="btn btn-danger btn-sm item-rm" onclick="rmDec(${d.id})">✕</button>
+      <div class="g2" style="margin-bottom:10px;">
+        <div class="fg" style="grid-column:span 2;"><label>Decision #${i+1}</label><input value="${e(d.decision)}" placeholder="What was decided?" oninput="setDec(${d.id},'decision',this.value)"></div>
+        <div class="fg"><label>Made By</label><input value="${e(d.madeBy)}" placeholder="Name / Group" oninput="setDec(${d.id},'madeBy',this.value)"></div>
+      </div>
+      <div class="fg"><label>Context / Rationale</label><textarea rows="2" placeholder="Why was this decision made?" oninput="setDec(${d.id},'context',this.value)">${e(d.context)}</textarea></div>
+    </div>`).join(''));
+}
+
+// ── ACTIONS ──────────────────────────────────────────
+function addAct(){D.act.push({id:seq++,task:'',owner:'',due:'',priority:'Medium',status:'Open'});renderAct();upd();}
+function rmAct(id){D.act=D.act.filter(x=>x.id!==id);renderAct();upd();}
+function setAct(id,k,v2){const x=D.act.find(a=>a.id===id);if(x)x[k]=v2;}
+function renderAct(){
+  show('actList','emAct',D.act.map((a,i)=>`
+    <div class="item-card" style="border-left:3px solid #d97706;">
+      <button class="btn btn-danger btn-sm item-rm" onclick="rmAct(${a.id})">✕</button>
+      <div class="fg" style="margin-bottom:10px;"><label>Action #${i+1} — Task</label><input value="${e(a.task)}" placeholder="What needs to be done?" oninput="setAct(${a.id},'task',this.value)"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+        <div class="fg"><label>Owner</label><input value="${e(a.owner)}" placeholder="Name" oninput="setAct(${a.id},'owner',this.value)"></div>
+        <div class="fg"><label>Due Date</label><input type="date" value="${e(a.due)}" oninput="setAct(${a.id},'due',this.value)"></div>
+        <div class="fg"><label>Priority</label><select onchange="setAct(${a.id},'priority',this.value)">${['High','Medium','Low'].map(p=>`<option${p===a.priority?' selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="fg"><label>Status</label><select onchange="setAct(${a.id},'status',this.value)">${['Open','In Progress','Done','Blocked'].map(s=>`<option${s===a.status?' selected':''}>${s}</option>`).join('')}</select></div>
+      </div>
+    </div>`).join(''));
+}
+
+// ── PARKING LOT ──────────────────────────────────────
+function addPk(){D.pk.push({id:seq++,item:'',by:''});renderPk();upd();}
+function rmPk(id){D.pk=D.pk.filter(x=>x.id!==id);renderPk();upd();}
+function setPk(id,k,v2){const x=D.pk.find(p=>p.id===id);if(x)x[k]=v2;}
+function renderPk(){
+  show('pkList','emPk',D.pk.map(p=>`
+    <div class="item-card">
+      <button class="btn btn-danger btn-sm item-rm" onclick="rmPk(${p.id})">✕</button>
+      <div class="g2">
+        <div class="fg" style="grid-column:span 2;"><label>Item</label><input value="${e(p.item)}" placeholder="Deferred topic or question" oninput="setPk(${p.id},'item',this.value)"></div>
+        <div class="fg"><label>Raised By</label><input value="${e(p.by)}" placeholder="Name" oninput="setPk(${p.id},'by',this.value)"></div>
+      </div>
+    </div>`).join(''));
+}
+
+// ── EXPORT ───────────────────────────────────────────
+const PC={High:'color:#991b1b;background:#fee2e2',Medium:'color:#92400e;background:#fef3c7',Low:'color:#166534;background:#dcfce7'};
+const SC={Open:'color:#1e40af;background:#dbeafe','In Progress':'color:#92400e;background:#fef3c7',Done:'color:#166534;background:#dcfce7',Blocked:'color:#991b1b;background:#fee2e2'};
+
+function exportHTML(){
+  const title=v('mTitle')||'Meeting Notes';
+  const html=`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${e(title)}</title>
+<style>
+body{font-family:'Segoe UI',sans-serif;background:#faf8ff;color:#1e293b;padding:40px;font-size:13px;max-width:900px;margin:0 auto;}
+h1{font-size:22px;font-weight:800;color:#6d28d9;margin-bottom:6px;}
+.meta{color:#64748b;font-size:12px;margin-bottom:6px;line-height:1.8;}
+.obj{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:12px 16px;font-size:13px;color:#4c1d95;margin-bottom:24px;line-height:1.6;}
+h2{font-size:13px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:.07em;margin:24px 0 10px;padding-bottom:6px;border-bottom:2px solid #ddd6fe;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 6px rgba(109,40,217,.06);}
+th{background:#f5f3ff;color:#5b21b6;font-size:10.5px;font-weight:700;text-transform:uppercase;padding:8px 14px;text-align:left;border-bottom:1px solid #e4e0f5;}
+td{padding:9px 14px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.dec{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:10px;}
+.dec-n{font-size:10px;font-weight:700;color:#166534;margin-bottom:4px;}
+.dec-t{font-size:14px;font-weight:600;color:#14532d;line-height:1.4;}
+.dec-by{font-size:11px;color:#16a34a;margin-top:4px;}
+.dec-ctx{font-size:12px;color:#374151;margin-top:6px;line-height:1.6;}
+.pk-row{background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:8px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+footer{margin-top:36px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;}
+</style></head><body>
+<h1>📝 ${e(title)}</h1>
+<div class="meta">
+  <strong>${e(v('mType'))}</strong> &nbsp;·&nbsp; ${e(v('mDate'))} ${e(v('mTime'))} (${e(v('mDur'))}) &nbsp;·&nbsp; ${e(v('mLoc')||'—')}<br>
+  Project: <strong>${e(v('mProj')||'—')}</strong> &nbsp;·&nbsp;
+  Facilitator: <strong>${e(v('mFac')||'—')}</strong> &nbsp;·&nbsp;
+  Note-taker: <strong>${e(v('mNote')||'—')}</strong>
+</div>
+${v('mObj')?`<div class="obj"><strong>Objective:</strong> ${nb(v('mObj'))}</div>`:''}
+
+${D.att.length?`<h2>👥 Attendees</h2>
+<table><thead><tr><th>Name</th><th>Role</th><th>Present</th></tr></thead><tbody>
+${D.att.map(a=>`<tr><td><strong>${e(a.name)}</strong></td><td>${e(a.role)}</td><td>${a.present?'✅ Yes':'❌ No'}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${D.ag.length?`<h2>📋 Agenda</h2>
+<table><thead><tr><th>#</th><th>Topic</th><th>Time</th><th>Notes</th></tr></thead><tbody>
+${D.ag.map((a,i)=>`<tr><td style="font-weight:700;color:#64748b;">${i+1}</td><td><strong>${e(a.item)}</strong></td><td>${a.mins?a.mins+'m':''}</td><td style="color:#374151;">${nb(a.notes)}</td></tr>`).join('')}
+</tbody></table>`:''}
+
+${D.dec.length?`<h2>✅ Decisions</h2>
+${D.dec.map((d,i)=>`<div class="dec">
+  <div class="dec-n">DECISION ${i+1}</div>
+  <div class="dec-t">${e(d.decision)}</div>
+  ${d.madeBy?`<div class="dec-by">Made by: ${e(d.madeBy)}</div>`:''}
+  ${d.context?`<div class="dec-ctx">${nb(d.context)}</div>`:''}
+</div>`).join('')}`:''}
+
+${D.act.length?`<h2>⚡ Action Items</h2>
+<table><thead><tr><th>#</th><th>Task</th><th>Owner</th><th>Due Date</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+${D.act.map((a,i)=>`<tr>
+  <td style="font-weight:700;color:#64748b;">${i+1}</td>
+  <td><strong>${e(a.task)}</strong></td>
+  <td>${e(a.owner)}</td><td>${e(a.due)}</td>
+  <td><span class="badge" style="${PC[a.priority]||''}">${e(a.priority)}</span></td>
+  <td><span class="badge" style="${SC[a.status]||''}">${e(a.status)}</span></td>
+</tr>`).join('')}
+</tbody></table>`:''}
+
+${D.pk.length?`<h2>🅿 Parking Lot</h2>
+${D.pk.map(p=>`<div class="pk-row"><span>${e(p.item)}</span><span style="color:#94a3b8;font-size:11px;">${e(p.by)}</span></div>`).join('')}`:''}
+
+${v('nDate')?`<h2>📅 Next Meeting</h2>
+<p style="margin-bottom:8px;">📅 <strong>${e(v('nDate'))}</strong> ${e(v('nTime'))} (${e(v('nDur'))}) &nbsp;·&nbsp; ${e(v('nLoc')||'TBD')}</p>
+${v('nAg')?`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;line-height:1.7;">${nb(v('nAg'))}</div>`:''}`:''}
+
+<footer>Generated by QuickTools · Meeting Notes · ${new Date().toISOString()}</footer>
+</body></html>`;
+  const fn=`MeetingNotes_${(title).replace(/\s+/g,'-').slice(0,40)}_${new Date().toISOString().slice(0,10)}.html`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=fn;a.click();
+}
+
+(function init(){
+  const t=new Date();
+  document.getElementById('mDate').value=t.toISOString().slice(0,10);
+  const hh=String(t.getHours()).padStart(2,'0');
+  const mm=String(Math.min(Math.round(t.getMinutes()/15)*15,59)).padStart(2,'0');
+  document.getElementById('mTime').value=`${hh}:${mm}`;
+
+  // ── Prefilled demo data ──────────────────────────────
+  document.getElementById('mTitle').value='Sprint 12 Planning';
+  document.getElementById('mProj').value='Project Alpha';
+  document.getElementById('mFac').value='Alice Johnson';
+  document.getElementById('mNote').value='Carol White';
+  document.getElementById('mLoc').value='Microsoft Teams';
+  document.getElementById('mObj').value='Define Sprint 12 scope and goals, confirm team capacity, agree on priorities from backlog, and assign action items.';
+
+  // Attendees
+  D.att.push({id:seq++,name:'Alice Johnson',role:'Tech Lead',present:true});
+  D.att.push({id:seq++,name:'Bob Smith',role:'Senior Developer',present:true});
+  D.att.push({id:seq++,name:'Carol White',role:'Business Analyst',present:true});
+  D.att.push({id:seq++,name:'David Lee',role:'QA Engineer',present:false});
+
+  // Agenda
+  D.ag.push({id:seq++,item:'Sprint 11 Review & Velocity',mins:'15',notes:'Reviewed Sprint 11: 42 of 48 story points delivered. Remaining 6 points rolled into backlog. Demo of new customer search feature well-received.'});
+  D.ag.push({id:seq++,item:'Backlog Grooming & Sprint 12 Goals',mins:'30',notes:'Prioritised top 8 user stories. Sprint 12 goal: complete checkout flow redesign and fix 3 P1 bugs. Capacity confirmed at ~180 net hours.'});
+  D.ag.push({id:seq++,item:'Technical Debt & Risks',mins:'15',notes:'Agreed to allocate 10% of sprint capacity to address legacy payment module coupling. Azure Service Bus migration flagged as a dependency.'});
+
+  // Decisions
+  D.dec.push({id:seq++,decision:'Adopt Azure Service Bus for async messaging between Order and Notification services',madeBy:'Alice Johnson',context:'After evaluating RabbitMQ and Azure Service Bus, team agreed Azure SB reduces operational overhead and aligns with existing cloud infrastructure. Cost difference is negligible at current scale.'});
+  D.dec.push({id:seq++,decision:'Sprint 12 effective capacity set at 80% due to release freeze on the final day',madeBy:'Team',context:'A release freeze is in effect from Thursday EOD (last sprint day), meaning no deployments on Friday. Sprint committments adjusted accordingly.'});
+
+  // Action Items
+  const due1=new Date(t);due1.setDate(t.getDate()+5);
+  const due2=new Date(t);due2.setDate(t.getDate()+3);
+  const due3=new Date(t);due3.setDate(t.getDate()+9);
+  D.act.push({id:seq++,task:'Set up Azure Service Bus namespace, topics and subscriptions in dev environment',owner:'Bob Smith',due:due1.toISOString().slice(0,10),priority:'High',status:'Open'});
+  D.act.push({id:seq++,task:'Update sprint board with groomed user stories and acceptance criteria',owner:'Carol White',due:due2.toISOString().slice(0,10),priority:'Medium',status:'Open'});
+  D.act.push({id:seq++,task:'Write integration tests for checkout flow — cover happy path and payment failure',owner:'David Lee',due:due3.toISOString().slice(0,10),priority:'High',status:'In Progress'});
+  D.act.push({id:seq++,task:'Send Sprint 12 kick-off summary email to stakeholders',owner:'Alice Johnson',due:due2.toISOString().slice(0,10),priority:'Low',status:'Open'});
+
+  // Parking Lot
+  D.pk.push({id:seq++,item:'API versioning strategy — carry to Architecture Review next week',by:'Bob Smith'});
+  D.pk.push({id:seq++,item:'Should we upgrade to .NET 9 this quarter? Needs cost/benefit analysis',by:'Alice Johnson'});
+
+  // Next meeting
+  const nxt=new Date(t);nxt.setDate(t.getDate()+14);
+  document.getElementById('nDate').value=nxt.toISOString().slice(0,10);
+  document.getElementById('nTime').value=`${hh}:${mm}`;
+  document.getElementById('nLoc').value='Microsoft Teams';
+  document.getElementById('nAg').value='Sprint 12 Review & Demo\nSprint 13 Planning\nQ3 roadmap alignment';
+
+  renderAtt();renderAg();renderDec();renderAct();renderPk();upd();
+})();
+</script>
+</body>
+</html>

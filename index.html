@@ -154,6 +154,24 @@ nav {
 .card-5::before { background: linear-gradient(90deg, #0d9488, #34d399); }
 .card-5:hover   { border-color: #0d9488; }
 
+.card-6::before { background: linear-gradient(90deg, #1d4ed8, #6366f1); }
+.card-6:hover   { border-color: #1d4ed8; }
+
+.card-7::before { background: linear-gradient(90deg, #6d28d9, #a78bfa); }
+.card-7:hover   { border-color: #6d28d9; }
+
+.card-8::before { background: linear-gradient(90deg, #0f766e, #34d399); }
+.card-8:hover   { border-color: #0f766e; }
+
+.card-9::before  { background: linear-gradient(90deg, #b45309, #f59e0b); }
+.card-9:hover    { border-color: #b45309; }
+
+.card-10::before { background: linear-gradient(90deg, #1e40af, #059669); }
+.card-10:hover   { border-color: #1e40af; }
+
+.card-11::before { background: linear-gradient(90deg, #7c3aed, #0891b2); }
+.card-11:hover   { border-color: #7c3aed; }
+
 .card-icon {
   width: 48px;
   height: 48px;
@@ -169,6 +187,12 @@ nav {
 .card-3 .card-icon { background: rgba(124,58,237,0.15); }
 .card-4 .card-icon { background: rgba(21,88,176,0.15); }
 .card-5 .card-icon { background: rgba(13,148,136,0.15); }
+.card-6 .card-icon { background: rgba(29,78,216,0.15); }
+.card-7 .card-icon { background: rgba(109,40,217,0.15); }
+.card-8  .card-icon { background: rgba(15,118,110,0.15); }
+.card-9  .card-icon { background: rgba(180,83,9,0.15); }
+.card-10 .card-icon { background: rgba(30,64,175,0.15); }
+.card-11 .card-icon { background: rgba(124,58,237,0.15); }
 
 .card-meta { flex: 1; }
 .card-meta h2 {
@@ -216,6 +240,19 @@ nav {
 .card-3 .card-cta { color: #a78bfa; }
 .card-4 .card-cta { color: #60a5fa; }
 .card-5 .card-cta { color: #34d399; }
+.card-6 .card-cta { color: #818cf8; }
+.card-7 .card-cta { color: #c084fc; }
+.card-8  .card-cta { color: #2dd4bf; }
+.card-9  .card-cta { color: #fbbf24; }
+.card-10 .card-cta { color: #60a5fa; }
+.card-11 .card-cta { color: #a78bfa; }
+
+.card-6 .tag { background: rgba(29,78,216,0.12); color: #818cf8; border-color: rgba(29,78,216,0.25); }
+.card-7 .tag { background: rgba(109,40,217,0.12); color: #c084fc; border-color: rgba(109,40,217,0.25); }
+.card-8  .tag { background: rgba(15,118,110,0.12);  color: #2dd4bf;  border-color: rgba(15,118,110,0.25); }
+.card-9  .tag { background: rgba(180,83,9,0.12);    color: #fbbf24;  border-color: rgba(180,83,9,0.25); }
+.card-10 .tag { background: rgba(30,64,175,0.12);   color: #60a5fa;  border-color: rgba(30,64,175,0.25); }
+.card-11 .tag { background: rgba(124,58,237,0.12);  color: #a78bfa;  border-color: rgba(124,58,237,0.25); }
 
 .arrow {
   font-size: 18px;
@@ -247,7 +284,7 @@ footer {
     <span class="icon">⚡</span>
     QuickTools
   </a>
-  <span class="nav-badge">5 tools</span>
+  <span class="nav-badge">11 tools</span>
 </nav>
 
 <section class="hero">
@@ -327,6 +364,57 @@ footer {
   </a>
 
 
+  <a class="card card-6" href="TeamCapacityPlanner.html">
+    <div class="card-icon">📅</div>
+    <div class="card-meta">
+      <h2>Team Capacity Planner</h2>
+      <p>Plan sprint capacity by entering team members, availability %, planned leave, and hours per day. Calculates net available hours with configurable focus-factor buffer.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Capacity</span>
+      <span class="tag">Sprint</span>
+      <span class="tag">Planning</span>
+      <span class="tag">Agile</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-7" href="MeetingNotes.html">
+    <div class="card-icon">📝</div>
+    <div class="card-meta">
+      <h2>Meeting Notes Template</h2>
+      <p>Structured meeting notes with sections for attendees, agenda, key decisions, action items (owner, due date, priority), and parking lot. Export as a shareable HTML document.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Meetings</span>
+      <span class="tag">Action Items</span>
+      <span class="tag">Decisions</span>
+      <span class="tag">Docs</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-8" href="APIContractDesigner.html">
+    <div class="card-icon">🔌</div>
+    <div class="card-meta">
+      <h2>API Contract Designer</h2>
+      <p>Define REST API endpoints with method, path, path &amp; query parameters, request body schema, and response codes. Generates a readable spec preview and exports JSON + HTML documentation.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">REST API</span>
+      <span class="tag">Contract</span>
+      <span class="tag">OpenAPI</span>
+      <span class="tag">Docs</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
   <a class="card card-5" href="ADR-Tool.html">
     <div class="card-icon">📝</div>
     <div class="card-meta">
@@ -338,6 +426,58 @@ footer {
       <span class="tag">Architecture</span>
       <span class="tag">Decisions</span>
       <span class="tag">Docs</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+
+  <a class="card card-9" href="OKR_Goals_Tracker.html">
+    <div class="card-icon">🎯</div>
+    <div class="card-meta">
+      <h2>OKR Goals Tracker</h2>
+      <p>Define and track Objectives &amp; Key Results across quarters. Set confidence scores, measure key result progress, and get a visual summary of goal completion.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">OKR</span>
+      <span class="tag">Goals</span>
+      <span class="tag">Planning</span>
+      <span class="tag">Tracking</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-10" href="DORA_Metrics_Dashboard.html">
+    <div class="card-icon">📈</div>
+    <div class="card-meta">
+      <h2>DORA Metrics Dashboard</h2>
+      <p>Track the 4 key DevOps metrics: Deployment Frequency, Lead Time for Changes, MTTR, and Change Failure Rate. Input data per sprint and visualize trends with DORA tier benchmarks.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">DevOps</span>
+      <span class="tag">DORA</span>
+      <span class="tag">Metrics</span>
+      <span class="tag">Charts</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-11" href="Sprint_Retrospective_Board.html">
+    <div class="card-icon">🔄</div>
+    <div class="card-meta">
+      <h2>Sprint Retrospective Board</h2>
+      <p>Interactive retro board with What Went Well, What to Improve, and Action Items columns. Supports dot voting, inline card editing, sort by votes, and markdown export.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Retrospective</span>
+      <span class="tag">Agile</span>
+      <span class="tag">Voting</span>
+      <span class="tag">Sprint</span>
     </div>
     <div class="card-cta">
       Open tool <span class="arrow">→</span>

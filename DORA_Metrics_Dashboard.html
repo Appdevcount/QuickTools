@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DORA Metrics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f9;--card:#fff;--border:#dde2ea;
+  --accent:#2563eb;--accent-light:#eff6ff;
+  --elite:#059669;--elite-bg:#ecfdf5;
+  --high:#2563eb;--high-bg:#eff6ff;
+  --med:#d97706;--med-bg:#fffbeb;
+  --low:#dc2626;--low-bg:#fef2f2;
+  --text:#1e293b;--muted:#64748b;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+header{background:var(--accent);color:#fff;padding:13px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+header h1{font-size:17px;font-weight:700;}
+.hdr-sub{font-size:11px;opacity:.8;margin-top:2px;}
+.btn{padding:6px 13px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;line-height:1.4;}
+.btn-primary{background:#fff;color:var(--accent);}
+.btn-primary:hover{background:#e0eaff;}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.35);}
+.btn-ghost:hover{background:rgba(255,255,255,.22);}
+.btn-xs{padding:3px 9px;font-size:11px;}
+.btn-red{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+.btn-red:hover{background:#fee2e2;}
+.btn-slate{background:#f1f5f9;color:var(--text);}
+.btn-slate:hover{background:#e2e8f0;}
+.main{padding:16px 22px 40px;max-width:1400px;margin:0 auto;}
+.tier-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:11px;}
+.t-pill{display:flex;align-items:center;gap:5px;font-weight:600;}
+.t-dot{width:9px;height:9px;border-radius:50%;}
+.ov-banner{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 18px;margin-bottom:16px;box-shadow:var(--shadow);flex-wrap:wrap;}
+.ov-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+.ov-tier{font-size:26px;font-weight:800;line-height:1.1;}
+.ov-desc{font-size:11px;color:var(--muted);margin-top:3px;}
+.ov-right{margin-left:auto;display:grid;grid-template-columns:auto auto;gap:3px 10px;align-items:center;font-size:11px;}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:800px){.metric-grid{grid-template-columns:1fr;}}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;}
+.mc-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px;}
+.mc-title{font-size:12px;font-weight:700;}
+.mc-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.mc-val{text-align:right;flex-shrink:0;}
+.mc-num{font-size:22px;font-weight:800;line-height:1.1;}
+.mc-unit{font-size:10px;color:var(--muted);}
+.mc-delta{font-size:10px;margin-top:2px;min-height:14px;}
+.chart-wrap{position:relative;height:155px;}
+.tb{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;}
+.tb-Elite{background:var(--elite-bg);color:var(--elite);}
+.tb-High{background:var(--high-bg);color:var(--high);}
+.tb-Medium{background:var(--med-bg);color:var(--med);}
+.tb-Low{background:var(--low-bg);color:var(--low);}
+.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;}
+.tbl-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.tbl-title{font-size:13px;font-weight:700;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:#f8fafc;border-bottom:2px solid var(--border);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fafc;}
+.td-act{display:flex;gap:5px;}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty h3{font-size:14px;color:var(--text);margin-bottom:5px;}
+.empty p{font-size:11px;}
+.ov-modal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;}
+.ov-modal.open{display:flex;}
+.modal{background:#fff;border-radius:12px;width:500px;max-width:calc(100vw - 32px);max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.mhdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.mhdr h2{font-size:15px;font-weight:700;}
+.close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px;}
+.close-btn:hover{color:var(--text);}
+.mbody{padding:18px 20px;}
+.mfooter{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.fg input{border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:13px;color:var(--text);width:100%;outline:none;transition:border-color .15s;}
+.fg input:focus{border-color:var(--accent);}
+.fhint{font-size:10px;color:var(--muted);}
+.bm-box{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:4px;}
+.bm-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.bm-grid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:3px 6px;font-size:10px;align-items:center;}
+.bm-grid .bh{font-weight:700;text-align:center;}
+.bm-grid .bv{text-align:center;color:var(--muted);}
+.bm-grid .bl{color:var(--muted);padding-right:6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>DORA Metrics Dashboard</h1>
+    <div class="hdr-sub">DevOps Research &amp; Assessment — 4 Key Metrics</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="btn btn-ghost btn-xs" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-primary" onclick="openModal()">+ Add Entry</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="tier-legend">
+    <span style="font-weight:700;color:var(--muted)">DORA Tiers:</span>
+    <span class="t-pill"><span class="t-dot" style="background:var(--elite)"></span>Elite</span>
+    <span class="t-pill"><span class="t-dot" style="background:var(--high)"></span>High</span>
+    <span class="t-pill"><span class="t-dot" style="background:var(--med)"></span>Medium</span>
+    <span class="t-pill"><span class="t-dot" style="background:var(--low)"></span>Low</span>
+    <span style="color:var(--muted);font-size:10px">Based on latest entry</span>
+  </div>
+
+  <div class="ov-banner">
+    <div>
+      <div class="ov-lbl">Overall Performance Tier</div>
+      <div class="ov-tier" id="ovTier">—</div>
+      <div class="ov-desc" id="ovDesc">Add entries to see your DORA tier</div>
+    </div>
+    <div class="ov-right" id="ovDetails"></div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="mc">
+      <div class="mc-hdr">
+        <div><div class="mc-title">Deployment Frequency</div><div class="mc-sub">How often code is deployed to production</div></div>
+        <div class="mc-val">
+          <div class="mc-num" id="dfNum">—</div>
+          <div class="mc-unit">deploys / week</div>
+          <span class="tb" id="dfBadge">No data</span>
+          <div class="mc-delta" id="dfDelta"></div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="dfChart"></canvas></div>
+    </div>
+
+    <div class="mc">
+      <div class="mc-hdr">
+        <div><div class="mc-title">Lead Time for Changes</div><div class="mc-sub">Commit to production deployment time</div></div>
+        <div class="mc-val">
+          <div class="mc-num" id="ltNum">—</div>
+          <div class="mc-unit">avg (hours shown)</div>
+          <span class="tb" id="ltBadge">No data</span>
+          <div class="mc-delta" id="ltDelta"></div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="ltChart"></canvas></div>
+    </div>
+
+    <div class="mc">
+      <div class="mc-hdr">
+        <div><div class="mc-title">Mean Time to Restore (MTTR)</div><div class="mc-sub">Time to recover from a production failure</div></div>
+        <div class="mc-val">
+          <div class="mc-num" id="mttrNum">—</div>
+          <div class="mc-unit">avg (hours shown)</div>
+          <span class="tb" id="mttrBadge">No data</span>
+          <div class="mc-delta" id="mttrDelta"></div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="mttrChart"></canvas></div>
+    </div>
+
+    <div class="mc">
+      <div class="mc-hdr">
+        <div><div class="mc-title">Change Failure Rate</div><div class="mc-sub">% of deployments causing incidents</div></div>
+        <div class="mc-val">
+          <div class="mc-num" id="cfrNum">—</div>
+          <div class="mc-unit">percent</div>
+          <span class="tb" id="cfrBadge">No data</span>
+          <div class="mc-delta" id="cfrDelta"></div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="cfrChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="tbl-card">
+    <div class="tbl-title-row">
+      <div class="tbl-title">Sprint / Release History</div>
+      <button class="btn btn-xs btn-red" id="clearBtn" style="display:none" onclick="clearAll()">Clear All</button>
+    </div>
+    <div id="tblWrap">
+      <div class="empty"><h3>No data yet</h3><p>Click "+ Add Entry" to record your first sprint or release metrics.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="ov-modal" id="modalBg">
+  <div class="modal">
+    <div class="mhdr">
+      <h2 id="mTitle">Add Sprint / Release Entry</h2>
+      <button class="close-btn" onclick="closeModal()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg">
+          <label>Sprint / Release Name</label>
+          <input id="fName" type="text" placeholder="e.g. Sprint 23 / v2.1.0">
+        </div>
+        <div class="fg">
+          <label>Date</label>
+          <input id="fDate" type="date">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>Deployments to Prod</label>
+          <input id="fDeploys" type="number" min="0" placeholder="12">
+          <span class="fhint">Total deploys in the period</span>
+        </div>
+        <div class="fg">
+          <label>Period Length (days)</label>
+          <input id="fPeriod" type="number" min="1" placeholder="14" value="14">
+          <span class="fhint">Sprint length (default: 14)</span>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>Lead Time (hours)</label>
+          <input id="fLT" type="number" min="0" step="0.1" placeholder="4.5">
+          <span class="fhint">Avg hours: commit &#8594; production</span>
+        </div>
+        <div class="fg">
+          <label>MTTR (hours)</label>
+          <input id="fMTTR" type="number" min="0" step="0.1" placeholder="1.5">
+          <span class="fhint">Avg hours to restore service</span>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>Change Failure Rate (%)</label>
+          <input id="fCFR" type="number" min="0" max="100" step="0.1" placeholder="5">
+          <span class="fhint">% of deploys causing incidents</span>
+        </div>
+        <div class="fg"></div>
+      </div>
+      <div class="bm-box">
+        <div class="bm-title">DORA Benchmark Reference</div>
+        <div class="bm-grid">
+          <div></div>
+          <div class="bh" style="color:var(--elite)">Elite</div>
+          <div class="bh" style="color:var(--high)">High</div>
+          <div class="bh" style="color:var(--med)">Medium</div>
+          <div class="bh" style="color:var(--low)">Low</div>
+          <div class="bl">Deploy Freq</div>
+          <div class="bv">&#8805;7/wk</div><div class="bv">1&#8211;7/wk</div><div class="bv">&#8805;0.25/wk</div><div class="bv">&lt;0.25/wk</div>
+          <div class="bl">Lead Time</div>
+          <div class="bv">&#8804;1h</div><div class="bv">1h&#8211;1wk</div><div class="bv">1wk&#8211;1mo</div><div class="bv">&gt;1mo</div>
+          <div class="bl">MTTR</div>
+          <div class="bv">&#8804;1h</div><div class="bv">1h&#8211;1d</div><div class="bv">1d&#8211;1wk</div><div class="bv">&gt;1wk</div>
+          <div class="bl">Failure Rate</div>
+          <div class="bv">&#8804;5%</div><div class="bv">5&#8211;10%</div><div class="bv">10&#8211;15%</div><div class="bv">&gt;15%</div>
+        </div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-slate" onclick="closeModal()">Cancel</button>
+      <button class="btn" style="background:var(--accent);color:#fff" onclick="saveEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK = 'dora_v1';
+let entries = JSON.parse(localStorage.getItem(SK) || '[]');
+let editId = null;
+const charts = {};
+
+const TC = { Elite:'#059669', High:'#2563eb', Medium:'#d97706', Low:'#dc2626' };
+const TO = ['Low','Medium','High','Elite'];
+const TD = {
+  Elite: 'Top-tier DevOps performance — best in class',
+  High:  'Strong performance across all metrics',
+  Medium:'Average performance — focus on bottlenecks',
+  Low:   'Below average — significant improvement needed'
+};
+
+const dfT  = pw => pw>=7?'Elite':pw>=1?'High':pw>=0.25?'Medium':'Low';
+const ltT  = h  => h<=1?'Elite':h<=168?'High':h<=720?'Medium':'Low';
+const mtT  = h  => h<=1?'Elite':h<=24?'High':h<=168?'Medium':'Low';
+const cfrT = p  => p<=5?'Elite':p<=10?'High':p<=15?'Medium':'Low';
+const worst = (...ts) => ts.reduce((w,t)=>TO.indexOf(t)<TO.indexOf(w)?t:w,'Elite');
+
+function fmtH(h) {
+  if (h==null||isNaN(h)) return '—';
+  if (h<1) return (h*60).toFixed(0)+'m';
+  if (h<24) return (h%1===0?h:h.toFixed(1))+'h';
+  if (h<168) return (h/24).toFixed(1)+'d';
+  return (h/168).toFixed(1)+'wk';
+}
+
+function sorted() { return [...entries].sort((a,b)=>new Date(a.date)-new Date(b.date)); }
+
+function enrich(e) {
+  const pw = (e.deploys/e.period)*7;
+  return {...e, pw, dt:dfT(pw), lt:ltT(e.leadTime), mt:mtT(e.mttr), ct:cfrT(e.cfr)};
+}
+
+function ptColor(v, key) {
+  if (key==='pw')       return TC[dfT(v)];
+  if (key==='leadTime') return TC[ltT(v)];
+  if (key==='mttr')     return TC[mtT(v)];
+  return TC[cfrT(v)];
+}
+
+function deltaHtml(cur, prev, lowerBetter) {
+  if (prev==null) return '';
+  const d = cur - prev;
+  if (Math.abs(d)<0.001) return '';
+  const better = lowerBetter ? d<0 : d>0;
+  const col = better?'#059669':'#dc2626';
+  return `<span style="color:${col}">${d>0?'&#9650;':'&#9660;'} ${Math.abs(d)<10?Math.abs(d).toFixed(1):Math.abs(d).toFixed(0)}</span>`;
+}
+
+function initCharts() {
+  [
+    {id:'dfChart',   label:'Deploys/wk', color:'#2563eb'},
+    {id:'ltChart',   label:'Lead Time',  color:'#7c3aed'},
+    {id:'mttrChart', label:'MTTR',       color:'#d97706'},
+    {id:'cfrChart',  label:'CFR %',      color:'#dc2626'},
+  ].forEach(d => {
+    const ctx = document.getElementById(d.id);
+    if (!ctx) return;
+    charts[d.id] = new Chart(ctx.getContext('2d'), {
+      type: 'line',
+      data: { labels:[], datasets:[{
+        label: d.label, data:[],
+        borderColor: d.color, backgroundColor: d.color+'18',
+        borderWidth:2.5, pointRadius:5,
+        pointBackgroundColor:[], pointBorderColor:'#fff', pointBorderWidth:1.5,
+        tension:0.35, fill:true
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:(c)=>{
+            const v=c.parsed.y;
+            if(d.id==='ltChart'||d.id==='mttrChart') return ' '+fmtH(v);
+            if(d.id==='cfrChart') return ' '+v.toFixed(1)+'%';
+            return ' '+v.toFixed(2)+'/wk';
+          }}}
+        },
+        scales:{
+          x:{ticks:{font:{size:10},maxRotation:30,maxTicksLimit:8},grid:{color:'#f1f5f9'}},
+          y:{ticks:{font:{size:10}},grid:{color:'#f1f5f9'},beginAtZero:true}
+        }
+      }
+    });
+  });
+}
+
+function updateCharts(data) {
+  const labels = data.map(e => e.name.length>12 ? e.name.slice(0,12)+'…' : e.name);
+  [{id:'dfChart',key:'pw'},{id:'ltChart',key:'leadTime'},{id:'mttrChart',key:'mttr'},{id:'cfrChart',key:'cfr'}]
+  .forEach(({id,key})=>{
+    const ch=charts[id]; if(!ch) return;
+    const vals=data.map(e=>e[key]);
+    ch.data.labels=labels;
+    ch.data.datasets[0].data=vals;
+    ch.data.datasets[0].pointBackgroundColor=vals.map(v=>ptColor(v,key));
+    ch.update();
+  });
+}
+
+function renderUI() {
+  const data = sorted().map(enrich);
+  if (!data.length) {
+    ['dfNum','ltNum','mttrNum','cfrNum'].forEach(id=>document.getElementById(id).textContent='—');
+    ['dfBadge','ltBadge','mttrBadge','cfrBadge'].forEach(id=>{const el=document.getElementById(id);el.textContent='No data';el.className='tb';});
+    ['dfDelta','ltDelta','mttrDelta','cfrDelta'].forEach(id=>document.getElementById(id).innerHTML='');
+    document.getElementById('ovTier').textContent='—';
+    document.getElementById('ovTier').style.color='';
+    document.getElementById('ovDesc').textContent='Add entries to see your DORA tier';
+    document.getElementById('ovDetails').innerHTML='';
+    document.getElementById('tblWrap').innerHTML='<div class="empty"><h3>No data yet</h3><p>Click "+ Add Entry" to record your first sprint or release metrics.</p></div>';
+    document.getElementById('clearBtn').style.display='none';
+    return;
+  }
+
+  const lat = data[data.length-1];
+  const prev = data.length>1 ? data[data.length-2] : null;
+
+  document.getElementById('dfNum').textContent   = lat.pw.toFixed(1);
+  document.getElementById('ltNum').textContent   = fmtH(lat.leadTime);
+  document.getElementById('mttrNum').textContent = fmtH(lat.mttr);
+  document.getElementById('cfrNum').textContent  = lat.cfr.toFixed(1);
+
+  [{id:'dfBadge',t:lat.dt},{id:'ltBadge',t:lat.lt},{id:'mttrBadge',t:lat.mt},{id:'cfrBadge',t:lat.ct}]
+  .forEach(({id,t})=>{ const el=document.getElementById(id); el.textContent=t; el.className='tb tb-'+t; });
+
+  document.getElementById('dfDelta').innerHTML   = prev ? deltaHtml(lat.pw,prev.pw,false) : '';
+  document.getElementById('ltDelta').innerHTML   = prev ? deltaHtml(lat.leadTime,prev.leadTime,true) : '';
+  document.getElementById('mttrDelta').innerHTML = prev ? deltaHtml(lat.mttr,prev.mttr,true) : '';
+  document.getElementById('cfrDelta').innerHTML  = prev ? deltaHtml(lat.cfr,prev.cfr,true) : '';
+
+  const ov = worst(lat.dt,lat.lt,lat.mt,lat.ct);
+  const ovEl = document.getElementById('ovTier');
+  ovEl.textContent=ov; ovEl.style.color=TC[ov];
+  document.getElementById('ovDesc').textContent=TD[ov];
+  document.getElementById('ovDetails').innerHTML=`
+    <div style="display:grid;grid-template-columns:auto auto;gap:3px 10px;align-items:center;font-size:11px;">
+      <span style="color:var(--muted)">Deploy Freq</span><span class="tb tb-${lat.dt}">${lat.dt}</span>
+      <span style="color:var(--muted)">Lead Time</span><span class="tb tb-${lat.lt}">${lat.lt}</span>
+      <span style="color:var(--muted)">MTTR</span><span class="tb tb-${lat.mt}">${lat.mt}</span>
+      <span style="color:var(--muted)">Failure Rate</span><span class="tb tb-${lat.ct}">${lat.ct}</span>
+    </div>`;
+
+  document.getElementById('clearBtn').style.display='';
+  document.getElementById('tblWrap').innerHTML=`
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Sprint / Release</th><th>Date</th>
+        <th>Deploy Freq</th><th>Lead Time</th><th>MTTR</th><th>Failure Rate</th>
+        <th>Overall</th><th></th>
+      </tr></thead>
+      <tbody>${[...data].reverse().map(e=>{
+        const ov=worst(e.dt,e.lt,e.mt,e.ct);
+        return `<tr>
+          <td style="font-weight:600">${esc(e.name)}</td>
+          <td style="color:var(--muted)">${e.date}</td>
+          <td><span class="tb tb-${e.dt}">${e.pw.toFixed(1)}/wk</span></td>
+          <td><span class="tb tb-${e.lt}">${fmtH(e.leadTime)}</span></td>
+          <td><span class="tb tb-${e.mt}">${fmtH(e.mttr)}</span></td>
+          <td><span class="tb tb-${e.ct}">${e.cfr.toFixed(1)}%</span></td>
+          <td><span class="tb tb-${ov}">${ov}</span></td>
+          <td><div class="td-act">
+            <button class="btn btn-xs btn-slate" onclick="openModal('${e.id}')">Edit</button>
+            <button class="btn btn-xs btn-red" onclick="delEntry('${e.id}')">Del</button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+
+  updateCharts(data);
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function openModal(id) {
+  editId = id||null;
+  document.getElementById('mTitle').textContent = id ? 'Edit Entry' : 'Add Sprint / Release Entry';
+  if (id) {
+    const e=entries.find(x=>x.id===id);
+    document.getElementById('fName').value=e.name;
+    document.getElementById('fDate').value=e.date;
+    document.getElementById('fDeploys').value=e.deploys;
+    document.getElementById('fPeriod').value=e.period;
+    document.getElementById('fLT').value=e.leadTime;
+    document.getElementById('fMTTR').value=e.mttr;
+    document.getElementById('fCFR').value=e.cfr;
+  } else {
+    document.getElementById('fName').value='';
+    document.getElementById('fDate').value=new Date().toISOString().slice(0,10);
+    ['fDeploys','fLT','fMTTR','fCFR'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fPeriod').value='14';
+  }
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),50);
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); editId=null; }
+
+function saveEntry(){
+  const name=document.getElementById('fName').value.trim();
+  const date=document.getElementById('fDate').value;
+  const deploys=parseFloat(document.getElementById('fDeploys').value);
+  const period=parseFloat(document.getElementById('fPeriod').value);
+  const leadTime=parseFloat(document.getElementById('fLT').value);
+  const mttr=parseFloat(document.getElementById('fMTTR').value);
+  const cfr=parseFloat(document.getElementById('fCFR').value);
+  if(!name||!date||isNaN(deploys)||isNaN(period)||isNaN(leadTime)||isNaN(mttr)||isNaN(cfr)){
+    alert('Please fill in all fields.'); return;
+  }
+  const entry={id:editId||Date.now().toString(),name,date,deploys,period,leadTime,mttr,cfr};
+  if(editId){ const i=entries.findIndex(e=>e.id===editId); entries[i]=entry; }
+  else entries.push(entry);
+  persist(); closeModal(); renderUI();
+}
+
+function delEntry(id){ if(!confirm('Delete this entry?')) return; entries=entries.filter(e=>e.id!==id); persist(); renderUI(); }
+function clearAll(){ if(!confirm('Clear all entries? This cannot be undone.')) return; entries=[]; persist(); renderUI(); }
+function persist(){ localStorage.setItem(SK,JSON.stringify(entries)); }
+
+function exportCSV(){
+  if(!entries.length){ alert('No data to export.'); return; }
+  const data=sorted().map(enrich);
+  const hdr=['Sprint/Release','Date','Deploys','Period(days)','Deploys/wk','DF Tier','Lead Time(h)','LT Tier','MTTR(h)','MTTR Tier','CFR(%)','CFR Tier','Overall'];
+  const rows=data.map(e=>{
+    const ov=worst(e.dt,e.lt,e.mt,e.ct);
+    return[e.name,e.date,e.deploys,e.period,e.pw.toFixed(2),e.dt,e.leadTime,e.lt,e.mttr,e.mt,e.cfr,e.ct,ov];
+  });
+  const csv=[hdr,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='dora-metrics.csv'; a.click();
+}
+
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget) closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModal();});
+
+initCharts();
+renderUI();
+</script>
+</body>
+</html>

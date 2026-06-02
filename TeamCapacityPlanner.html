@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Capacity Planner — QuickTools</title>
+<style>
+:root{
+  --bg:#f0f6ff;--surface:#fff;--border:#dce8f7;
+  --accent:#2563eb;--accent2:#7c3aed;
+  --green:#16a34a;--red:#dc2626;
+  --text:#1e293b;--muted:#64748b;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+.hdr{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(30,64,175,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-green{background:#15803d;color:#fff;}
+.btn-green:hover{background:#166534;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:210px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:#eff6ff;color:var(--text);}
+.sb-btn.on{background:#eff6ff;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:1080px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(37,99,235,.07);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
+.fg .hint{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:0 1px 6px rgba(37,99,235,.07);}
+.kpi-val{font-size:28px;font-weight:800;color:var(--accent);line-height:1;}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.kpi.net{border-color:#c7d2fe;background:linear-gradient(135deg,#eff6ff,#f5f3ff);}
+.kpi.net .kpi-val{color:#4f46e5;}
+.kpi.net .kpi-lbl,.kpi.net .kpi-sub{color:#6366f1;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f8fafc;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafcff;}
+td input,td select{border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);background:var(--surface);font-family:inherit;}
+td input:focus,td select:focus{outline:none;border-color:var(--accent);}
+
+.bar-wrap{background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;}
+.bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s;}
+.mbr{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.mbr-name{font-size:12px;font-weight:600;min-width:145px;flex-shrink:0;}
+.mbr-name span{display:block;font-size:10px;font-weight:400;color:var(--muted);}
+.mbr-bar{flex:1;}
+.mbr-hrs{font-size:12px;font-weight:700;color:var(--accent);min-width:80px;text-align:right;flex-shrink:0;}
+.sub-hint{font-size:10px;color:var(--muted);margin-top:2px;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;}
+.b-dev{background:#dbeafe;color:#1e40af;}
+.b-qa{background:#dcfce7;color:#166534;}
+.b-ba{background:#fef3c7;color:#92400e;}
+.b-ops{background:#f3e8ff;color:#6b21a8;}
+.b-pm{background:#ffe4e6;color:#9f1239;}
+.b-o{background:#f1f5f9;color:#475569;}
+
+.empty{text-align:center;padding:36px 20px;color:var(--muted);}
+.empty .ico{font-size:36px;margin-bottom:8px;}
+
+.info-box{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #c7d2fe;border-radius:var(--radius);padding:14px 18px;}
+.info-box h4{font-size:13px;font-weight:600;color:#3730a3;margin-bottom:8px;}
+.info-box ul{font-size:12px;color:#4338ca;line-height:1.9;padding-left:18px;}
+
+@media(max-width:900px){.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr 1fr;}.g2{grid-template-columns:1fr;}}
+
+@media print{
+  .sb,.hdr-actions,.btn,.no-print{display:none!important;}
+  .app{display:block;}
+  .main{overflow:visible;}
+  .content{padding:16px;max-width:100%;}
+  .panel{display:block!important;}
+  body{height:auto;overflow:auto;font-size:12px;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  td input,td select{border:none;padding:0;background:transparent;}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-icon">📅</div>
+  <div>
+    <div class="hdr-title">Team Capacity Planner</div>
+    <div class="hdr-sub">Sprint capacity planning &amp; available hours estimation</div>
+  </div>
+  <div class="hdr-actions no-print">
+    <a href="index.html" class="btn btn-ghost" style="text-decoration:none;">← Home</a>
+    <button class="btn btn-ghost" onclick="exportHTML()">⬇ Export HTML</button>
+    <button class="btn btn-green" onclick="window.print()">🖨 Print / PDF</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="sb">
+    <div class="sb-lbl">Configuration</div>
+    <button class="sb-btn on" onclick="nav('sprint',this)">⚙️ Sprint Setup</button>
+    <button class="sb-btn" onclick="nav('team',this)">👥 Team Members</button>
+    <div class="sb-lbl">Output</div>
+    <button class="sb-btn" onclick="nav('summary',this);render()">📊 Capacity Summary</button>
+  </nav>
+
+  <div class="main">
+    <div class="content">
+
+      <!-- ── Sprint Setup ── -->
+      <div class="panel on" id="p-sprint">
+        <div class="card">
+          <div class="card-hd">⚙️ Sprint Configuration</div>
+          <div class="g2">
+            <div class="fg"><label>Sprint Name</label><input id="sName" value="Sprint 1" oninput="sync()"></div>
+            <div class="fg"><label>Project / Team</label><input id="sProject" placeholder="e.g. Project Alpha" oninput="sync()"></div>
+            <div class="fg"><label>Sprint Start Date</label><input type="date" id="sStart" oninput="sync();calcDays()"></div>
+            <div class="fg"><label>Sprint End Date</label><input type="date" id="sEnd" oninput="sync();calcDays()"></div>
+          </div>
+          <div class="g3">
+            <div class="fg">
+              <label>Hours Per Day</label>
+              <input type="number" id="sHpd" value="8" min="1" max="16" oninput="sync()">
+            </div>
+            <div class="fg">
+              <label>Focus Factor Buffer %</label>
+              <input type="number" id="sBuf" value="20" min="0" max="60" oninput="sync()">
+              <span class="hint">Reserved for meetings, reviews, interruptions</span>
+            </div>
+            <div class="fg">
+              <label>Working Days (auto-calculated)</label>
+              <input type="number" id="sWd" readonly style="background:#f8fafc;font-weight:700;color:var(--accent);">
+            </div>
+          </div>
+        </div>
+        <div class="info-box">
+          <h4>💡 How capacity is calculated</h4>
+          <ul>
+            <li>Working days = business days between start &amp; end dates (Mon–Fri only)</li>
+            <li>Available hours = (Working Days − Leave Days) × Hours/Day × Availability %</li>
+            <li>Net hours = Available Hours × (1 − Buffer %) — time for actual dev work</li>
+            <li>Add team members on the next tab, then view Capacity Summary for results</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── Team Members ── -->
+      <div class="panel" id="p-team">
+        <div class="card">
+          <div class="card-hd">
+            <span>👥 Team Members</span>
+            <button class="btn btn-primary btn-sm" onclick="addMember()">+ Add Member</button>
+          </div>
+          <table id="tbl" style="display:none;">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th style="width:120px;">Availability %</th>
+                <th style="width:120px;">Leave Days</th>
+                <th>Notes</th>
+                <th style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="emptyTeam">
+            <div class="ico">👤</div>
+            <p>No team members yet.<br>Click <strong>+ Add Member</strong> to get started.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Capacity Summary ── -->
+      <div class="panel" id="p-summary">
+        <div class="g4" id="kpis"></div>
+        <div class="card">
+          <div class="card-hd">👥 Member Breakdown</div>
+          <div id="breakdown"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">📋 Detailed Capacity Table</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Member</th><th>Role</th><th>Working Days</th>
+                <th>Leave Days</th><th>Effective Days</th>
+                <th>Availability</th><th>Gross Hours</th><th>Net Hours</th>
+              </tr>
+            </thead>
+            <tbody id="dtbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const ROLES=['Developer','Senior Developer','Tech Lead','QA Engineer','Business Analyst','DevOps Engineer','Product Manager','Designer','Architect','Other'];
+const RBADGE={Developer:'b-dev','Senior Developer':'b-dev','Tech Lead':'b-dev','QA Engineer':'b-qa','Business Analyst':'b-ba','DevOps Engineer':'b-ops','Product Manager':'b-pm',Designer:'b-o',Architect:'b-dev',Other:'b-o'};
+
+let S={name:'Sprint 1',project:'',start:'',end:'',hpd:8,buf:20,wd:10};
+let members=[],seq=1;
+
+function nav(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function v(id){return document.getElementById(id)?.value||'';}
+
+function sync(){
+  S.name=v('sName');S.project=v('sProject');
+  S.hpd=+v('sHpd')||8;S.buf=+v('sBuf')||20;
+}
+
+function calcDays(){
+  S.start=v('sStart');S.end=v('sEnd');
+  if(!S.start||!S.end){document.getElementById('sWd').value='';return;}
+  let c=0,d=new Date(S.start),e=new Date(S.end);
+  while(d<=e){let wd=d.getDay();if(wd&&wd<6)c++;d.setDate(d.getDate()+1);}
+  S.wd=c;
+  document.getElementById('sWd').value=c;
+}
+
+function addMember(name='',role='Developer',avail=100,leave=0,notes=''){
+  members.push({id:seq++,name,role,avail,leave,notes});
+  renderTeam();
+}
+
+function removeMember(id){members=members.filter(m=>m.id!==id);renderTeam();}
+
+function updM(id,k,val){
+  const m=members.find(m=>m.id===id);
+  if(m)m[k]=['avail','leave'].includes(k)?+val||0:val;
+}
+
+function renderTeam(){
+  const tbl=document.getElementById('tbl'),em=document.getElementById('emptyTeam');
+  if(!members.length){tbl.style.display='none';em.style.display='block';return;}
+  tbl.style.display='table';em.style.display='none';
+  document.getElementById('tbody').innerHTML=members.map(m=>`
+    <tr>
+      <td><input value="${e(m.name)}" placeholder="Full name" oninput="updM(${m.id},'name',this.value)" style="min-width:130px;width:100%;"></td>
+      <td><select onchange="updM(${m.id},'role',this.value)" style="min-width:140px;">${ROLES.map(r=>`<option${r===m.role?' selected':''}>${r}</option>`).join('')}</select></td>
+      <td><input type="number" value="${m.avail}" min="0" max="100" oninput="updM(${m.id},'avail',this.value)" style="width:80px;text-align:center;"></td>
+      <td><input type="number" value="${m.leave}" min="0" oninput="updM(${m.id},'leave',this.value)" style="width:80px;text-align:center;"></td>
+      <td><input value="${e(m.notes)}" placeholder="Optional" oninput="updM(${m.id},'notes',this.value)" style="width:100%;"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeMember(${m.id})">✕</button></td>
+    </tr>`).join('');
+}
+
+function calcM(m){
+  const eff=Math.max(0,S.wd-m.leave);
+  const gross=eff*S.hpd*(m.avail/100);
+  const net=gross*(1-S.buf/100);
+  return{eff,gross,net};
+}
+
+function render(){
+  sync();
+  let tg=0,tn=0;
+  const rows=members.map(m=>{const c=calcM(m);tg+=c.gross;tn+=c.net;return{...m,...c};});
+  const maxNet=Math.max(...rows.map(r=>r.net),1);
+
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-val">${members.length}</div><div class="kpi-lbl">Team Members</div></div>
+    <div class="kpi"><div class="kpi-val">${S.wd}</div><div class="kpi-lbl">Working Days</div><div class="kpi-sub">${S.start||'—'} → ${S.end||'—'}</div></div>
+    <div class="kpi"><div class="kpi-val">${tg.toFixed(0)}h</div><div class="kpi-lbl">Total Gross Hours</div><div class="kpi-sub">Before buffer deduction</div></div>
+    <div class="kpi net"><div class="kpi-val">${tn.toFixed(0)}h</div><div class="kpi-lbl">Net Available Hours</div><div class="kpi-sub">${S.buf}% buffer applied</div></div>`;
+
+  document.getElementById('breakdown').innerHTML=rows.length
+    ?rows.map(r=>`
+      <div class="mbr">
+        <div class="mbr-name">${e(r.name||'Unnamed')}<span>${e(r.role)}</span></div>
+        <div class="mbr-bar">
+          <div class="bar-wrap"><div class="bar" style="width:${(r.net/maxNet*100).toFixed(1)}%"></div></div>
+          <div class="sub-hint">${r.avail}% avail · ${r.leave}d leave · ${r.eff}d effective</div>
+        </div>
+        <div class="mbr-hrs">${r.net.toFixed(1)}h net</div>
+      </div>`).join('')
+    :'<div class="empty"><div class="ico">📊</div><p>Add team members to see breakdown</p></div>';
+
+  document.getElementById('dtbody').innerHTML=
+    rows.map(r=>`
+      <tr>
+        <td><strong>${e(r.name||'Unnamed')}</strong>${r.notes?`<br><small style="color:var(--muted);">${e(r.notes)}</small>`:''}</td>
+        <td><span class="badge ${RBADGE[r.role]||'b-o'}">${e(r.role)}</span></td>
+        <td>${S.wd}</td><td>${r.leave}</td><td><strong>${r.eff}</strong></td>
+        <td>${r.avail}%</td>
+        <td>${r.gross.toFixed(1)}h</td>
+        <td><strong style="color:var(--accent);">${r.net.toFixed(1)}h</strong></td>
+      </tr>`).join('')+
+    (rows.length?`
+      <tr style="background:#f8fafc;">
+        <td colspan="6" style="text-align:right;color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">TOTAL</td>
+        <td style="font-weight:700;">${tg.toFixed(1)}h</td>
+        <td><strong style="color:var(--accent);">${tn.toFixed(1)}h</strong></td>
+      </tr>`:
+      '<tr><td colspan="8" class="empty" style="padding:20px;">No members added yet.</td></tr>');
+}
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function exportHTML(){
+  sync();
+  let tg=0,tn=0;
+  const rows=members.map(m=>{const c=calcM(m);tg+=c.gross;tn+=c.net;return{...m,...c};});
+  const html=`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Capacity Report — ${e(S.name)}</title>
+<style>
+body{font-family:'Segoe UI',sans-serif;background:#f0f6ff;color:#1e293b;padding:40px;font-size:13px;max-width:960px;margin:0 auto;}
+h1{font-size:22px;font-weight:800;color:#1d4ed8;margin-bottom:6px;}
+.meta{color:#64748b;font-size:12px;margin-bottom:24px;line-height:1.8;}
+.kpis{display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap;}
+.kpi{background:#fff;border:1px solid #dce8f7;border-radius:10px;padding:14px 20px;min-width:140px;}
+.kpi .val{font-size:24px;font-weight:800;color:#2563eb;}
+.kpi .lbl{font-size:11px;color:#64748b;margin-top:4px;}
+.kpi .sub{font-size:10px;color:#94a3b8;margin-top:2px;}
+.kpi.n{border-color:#c7d2fe;background:linear-gradient(135deg,#eff6ff,#f5f3ff);}
+.kpi.n .val{color:#4f46e5;}.kpi.n .lbl{color:#6366f1;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 8px rgba(37,99,235,.08);}
+th{background:#f8fafc;color:#64748b;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:9px 14px;text-align:left;border-bottom:1px solid #dce8f7;}
+td{padding:9px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+.total td{background:#f0f6ff;font-weight:700;}
+.acc{color:#2563eb;font-weight:700;}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:#dbeafe;color:#1e40af;}
+footer{margin-top:32px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;}
+</style></head><body>
+<h1>📅 ${e(S.name)} — Capacity Report</h1>
+<div class="meta">
+  Project: <strong>${e(S.project||'—')}</strong><br>
+  Period: <strong>${e(S.start||'—')}</strong> → <strong>${e(S.end||'—')}</strong> (${S.wd} working days)<br>
+  Config: ${S.hpd}h/day · ${S.buf}% focus-factor buffer · Generated: ${new Date().toLocaleDateString()}
+</div>
+<div class="kpis">
+  <div class="kpi"><div class="val">${members.length}</div><div class="lbl">Team Members</div></div>
+  <div class="kpi"><div class="val">${S.wd}</div><div class="lbl">Working Days</div></div>
+  <div class="kpi"><div class="val">${tg.toFixed(0)}h</div><div class="lbl">Gross Hours</div></div>
+  <div class="kpi n"><div class="val">${tn.toFixed(0)}h</div><div class="lbl">Net Hours (${S.buf}% buffer)</div></div>
+</div>
+<table>
+<thead><tr><th>Member</th><th>Role</th><th>Working Days</th><th>Leave Days</th><th>Effective Days</th><th>Availability</th><th>Gross Hours</th><th>Net Hours</th></tr></thead>
+<tbody>
+${rows.map(r=>`<tr>
+  <td><strong>${e(r.name||'Unnamed')}</strong>${r.notes?`<br><small style="color:#64748b;">${e(r.notes)}</small>`:''}</td>
+  <td><span class="badge">${e(r.role)}</span></td>
+  <td>${S.wd}</td><td>${r.leave}</td><td><strong>${r.eff}</strong></td>
+  <td>${r.avail}%</td><td>${r.gross.toFixed(1)}h</td>
+  <td class="acc">${r.net.toFixed(1)}h</td>
+</tr>`).join('')}
+<tr class="total">
+  <td colspan="6" style="text-align:right;color:#64748b;font-size:11px;letter-spacing:.05em;">TOTAL</td>
+  <td>${tg.toFixed(1)}h</td><td class="acc">${tn.toFixed(1)}h</td>
+</tr>
+</tbody></table>
+<footer>Generated by QuickTools · Team Capacity Planner · ${new Date().toISOString()}</footer>
+</body></html>`;
+  dl(html,`Capacity_${S.name.replace(/\s+/g,'-')}_${new Date().toISOString().slice(0,10)}.html`);
+}
+
+function dl(content,filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:'text/html'}));
+  a.download=filename;a.click();
+}
+
+(function init(){
+  const t=new Date(),end=new Date(t);
+  end.setDate(t.getDate()+13);
+  document.getElementById('sStart').value=t.toISOString().slice(0,10);
+  document.getElementById('sEnd').value=end.toISOString().slice(0,10);
+  calcDays();
+  addMember('Alice Johnson','Senior Developer',100,0,'');
+  addMember('Bob Smith','QA Engineer',80,2,'Part-time Thursdays');
+  addMember('Carol White','Business Analyst',100,1,'');
+})();
+</script>
+</body>
+</html>

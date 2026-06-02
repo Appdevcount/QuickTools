@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OKR Goals Tracker — QuickTools</title>
+<style>
+:root{
+  --bg:#f0fdf4;--surface:#fff;--border:#d1fae5;
+  --accent:#059669;--accent2:#0d9488;
+  --green:#16a34a;--amber:#d97706;--red:#dc2626;
+  --text:#1e293b;--muted:#64748b;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#047857,#059669);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(4,120,87,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#047857;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:200px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:#f0fdf4;color:var(--text);}
+.sb-btn.on{background:#f0fdf4;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:1000px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(5,150,105,.07);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;resize:vertical;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:0 1px 6px rgba(5,150,105,.07);}
+.kpi-val{font-size:28px;font-weight:800;color:var(--accent);line-height:1;}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.rag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.rag-green{background:#dcfce7;color:#166534;}
+.rag-amber{background:#fef3c7;color:#92400e;}
+.rag-red{background:#fee2e2;color:#991b1b;}
+.rag-grey{background:#f1f5f9;color:#64748b;}
+.bar-wrap{background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;flex:1;}
+.bar{height:100%;border-radius:99px;transition:width .3s;}
+.bar-green{background:linear-gradient(90deg,#16a34a,#059669);}
+.bar-amber{background:linear-gradient(90deg,#d97706,#f59e0b);}
+.bar-red{background:linear-gradient(90deg,#dc2626,#ef4444);}
+.obj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 6px rgba(5,150,105,.07);}
+.obj-hd{padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.obj-hd:hover{background:#f8fffe;}
+.obj-title{font-size:14px;font-weight:700;flex:1;}
+.kr-box{background:#f0fdf4;border:1px solid #d1fae5;border-radius:8px;padding:12px 14px;margin-top:10px;}
+.kr-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.kr-title{font-size:13px;font-weight:600;flex:1;min-width:150px;}
+.init-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:12px;}
+.init-row:last-child{border-bottom:none;}
+.add-kr-area{background:#f8fffe;border:1px dashed #a7f3d0;border-radius:8px;padding:14px;margin-top:12px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .ico{font-size:40px;margin-bottom:8px;}
+input[type=range]{-webkit-appearance:none;height:6px;border-radius:99px;background:#a7f3d0;cursor:pointer;width:120px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.stat-pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.s-ns{background:#f1f5f9;color:#475569;}
+.s-ip{background:#dbeafe;color:#1e40af;}
+.s-done{background:#dcfce7;color:#166534;}
+.s-blocked{background:#fee2e2;color:#991b1b;}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-icon">🎯</div>
+  <div>
+    <div class="hdr-title">OKR Goals Tracker</div>
+    <div class="hdr-sub">Objectives · Key Results · Initiatives</div>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">Export JSON</button>
+    <button class="btn btn-ghost btn-sm" onclick="importData()">Import</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-lbl">Quarter</div>
+    <div id="quarter-list"></div>
+    <div class="sb-lbl">Views</div>
+    <button class="sb-btn on" id="nav-overview" onclick="nav('overview')">📊 Overview</button>
+    <button class="sb-btn" id="nav-objectives" onclick="nav('objectives')">🎯 All Objectives</button>
+    <button class="sb-btn" id="nav-add-obj" onclick="nav('add-obj')">＋ Add Objective</button>
+    <div class="sb-lbl">Manage</div>
+    <button class="sb-btn" onclick="addQuarter()">＋ Quarter</button>
+  </div>
+  <div class="main">
+    <div class="content">
+
+      <div class="panel on" id="panel-overview">
+        <div class="g4" id="kpi-grid"></div>
+        <div id="overview-list"></div>
+      </div>
+
+      <div class="panel" id="panel-objectives">
+        <div id="obj-full-list"></div>
+      </div>
+
+      <div class="panel" id="panel-add-obj">
+        <div class="card">
+          <div class="card-hd">New Objective</div>
+          <div class="g2">
+            <div class="fg"><label>Title</label><input id="inp-obj-title" placeholder="e.g. Improve customer retention"/></div>
+            <div class="fg"><label>Owner</label><input id="inp-obj-owner" placeholder="Name or team"/></div>
+          </div>
+          <div class="g2">
+            <div class="fg"><label>Quarter</label><select id="inp-obj-quarter"></select></div>
+            <div class="fg"><label>Description (optional)</label><input id="inp-obj-desc" placeholder="Context or motivation"/></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveObjective()">Save Objective</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+const SK = 'okr-v2';
+let S = (() => {
+  const d = localStorage.getItem(SK);
+  if (d) return JSON.parse(d);
+  return { quarters:['Q1 2026','Q2 2026','Q3 2026','Q4 2026'], currentQ:'Q2 2026', objectives:[], nid:1 };
+})();
+let currentQ = S.currentQ || S.quarters[0];
+let activePanel = 'overview';
+
+function save(){ S.currentQ = currentQ; localStorage.setItem(SK, JSON.stringify(S)); }
+function nid(){ return 'id'+(S.nid++); }
+
+function nav(p){
+  activePanel = p;
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(el=>el.classList.remove('on'));
+  document.getElementById('panel-'+p).classList.add('on');
+  const nb = document.getElementById('nav-'+p);
+  if(nb) nb.classList.add('on');
+  render();
+}
+
+function setQ(q){ currentQ=q; save(); renderSB(); render(); }
+function addQuarter(){
+  const q=prompt('Quarter name (e.g. Q3 2026):');
+  if(!q||!q.trim()) return;
+  if(!S.quarters.includes(q.trim())) S.quarters.push(q.trim());
+  save(); setQ(q.trim());
+}
+
+function qObjs(){ return S.objectives.filter(o=>o.quarter===currentQ); }
+
+function krPct(kr){ return kr.target?Math.min(100,Math.round(kr.current/kr.target*100)):0; }
+function objPct(obj){
+  if(!obj.keyResults||!obj.keyResults.length) return 0;
+  return Math.round(obj.keyResults.reduce((s,kr)=>s+krPct(kr),0)/obj.keyResults.length);
+}
+function rag(pct,ov){
+  const v = ov||null;
+  if(v==='green') return {cls:'rag-green',lbl:'On Track'};
+  if(v==='amber') return {cls:'rag-amber',lbl:'At Risk'};
+  if(v==='red')   return {cls:'rag-red',lbl:'Off Track'};
+  if(pct>=70) return {cls:'rag-green',lbl:'On Track'};
+  if(pct>=40) return {cls:'rag-amber',lbl:'At Risk'};
+  return {cls:'rag-red',lbl:'Off Track'};
+}
+function barCls(pct){ return pct>=70?'bar-green':pct>=40?'bar-amber':'bar-red'; }
+
+function renderSB(){
+  document.getElementById('quarter-list').innerHTML = S.quarters.map(q=>
+    `<button class="sb-btn${q===currentQ?' on':''}" onclick="setQ('${q}')">${q}</button>`
+  ).join('');
+  const qs = document.getElementById('inp-obj-quarter');
+  if(qs) qs.innerHTML = S.quarters.map(q=>`<option value="${q}"${q===currentQ?' selected':''}>${q}</option>`).join('');
+}
+
+function render(){
+  renderSB();
+  if(activePanel==='overview') renderOverview();
+  if(activePanel==='objectives') renderObjFull();
+}
+
+function renderOverview(){
+  const objs = qObjs();
+  const on = objs.filter(o=>objPct(o)>=70).length;
+  const at = objs.filter(o=>{const p=objPct(o);return p>=40&&p<70;}).length;
+  const off= objs.filter(o=>objPct(o)<40).length;
+  document.getElementById('kpi-grid').innerHTML =
+    `<div class="kpi"><div class="kpi-val">${objs.length}</div><div class="kpi-lbl">Objectives (${currentQ})</div></div>`+
+    `<div class="kpi" style="border-color:#d1fae5"><div class="kpi-val" style="color:#16a34a">${on}</div><div class="kpi-lbl">On Track</div></div>`+
+    `<div class="kpi" style="border-color:#fef3c7"><div class="kpi-val" style="color:#d97706">${at}</div><div class="kpi-lbl">At Risk</div></div>`+
+    `<div class="kpi" style="border-color:#fee2e2"><div class="kpi-val" style="color:#dc2626">${off}</div><div class="kpi-lbl">Off Track</div></div>`;
+
+  if(!objs.length){
+    document.getElementById('overview-list').innerHTML=`<div class="empty"><div class="ico">🎯</div><div>No objectives for ${currentQ}</div><br><button class="btn btn-primary btn-sm" onclick="nav('add-obj')">Add First Objective</button></div>`;
+    return;
+  }
+  document.getElementById('overview-list').innerHTML = objs.map(obj=>{
+    const p=objPct(obj); const r=rag(p,obj.ragOv);
+    const krs=(obj.keyResults||[]).map(kr=>{
+      const kp=krPct(kr);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+        <span style="flex:1">${kr.title}</span>
+        <span style="color:var(--muted);white-space:nowrap">${kr.current} / ${kr.target} ${kr.unit||''}</span>
+        <div style="width:90px"><div class="bar-wrap"><div class="bar ${barCls(kp)}" style="width:${kp}%"></div></div></div>
+        <span style="min-width:32px;text-align:right;font-weight:700">${kp}%</span>
+      </div>`;
+    }).join('');
+    return `<div class="obj-card">
+      <div class="obj-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div class="obj-title">${obj.title}</div>
+        <span class="rag ${r.cls}">${r.lbl}</span>
+        <div style="display:flex;align-items:center;gap:8px;min-width:160px">
+          <div class="bar-wrap"><div class="bar ${barCls(p)}" style="width:${p}%"></div></div>
+          <span style="font-size:12px;font-weight:700">${p}%</span>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${obj.owner||''}</span>
+      </div>
+      <div style="display:none;padding:0 16px 16px;border-top:1px solid var(--border)">
+        ${krs||'<div style="color:var(--muted);font-size:12px;padding:10px 0">No key results yet.</div>'}
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="nav('objectives');expandFull('${obj.id}')">Edit / Add KRs →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function expandFull(id){
+  const el=document.getElementById('objbody-'+id);
+  if(el) el.style.display='block';
+}
+
+function renderObjFull(){
+  const objs=qObjs();
+  const el=document.getElementById('obj-full-list');
+  if(!objs.length){
+    el.innerHTML=`<div class="empty"><div class="ico">🎯</div><div>No objectives for ${currentQ}</div><br><button class="btn btn-primary btn-sm" onclick="nav('add-obj')">Add Objective</button></div>`;
+    return;
+  }
+  el.innerHTML=objs.map(obj=>{
+    const p=objPct(obj); const r=rag(p,obj.ragOv);
+    const krs=(obj.keyResults||[]).map(kr=>{
+      const kp=krPct(kr);
+      const inits=(kr.initiatives||[]).map(ini=>`
+        <div class="init-row">
+          <select onchange="updInitSt('${obj.id}','${kr.id}','${ini.id}',this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:5px;padding:2px 4px;background:#fff">
+            <option value="not-started"${ini.status==='not-started'?' selected':''}>Not Started</option>
+            <option value="in-progress"${ini.status==='in-progress'?' selected':''}>In Progress</option>
+            <option value="done"${ini.status==='done'?' selected':''}>Done</option>
+            <option value="blocked"${ini.status==='blocked'?' selected':''}>Blocked</option>
+          </select>
+          <span style="flex:1">${ini.title}</span>
+          <span style="color:var(--muted)">${ini.owner||''}</span>
+          <button class="btn btn-danger btn-sm" onclick="delInit('${obj.id}','${kr.id}','${ini.id}')">✕</button>
+        </div>`).join('');
+      return `<div class="kr-box">
+        <div class="kr-top">
+          <div class="kr-title">${kr.title}</div>
+          <input type="number" value="${kr.current}" min="0" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px" onchange="updKRVal('${obj.id}','${kr.id}',this.value)" title="Current value"/>
+          <span style="font-size:12px;color:var(--muted)">/ ${kr.target} ${kr.unit||''}</span>
+          <input type="range" min="0" max="${kr.target||100}" value="${kr.current}" oninput="updKRSlide(event,'${obj.id}','${kr.id}',this.value)"/>
+          <span style="font-size:12px;font-weight:700;min-width:36px">${kp}%</span>
+          <select onchange="updKRRag('${obj.id}','${kr.id}',this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:5px;padding:3px 5px;background:#fff">
+            <option value=""${!kr.ragOv?' selected':''}>Auto RAG</option>
+            <option value="green"${kr.ragOv==='green'?' selected':''}>Green</option>
+            <option value="amber"${kr.ragOv==='amber'?' selected':''}>Amber</option>
+            <option value="red"${kr.ragOv==='red'?' selected':''}>Red</option>
+          </select>
+          <span class="rag ${rag(kp,kr.ragOv).cls}">${rag(kp,kr.ragOv).lbl}</span>
+          <button class="btn btn-danger btn-sm" onclick="delKR('${obj.id}','${kr.id}')">✕ KR</button>
+        </div>
+        <div style="margin-top:8px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Initiatives</div>
+          ${inits||'<span style="color:var(--muted);font-size:11px">No initiatives yet</span>'}
+          <button class="btn btn-sm" style="background:#f0fdf4;border:1px solid var(--border);color:var(--accent);margin-top:6px" onclick="addInitPrompt('${obj.id}','${kr.id}')">＋ Initiative</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="obj-card">
+      <div class="obj-hd" onclick="toggleObjBody('${obj.id}')">
+        <div class="obj-title">${obj.title}</div>
+        <span class="rag ${r.cls}">${r.lbl}</span>
+        <div style="display:flex;align-items:center;gap:8px;min-width:160px">
+          <div class="bar-wrap"><div class="bar ${barCls(p)}" style="width:${p}%"></div></div>
+          <span style="font-size:12px;font-weight:700">${p}%</span>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${obj.owner||''}</span>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delObj('${obj.id}')">Delete</button>
+      </div>
+      <div id="objbody-${obj.id}" style="display:none;padding:16px;border-top:1px solid var(--border)">
+        ${krs||'<div style="color:var(--muted);font-size:12px;padding:8px 0">No key results yet.</div>'}
+        <div class="add-kr-area">
+          <div class="card-hd" style="margin-bottom:12px">Add Key Result</div>
+          <div class="g3" style="margin-bottom:10px">
+            <div class="fg"><label>KR Title</label><input id="kr-t-${obj.id}" placeholder="e.g. Increase NPS to 60"/></div>
+            <div class="fg"><label>Target</label><input type="number" id="kr-tgt-${obj.id}" placeholder="100"/></div>
+            <div class="fg"><label>Unit</label><input id="kr-u-${obj.id}" placeholder="%, pts, users…"/></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addKR('${obj.id}')">Add KR</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleObjBody(id){
+  const el=document.getElementById('objbody-'+id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function saveObjective(){
+  const t=document.getElementById('inp-obj-title').value.trim();
+  if(!t){alert('Title required');return;}
+  S.objectives.push({id:nid(),quarter:document.getElementById('inp-obj-quarter').value,title:t,owner:document.getElementById('inp-obj-owner').value.trim(),description:document.getElementById('inp-obj-desc').value.trim(),ragOv:null,keyResults:[]});
+  save();
+  document.getElementById('inp-obj-title').value='';
+  document.getElementById('inp-obj-owner').value='';
+  document.getElementById('inp-obj-desc').value='';
+  nav('objectives');
+}
+
+function delObj(id){
+  if(!confirm('Delete this objective and all its key results?')) return;
+  S.objectives=S.objectives.filter(o=>o.id!==id);
+  save(); renderObjFull();
+}
+
+function addKR(objId){
+  const t=document.getElementById('kr-t-'+objId).value.trim();
+  if(!t){alert('Title required');return;}
+  const obj=S.objectives.find(o=>o.id===objId);
+  if(!obj) return;
+  const target=parseFloat(document.getElementById('kr-tgt-'+objId).value)||100;
+  obj.keyResults.push({id:nid(),title:t,target,current:0,unit:document.getElementById('kr-u-'+objId).value.trim(),ragOv:null,initiatives:[]});
+  document.getElementById('kr-t-'+objId).value='';
+  document.getElementById('kr-tgt-'+objId).value='';
+  document.getElementById('kr-u-'+objId).value='';
+  save(); renderObjFull();
+}
+
+function delKR(objId,krId){
+  const obj=S.objectives.find(o=>o.id===objId);
+  if(obj) obj.keyResults=obj.keyResults.filter(k=>k.id!==krId);
+  save(); renderObjFull();
+}
+
+function updKRVal(objId,krId,val){
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  if(kr){ kr.current=parseFloat(val)||0; save(); renderObjFull(); }
+}
+
+function updKRSlide(e,objId,krId,val){
+  e.stopPropagation();
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  if(kr){ kr.current=parseFloat(val)||0; save(); renderObjFull(); }
+}
+
+function updKRRag(objId,krId,val){
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  if(kr){ kr.ragOv=val||null; save(); }
+}
+
+function addInitPrompt(objId,krId){
+  const t=prompt('Initiative title:');
+  if(!t||!t.trim()) return;
+  const ow=prompt('Owner (optional):')||'';
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  if(!kr) return;
+  if(!kr.initiatives) kr.initiatives=[];
+  kr.initiatives.push({id:nid(),title:t.trim(),owner:ow,status:'not-started'});
+  save(); renderObjFull();
+}
+
+function delInit(objId,krId,initId){
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  if(kr) kr.initiatives=kr.initiatives.filter(i=>i.id!==initId);
+  save(); renderObjFull();
+}
+
+function updInitSt(objId,krId,initId,st){
+  const obj=S.objectives.find(o=>o.id===objId);
+  const kr=obj&&obj.keyResults.find(k=>k.id===krId);
+  const ini=kr&&kr.initiatives.find(i=>i.id===initId);
+  if(ini){ ini.status=st; save(); }
+}
+
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='okr-data.json'; a.click();
+}
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const fr=new FileReader();
+    fr.onload=ev=>{ try{ S=JSON.parse(ev.target.result); currentQ=S.currentQ||S.quarters[0]; save(); render(); }catch{ alert('Invalid JSON'); } };
+    fr.readAsText(e.target.files[0]);
+  }; inp.click();
+}
+
+render();
+</script>
+</body>
+</html>

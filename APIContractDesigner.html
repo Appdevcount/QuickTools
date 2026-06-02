@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Contract Designer — QuickTools</title>
+<style>
+:root{
+  --bg:#f0fdf9;--surface:#fff;--border:#d1f0e8;
+  --accent:#0d9488;--accent2:#0891b2;
+  --green:#16a34a;--red:#dc2626;--yellow:#d97706;--blue:#2563eb;--orange:#ea580c;
+  --text:#1e293b;--muted:#64748b;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+.hdr{background:linear-gradient(135deg,#0f766e,#0d9488);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(13,148,136,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-green{background:#15803d;color:#fff;}
+.btn-green:hover{background:#166534;}
+.btn-teal{background:var(--accent);color:#fff;}
+.btn-teal:hover{background:#0f766e;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{background:#1d4ed8;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-xs{padding:3px 8px;font-size:10px;}
+
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:210px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:#f0fdf9;color:var(--text);}
+.sb-btn.on{background:#f0fdf9;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:1200px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(13,148,136,.07);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;resize:vertical;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{min-height:72px;font-family:'Consolas','Courier New',monospace;font-size:12px;}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+
+/* Method badges */
+.method{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.05em;font-family:monospace;}
+.m-GET{background:#dcfce7;color:#166534;}
+.m-POST{background:#dbeafe;color:#1e40af;}
+.m-PUT{background:#fff7ed;color:#9a3412;}
+.m-PATCH{background:#fef3c7;color:#92400e;}
+.m-DELETE{background:#fee2e2;color:#991b1b;}
+
+/* Endpoint list */
+.ep-layout{display:flex;gap:20px;min-height:400px;}
+.ep-list{width:260px;flex-shrink:0;}
+.ep-editor{flex:1;min-width:0;}
+.ep-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;margin-bottom:6px;transition:all .15s;position:relative;}
+.ep-card:hover{border-color:var(--accent);background:#f0fdf9;}
+.ep-card.on{border-color:var(--accent);background:#f0fdf9;box-shadow:0 0 0 2px rgba(13,148,136,.15);}
+.ep-card .ep-path{font-size:12px;color:var(--text);font-weight:600;margin-top:4px;font-family:monospace;word-break:break-all;}
+.ep-card .ep-sum{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ep-card .ep-del{position:absolute;top:8px;right:8px;opacity:0;transition:opacity .15s;}
+.ep-card:hover .ep-del{opacity:1;}
+.ep-placeholder{text-align:center;padding:40px 20px;color:var(--muted);}
+.ep-placeholder .ico{font-size:40px;margin-bottom:10px;}
+
+/* Section inside editor */
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+.sec-hd{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+
+/* Param table */
+.param-table{width:100%;border-collapse:collapse;font-size:12px;}
+.param-table th{background:#f8fafc;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.param-table td{padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.param-table tr:last-child td{border-bottom:none;}
+.param-table input,.param-table select{border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:11.5px;color:var(--text);background:var(--surface);width:100%;}
+.param-table input:focus,.param-table select:focus{outline:none;border-color:var(--accent);}
+.req-check{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);}
+.req-check input{accent-color:var(--accent);}
+
+/* Response cards */
+.resp-card{background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px;position:relative;}
+.resp-del{position:absolute;top:8px;right:8px;}
+
+/* Spec preview */
+.spec-ep{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden;}
+.spec-ep-hd{padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:#f8fafc;}
+.spec-ep-path{font-family:monospace;font-size:14px;font-weight:700;color:var(--text);}
+.spec-ep-sum{font-size:12px;color:var(--muted);margin-top:2px;}
+.spec-ep-body{padding:14px 16px;}
+.spec-section{margin-bottom:14px;}
+.spec-section-hd{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.spec-table{width:100%;border-collapse:collapse;font-size:12px;}
+.spec-table th{background:#f1f5f9;color:var(--muted);font-size:10px;font-weight:700;padding:5px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.spec-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;}
+.spec-table tr:last-child td{border-bottom:none;}
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px 14px;font-family:monospace;font-size:11.5px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin-top:4px;}
+.auth-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;}
+.auth-y{background:#dcfce7;color:#166534;}
+.auth-n{background:#f1f5f9;color:#64748b;}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:monospace;}
+.s-2{background:#dcfce7;color:#166534;}
+.s-3{background:#dbeafe;color:#1e40af;}
+.s-4{background:#fef3c7;color:#92400e;}
+.s-5{background:#fee2e2;color:#991b1b;}
+
+.req-star{color:var(--red);font-size:10px;}
+.type-chip{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;font-family:monospace;}
+
+.empty{text-align:center;padding:32px 20px;color:var(--muted);}
+.empty .ico{font-size:36px;margin-bottom:8px;}
+
+.toggle-group{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.toggle-group label{font-size:12px;font-weight:600;color:var(--muted);}
+
+@media print{
+  .sb,.hdr-actions,.btn,.no-print,.ep-del,.resp-del{display:none!important;}
+  .app{display:block;}
+  .main{overflow:visible;}
+  .content{padding:0;max-width:100%;}
+  .panel{display:block!important;}
+  body{height:auto;overflow:auto;font-size:12px;}
+  .ep-layout{display:block;}
+  .ep-list{display:none;}
+  .ep-editor{width:100%;}
+  .spec-ep{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-icon">🔌</div>
+  <div>
+    <div class="hdr-title">API Contract Designer</div>
+    <div class="hdr-sub">Define REST endpoints, parameters &amp; responses — generate API spec</div>
+  </div>
+  <div class="hdr-actions no-print">
+    <a href="index.html" class="btn btn-ghost" style="text-decoration:none;">← Home</a>
+    <button class="btn btn-ghost" onclick="exportJSON()">⬇ Export JSON</button>
+    <button class="btn btn-ghost" onclick="exportHTML()">⬇ Export HTML Doc</button>
+    <button class="btn btn-green" onclick="window.print()">🖨 Print / PDF</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="sb">
+    <div class="sb-lbl">Design</div>
+    <button class="sb-btn on" onclick="nav('info',this)">ℹ️ API Info</button>
+    <button class="sb-btn" onclick="nav('ep',this)">📡 Endpoints</button>
+    <div class="sb-lbl">Preview</div>
+    <button class="sb-btn" onclick="nav('spec',this);renderSpec()">👁 Spec Preview</button>
+  </nav>
+
+  <div class="main">
+    <div class="content">
+
+      <!-- ── API Info ── -->
+      <div class="panel on" id="p-info">
+        <div class="card">
+          <div class="card-hd">ℹ️ API Information</div>
+          <div class="g2">
+            <div class="fg"><label>API Name</label><input id="apiName" placeholder="My Service API" oninput="sync()"></div>
+            <div class="fg"><label>Version</label><input id="apiVer" placeholder="v1.0" oninput="sync()"></div>
+            <div class="fg"><label>Base URL</label><input id="apiBase" placeholder="https://api.example.com/v1" oninput="sync()"></div>
+            <div class="fg">
+              <label>Authentication Type</label>
+              <select id="apiAuth" oninput="sync()">
+                <option>Bearer Token (JWT)</option><option>API Key (Header)</option>
+                <option>API Key (Query Param)</option><option>Basic Auth</option>
+                <option>OAuth 2.0</option><option>No Authentication</option>
+              </select>
+            </div>
+            <div class="fg"><label>Contact / Team</label><input id="apiContact" placeholder="team@example.com" oninput="sync()"></div>
+            <div class="fg"><label>License</label><input id="apiLicense" placeholder="MIT / Proprietary" oninput="sync()"></div>
+          </div>
+          <div class="fg">
+            <label>Description</label>
+            <textarea id="apiDesc" rows="3" placeholder="What does this API do? Who is it for?" oninput="sync()" style="font-family:inherit;font-size:13px;"></textarea>
+          </div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#f0fdf9,#ecfeff);border-color:#a7f3d0;">
+          <div style="font-size:13px;font-weight:600;color:#065f46;margin-bottom:8px;">💡 Getting started</div>
+          <ul style="font-size:12px;color:#047857;line-height:1.9;padding-left:18px;">
+            <li>Fill in the API info above, then go to <strong>Endpoints</strong> to define your REST routes</li>
+            <li>For each endpoint: set method, path, parameters, request body, and expected responses</li>
+            <li>Use <strong>Spec Preview</strong> to see the generated API documentation</li>
+            <li>Export as <strong>JSON</strong> (machine-readable) or <strong>HTML Doc</strong> (shareable documentation)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── Endpoints ── -->
+      <div class="panel" id="p-ep">
+        <div class="ep-layout">
+
+          <!-- Left: endpoint list -->
+          <div class="ep-list">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Endpoints (<span id="epCount">0</span>)</span>
+              <button class="btn btn-teal btn-sm" onclick="addEp()">+ Add</button>
+            </div>
+            <div id="epList">
+              <div class="empty" style="padding:24px 10px;"><div class="ico">📡</div><p>No endpoints yet.<br>Click <strong>+ Add</strong>.</p></div>
+            </div>
+          </div>
+
+          <!-- Right: endpoint editor -->
+          <div class="ep-editor">
+            <div id="epEditor">
+              <div class="ep-placeholder">
+                <div class="ico">✏️</div>
+                <p>Select an endpoint from the list<br>to edit its details.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Spec Preview ── -->
+      <div class="panel" id="p-spec">
+        <div id="specContent"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let seq=1;
+let S={name:'',version:'v1.0',baseUrl:'',description:'',auth:'Bearer Token (JWT)',contact:'',license:''};
+let endpoints=[];
+let selectedId=null;
+
+const METHODS=['GET','POST','PUT','PATCH','DELETE'];
+const TYPES=['string','integer','number','boolean','array','object'];
+const CT=['application/json','application/xml','multipart/form-data','application/x-www-form-urlencoded','text/plain'];
+
+function nav(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nb(s){return e(s).replace(/\n/g,'<br>');}
+function v(id){return document.getElementById(id)?.value||'';}
+
+function sync(){
+  S.name=v('apiName');S.version=v('apiVer');S.baseUrl=v('apiBase');
+  S.description=v('apiDesc');S.auth=v('apiAuth');
+  S.contact=v('apiContact');S.license=v('apiLicense');
+}
+
+function mcls(m){return `m-${m}`;}
+function mcolor(m){const c={GET:'#166534',POST:'#1e40af',PUT:'#9a3412',PATCH:'#92400e',DELETE:'#991b1b'};return c[m]||'#374151';}
+function scls(code){const n=+String(code)[0];return`s-${n>=2&&n<=5?n:4}`;}
+
+// ── ENDPOINTS ─────────────────────────────────────────
+function addEp(){
+  const ep={
+    id:seq++,method:'GET',path:'/resource',summary:'',description:'',
+    tags:'',auth:true,
+    pathParams:[],queryParams:[],headers:[],
+    reqBody:{enabled:false,contentType:'application/json',schema:'',example:''},
+    responses:[{id:seq++,code:'200',desc:'Success',schema:'',example:''}]
+  };
+  endpoints.push(ep);
+  selectedId=ep.id;
+  renderEpList();
+  renderEditor();
+}
+
+function removeEp(id,ev){
+  ev&&ev.stopPropagation();
+  endpoints=endpoints.filter(x=>x.id!==id);
+  if(selectedId===id)selectedId=endpoints.length?endpoints[endpoints.length-1].id:null;
+  renderEpList();
+  renderEditor();
+}
+
+function selectEp(id){selectedId=id;renderEpList();renderEditor();}
+
+function getEp(){return endpoints.find(x=>x.id===selectedId);}
+
+function setEp(k,val){const ep=getEp();if(ep){ep[k]=val;renderEpList();}}
+function setReqBody(k,val){const ep=getEp();if(ep)ep.reqBody[k]=val;}
+
+function renderEpList(){
+  document.getElementById('epCount').textContent=endpoints.length;
+  if(!endpoints.length){
+    document.getElementById('epList').innerHTML='<div class="empty" style="padding:24px 10px;"><div class="ico">📡</div><p>No endpoints yet.<br>Click <strong>+ Add</strong>.</p></div>';
+    return;
+  }
+  document.getElementById('epList').innerHTML=endpoints.map(ep=>`
+    <div class="ep-card ${ep.id===selectedId?'on':''}" onclick="selectEp(${ep.id})">
+      <button class="btn btn-danger btn-xs ep-del" onclick="removeEp(${ep.id},event)">✕</button>
+      <span class="method ${mcls(ep.method)}">${ep.method}</span>
+      <div class="ep-path">${e(ep.path)}</div>
+      <div class="ep-sum">${e(ep.summary||'No summary')}</div>
+    </div>`).join('');
+}
+
+// ── ENDPOINT EDITOR ───────────────────────────────────
+function renderEditor(){
+  const ep=getEp();
+  const container=document.getElementById('epEditor');
+  if(!ep){
+    container.innerHTML='<div class="ep-placeholder"><div class="ico">✏️</div><p>Select an endpoint from the list<br>to edit its details.</p></div>';
+    return;
+  }
+
+  container.innerHTML=`
+    <!-- Basic Info -->
+    <div class="sec">
+      <div class="sec-hd">Basic Info</div>
+      <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;margin-bottom:12px;">
+        <div class="fg">
+          <label>Method</label>
+          <select onchange="setEp('method',this.value);renderEditor();">
+            ${METHODS.map(m=>`<option${m===ep.method?' selected':''}>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg">
+          <label>Path</label>
+          <input value="${e(ep.path)}" placeholder="/users/{id}" oninput="setEp('path',this.value)">
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div class="fg"><label>Summary</label><input value="${e(ep.summary)}" placeholder="Short description of this endpoint" oninput="setEp('summary',this.value)"></div>
+        <div class="fg"><label>Tags / Category</label><input value="${e(ep.tags)}" placeholder="Users, Auth, Products…" oninput="setEp('tags',this.value)"></div>
+      </div>
+      <div class="g2" style="margin-bottom:0;">
+        <div class="fg"><label>Description</label><textarea rows="2" placeholder="Detailed description…" oninput="setEp('description',this.value)" style="font-family:inherit;font-size:13px;">${e(ep.description)}</textarea></div>
+        <div class="fg" style="justify-content:center;padding-top:18px;">
+          <label class="req-check" style="cursor:pointer;font-size:13px;">
+            <input type="checkbox" ${ep.auth?'checked':''} onchange="setEp('auth',this.checked)" style="accent-color:var(--accent);width:15px;height:15px;">
+            &nbsp;Requires Authentication
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Path Parameters -->
+    <div class="sec">
+      <div class="sec-hd">
+        Path Parameters
+        <button class="btn btn-teal btn-xs" onclick="addParam('pathParams');renderEditor();">+ Add</button>
+      </div>
+      ${ep.pathParams.length?`
+        <table class="param-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th><th style="width:36px;"></th></tr></thead>
+          <tbody>${ep.pathParams.map(p=>`
+            <tr>
+              <td><input value="${e(p.name)}" placeholder="{id}" oninput="updParam('pathParams',${p.id},'name',this.value)"></td>
+              <td><select onchange="updParam('pathParams',${p.id},'type',this.value)">${TYPES.map(t=>`<option${t===p.type?' selected':''}>${t}</option>`).join('')}</select></td>
+              <td style="text-align:center;"><input type="checkbox" ${p.req?'checked':''} onchange="updParam('pathParams',${p.id},'req',this.checked)" style="accent-color:var(--accent);"></td>
+              <td><input value="${e(p.desc)}" placeholder="What is this param?" oninput="updParam('pathParams',${p.id},'desc',this.value)"></td>
+              <td><button class="btn btn-danger btn-xs" onclick="rmParam('pathParams',${p.id});renderEditor();">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
+      :'<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">No path parameters. Add one if your path contains <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px;">{id}</code> style segments.</div>'}
+    </div>
+
+    <!-- Query Parameters -->
+    <div class="sec">
+      <div class="sec-hd">
+        Query Parameters
+        <button class="btn btn-teal btn-xs" onclick="addParam('queryParams');renderEditor();">+ Add</button>
+      </div>
+      ${ep.queryParams.length?`
+        <table class="param-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th><th>Example</th><th style="width:36px;"></th></tr></thead>
+          <tbody>${ep.queryParams.map(p=>`
+            <tr>
+              <td><input value="${e(p.name)}" placeholder="page" oninput="updParam('queryParams',${p.id},'name',this.value)"></td>
+              <td><select onchange="updParam('queryParams',${p.id},'type',this.value)">${TYPES.map(t=>`<option${t===p.type?' selected':''}>${t}</option>`).join('')}</select></td>
+              <td style="text-align:center;"><input type="checkbox" ${p.req?'checked':''} onchange="updParam('queryParams',${p.id},'req',this.checked)" style="accent-color:var(--accent);"></td>
+              <td><input value="${e(p.desc)}" placeholder="Page number" oninput="updParam('queryParams',${p.id},'desc',this.value)"></td>
+              <td><input value="${e(p.example)}" placeholder="1" oninput="updParam('queryParams',${p.id},'example',this.value)"></td>
+              <td><button class="btn btn-danger btn-xs" onclick="rmParam('queryParams',${p.id});renderEditor();">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`
+      :'<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">No query parameters defined.</div>'}
+    </div>
+
+    <!-- Request Body -->
+    <div class="sec">
+      <div class="sec-hd">Request Body</div>
+      <div class="toggle-group">
+        <input type="checkbox" id="rbEnabled" ${ep.reqBody.enabled?'checked':''} onchange="setReqBody('enabled',this.checked);document.getElementById('rbFields').style.display=this.checked?'block':'none';" style="accent-color:var(--accent);width:14px;height:14px;">
+        <label for="rbEnabled" style="font-size:13px;font-weight:500;color:var(--text);cursor:pointer;">This endpoint has a request body</label>
+      </div>
+      <div id="rbFields" style="display:${ep.reqBody.enabled?'block':'none'};">
+        <div class="g2" style="margin-bottom:10px;">
+          <div class="fg">
+            <label>Content Type</label>
+            <select onchange="setReqBody('contentType',this.value)">${CT.map(c=>`<option${c===ep.reqBody.contentType?' selected':''}>${c}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="g2" style="margin-bottom:0;">
+          <div class="fg"><label>Schema (JSON)</label><textarea rows="5" placeholder='{\n  "name": "string",\n  "age": "integer"\n}' oninput="setReqBody('schema',this.value)">${e(ep.reqBody.schema)}</textarea></div>
+          <div class="fg"><label>Example</label><textarea rows="5" placeholder='{\n  "name": "Alice",\n  "age": 30\n}' oninput="setReqBody('example',this.value)">${e(ep.reqBody.example)}</textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Responses -->
+    <div class="sec">
+      <div class="sec-hd">
+        Responses
+        <button class="btn btn-teal btn-xs" onclick="addResp();renderEditor();">+ Add Response</button>
+      </div>
+      ${ep.responses.map(r=>`
+        <div class="resp-card">
+          <button class="btn btn-danger btn-xs resp-del" onclick="rmResp(${r.id});renderEditor();">✕</button>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;margin-bottom:10px;">
+            <div class="fg">
+              <label>Status Code</label>
+              <select onchange="updResp(${r.id},'code',this.value)">
+                ${['200','201','204','400','401','403','404','409','422','500'].map(c=>`<option${c===r.code?' selected':''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="fg"><label>Description</label><input value="${e(r.desc)}" placeholder="Success / Not Found / etc." oninput="updResp(${r.id},'desc',this.value)"></div>
+          </div>
+          <div class="g2" style="margin-bottom:0;">
+            <div class="fg"><label>Schema (JSON)</label><textarea rows="3" placeholder='{"id":"integer","name":"string"}' oninput="updResp(${r.id},'schema',this.value)">${e(r.schema)}</textarea></div>
+            <div class="fg"><label>Example</label><textarea rows="3" placeholder='{"id":1,"name":"Alice"}' oninput="updResp(${r.id},'example',this.value)">${e(r.example)}</textarea></div>
+          </div>
+        </div>`).join('')}
+      ${!ep.responses.length?'<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">No responses defined. Click <strong>+ Add Response</strong>.</div>':''}
+    </div>
+  `;
+}
+
+// ── PARAM CRUD ────────────────────────────────────────
+function addParam(key){
+  const ep=getEp();
+  if(ep)ep[key].push({id:seq++,name:'',type:'string',req:key==='pathParams',desc:'',example:''});
+}
+function rmParam(key,id){const ep=getEp();if(ep)ep[key]=ep[key].filter(x=>x.id!==id);}
+function updParam(key,id,k,val){const ep=getEp();if(ep){const p=ep[key].find(x=>x.id===id);if(p)p[k]=val;}}
+
+function addResp(){const ep=getEp();if(ep)ep.responses.push({id:seq++,code:'200',desc:'',schema:'',example:''});}
+function rmResp(id){const ep=getEp();if(ep)ep.responses=ep.responses.filter(x=>x.id!==id);}
+function updResp(id,k,val){const ep=getEp();if(ep){const r=ep.responses.find(x=>x.id===id);if(r)r[k]=val;}}
+
+// ── SPEC PREVIEW ──────────────────────────────────────
+function renderSpec(){
+  sync();
+  const container=document.getElementById('specContent');
+  if(!endpoints.length){
+    container.innerHTML='<div class="empty"><div class="ico">📄</div><p>No endpoints defined yet.<br>Go to <strong>Endpoints</strong> to add some.</p></div>';
+    return;
+  }
+
+  const infoCard=`
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--accent);">${e(S.name||'Untitled API')} <span style="font-size:13px;font-weight:600;color:var(--muted);">${e(S.version)}</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">${e(S.baseUrl)}</div>
+          ${S.description?`<div style="font-size:13px;color:var(--text);margin-top:8px;line-height:1.6;">${nb(S.description)}</div>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;">
+          ${S.auth?`<div style="margin-bottom:4px;"><strong>Auth:</strong> ${e(S.auth)}</div>`:''}
+          ${S.contact?`<div><strong>Contact:</strong> ${e(S.contact)}</div>`:''}
+          ${S.license?`<div><strong>License:</strong> ${e(S.license)}</div>`:''}
+          <div style="margin-top:6px;"><strong>${endpoints.length}</strong> endpoint${endpoints.length!==1?'s':''}</div>
+        </div>
+      </div>
+    </div>`;
+
+  const epCards=endpoints.map(ep=>{
+    const pathPart=ep.pathParams.length?`
+      <div class="spec-section">
+        <div class="spec-section-hd">Path Parameters</div>
+        <table class="spec-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+          <tbody>${ep.pathParams.map(p=>`<tr>
+            <td><code style="font-family:monospace;font-size:12px;">${e(p.name)}</code></td>
+            <td><span class="type-chip">${e(p.type)}</span></td>
+            <td>${p.req?'<span class="req-star">★</span> Yes':'No'}</td>
+            <td>${e(p.desc)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`:'';
+
+    const qPart=ep.queryParams.length?`
+      <div class="spec-section">
+        <div class="spec-section-hd">Query Parameters</div>
+        <table class="spec-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>${ep.queryParams.map(p=>`<tr>
+            <td><code style="font-family:monospace;font-size:12px;">${e(p.name)}</code></td>
+            <td><span class="type-chip">${e(p.type)}</span></td>
+            <td>${p.req?'<span class="req-star">★</span> Yes':'No'}</td>
+            <td>${e(p.desc)}</td>
+            <td><code style="font-size:11px;">${e(p.example)}</code></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`:'';
+
+    const rbPart=ep.reqBody.enabled?`
+      <div class="spec-section">
+        <div class="spec-section-hd">Request Body — <span style="font-family:monospace;font-size:10px;">${e(ep.reqBody.contentType)}</span></div>
+        ${ep.reqBody.schema?`<div style="margin-bottom:6px;"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600;">SCHEMA</div><div class="code-block">${e(ep.reqBody.schema)}</div></div>`:''}
+        ${ep.reqBody.example?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600;">EXAMPLE</div><div class="code-block">${e(ep.reqBody.example)}</div></div>`:''}
+      </div>`:'';
+
+    const respPart=ep.responses.length?`
+      <div class="spec-section">
+        <div class="spec-section-hd">Responses</div>
+        ${ep.responses.map(r=>`
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span class="status-badge ${scls(r.code)}">${e(r.code)}</span>
+              <span style="font-size:12px;font-weight:600;color:var(--text);">${e(r.desc)}</span>
+            </div>
+            ${r.schema?`<div style="margin-bottom:4px;"><div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;">SCHEMA</div><div class="code-block">${e(r.schema)}</div></div>`:''}
+            ${r.example?`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600;">EXAMPLE</div><div class="code-block">${e(r.example)}</div></div>`:''}
+          </div>`).join('')}
+      </div>`:'';
+
+    return `
+      <div class="spec-ep">
+        <div class="spec-ep-hd">
+          <span class="method ${mcls(ep.method)}">${ep.method}</span>
+          <div>
+            <div class="spec-ep-path">${e(S.baseUrl)}${e(ep.path)}</div>
+            <div class="spec-ep-sum">${e(ep.summary)}</div>
+          </div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <span class="auth-badge ${ep.auth?'auth-y':'auth-n'}">${ep.auth?'🔒 Auth Required':'🔓 Public'}</span>
+            ${ep.tags?`<span style="font-size:10px;color:var(--muted);">${e(ep.tags)}</span>`:''}
+          </div>
+        </div>
+        <div class="spec-ep-body">
+          ${ep.description?`<p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">${nb(ep.description)}</p>`:''}
+          ${pathPart}${qPart}${rbPart}${respPart}
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML=infoCard+epCards;
+}
+
+// ── EXPORT JSON ───────────────────────────────────────
+function exportJSON(){
+  sync();
+  const obj={
+    openapi:'3.0.x (simplified)',
+    info:{title:S.name,version:S.version,description:S.description,contact:S.contact,license:S.license},
+    servers:[{url:S.baseUrl}],
+    security:{type:S.auth},
+    paths:{}
+  };
+  endpoints.forEach(ep=>{
+    if(!obj.paths[ep.path])obj.paths[ep.path]={};
+    obj.paths[ep.path][ep.method.toLowerCase()]={
+      summary:ep.summary,description:ep.description,
+      tags:ep.tags?ep.tags.split(',').map(t=>t.trim()):[],
+      security:ep.auth?[{auth:[]}]:[],
+      parameters:[
+        ...ep.pathParams.map(p=>({in:'path',name:p.name,required:p.req,schema:{type:p.type},description:p.desc})),
+        ...ep.queryParams.map(p=>({in:'query',name:p.name,required:p.req,schema:{type:p.type,example:p.example},description:p.desc}))
+      ],
+      requestBody:ep.reqBody.enabled?{content:{[ep.reqBody.contentType]:{schema:ep.reqBody.schema,example:ep.reqBody.example}}}:undefined,
+      responses:Object.fromEntries(ep.responses.map(r=>[r.code,{description:r.desc,content:r.schema||r.example?{[ep.reqBody.contentType||'application/json']:{schema:r.schema,example:r.example}}:undefined}]))
+    };
+  });
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${(S.name||'api').replace(/\s+/g,'-')}_${S.version.replace(/\s+/g,'')}_contract.json`;
+  a.click();
+}
+
+// ── EXPORT HTML DOC ───────────────────────────────────
+function exportHTML(){
+  sync();
+  const MC={GET:'#166534;background:#dcfce7',POST:'#1e40af;background:#dbeafe',PUT:'#9a3412;background:#fff7ed',PATCH:'#92400e;background:#fef3c7',DELETE:'#991b1b;background:#fee2e2'};
+  const SC2={'2':'#166534;background:#dcfce7','3':'#1e40af;background:#dbeafe','4':'#92400e;background:#fef3c7','5':'#991b1b;background:#fee2e2'};
+
+  const html=`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>${e(S.name||'API')} Documentation</title>
+<style>
+body{font-family:'Segoe UI',sans-serif;background:#f0fdf9;color:#1e293b;padding:40px;font-size:13px;max-width:960px;margin:0 auto;}
+h1{font-size:24px;font-weight:800;color:#0f766e;margin-bottom:4px;}
+.api-meta{color:#64748b;font-size:12px;line-height:1.9;margin-bottom:8px;}
+.api-desc{background:#fff;border:1px solid #d1f0e8;border-radius:8px;padding:12px 16px;font-size:13px;color:#374151;margin-bottom:28px;line-height:1.6;}
+.ep{background:#fff;border:1px solid #d1f0e8;border-radius:10px;margin-bottom:18px;overflow:hidden;}
+.ep-hd{padding:12px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #d1f0e8;background:#f8fffe;}
+.ep-path{font-family:monospace;font-size:15px;font-weight:700;}
+.ep-sum{font-size:12px;color:#64748b;margin-top:2px;}
+.ep-body{padding:16px 18px;}
+.method{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:800;font-family:monospace;}
+.auth{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;margin-left:auto;}
+.sec-hd{font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+th{background:#f8fafc;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid #e2e8f0;}
+td{padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;}
+tr:last-child td{border-bottom:none;}
+.type{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;font-family:monospace;}
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px 14px;font-family:monospace;font-size:11.5px;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin-top:4px;}
+.status{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;font-family:monospace;}
+.req-y{color:#dc2626;}
+footer{margin-top:36px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;}
+</style></head><body>
+<h1>🔌 ${e(S.name||'API Documentation')}</h1>
+<div class="api-meta">
+  Version: <strong>${e(S.version)}</strong> &nbsp;·&nbsp;
+  Base URL: <code style="font-family:monospace;">${e(S.baseUrl)}</code><br>
+  Authentication: <strong>${e(S.auth)}</strong>
+  ${S.contact?`&nbsp;·&nbsp; Contact: <strong>${e(S.contact)}</strong>`:''}
+  ${S.license?`&nbsp;·&nbsp; License: ${e(S.license)}`:''}
+</div>
+${S.description?`<div class="api-desc">${nb(S.description)}</div>`:''}
+
+${endpoints.map(ep=>{
+  const mc=MC[ep.method]||'#374151;background:#f1f5f9';
+  return`<div class="ep">
+  <div class="ep-hd">
+    <span class="method" style="color:${mc}">${ep.method}</span>
+    <div>
+      <div class="ep-path">${e(S.baseUrl)}${e(ep.path)}</div>
+      ${ep.summary?`<div class="ep-sum">${e(ep.summary)}</div>`:''}
+    </div>
+    <span class="auth" style="${ep.auth?'background:#dcfce7;color:#166534':'background:#f1f5f9;color:#64748b'}">${ep.auth?'🔒 Auth Required':'🔓 Public'}</span>
+  </div>
+  <div class="ep-body">
+    ${ep.description?`<p style="font-size:13px;color:#64748b;margin-bottom:12px;line-height:1.6;">${nb(ep.description)}</p>`:''}
+    ${ep.tags?`<div style="margin-bottom:10px;font-size:11px;color:#64748b;"><strong>Tags:</strong> ${e(ep.tags)}</div>`:''}
+    ${ep.pathParams.length?`<div class="sec-hd">Path Parameters</div>
+    <table><thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr></thead><tbody>
+    ${ep.pathParams.map(p=>`<tr><td><code>${e(p.name)}</code></td><td><span class="type">${e(p.type)}</span></td><td>${p.req?'<span class="req-y">Required</span>':'Optional'}</td><td>${e(p.desc)}</td></tr>`).join('')}
+    </tbody></table>`:''}
+    ${ep.queryParams.length?`<div class="sec-hd">Query Parameters</div>
+    <table><thead><tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th><th>Example</th></tr></thead><tbody>
+    ${ep.queryParams.map(p=>`<tr><td><code>${e(p.name)}</code></td><td><span class="type">${e(p.type)}</span></td><td>${p.req?'<span class="req-y">Required</span>':'Optional'}</td><td>${e(p.desc)}</td><td><code>${e(p.example)}</code></td></tr>`).join('')}
+    </tbody></table>`:''}
+    ${ep.reqBody.enabled?`<div class="sec-hd">Request Body — <code>${e(ep.reqBody.contentType)}</code></div>
+    ${ep.reqBody.schema?`<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">SCHEMA</div><div class="code-block">${e(ep.reqBody.schema)}</div></div>`:''}
+    ${ep.reqBody.example?`<div><div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">EXAMPLE</div><div class="code-block">${e(ep.reqBody.example)}</div></div>`:''}`:''}
+    ${ep.responses.length?`<div class="sec-hd">Responses</div>
+    ${ep.responses.map(r=>{const sc=SC2[String(r.code)[0]]||SC2['4'];return`<div style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span class="status" style="color:${sc}">${e(r.code)}</span>
+        <strong style="font-size:12px;">${e(r.desc)}</strong>
+      </div>
+      ${r.schema?`<div class="code-block">${e(r.schema)}</div>`:''}
+    </div>`;}).join('')}`:''}
+  </div>
+</div>`;}).join('')}
+
+<footer>Generated by QuickTools · API Contract Designer · ${new Date().toISOString()}</footer>
+</body></html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=`${(S.name||'api').replace(/\s+/g,'-')}_${S.version}_documentation.html`;
+  a.click();
+}
+
+// ── INIT ─────────────────────────────────────────────
+(function init(){
+  document.getElementById('apiName').value='My Service API';
+  document.getElementById('apiVer').value='v1.0';
+  document.getElementById('apiBase').value='https://api.example.com/v1';
+  document.getElementById('apiDesc').value='RESTful API for managing resources.';
+  sync();
+
+  addEp();
+  const ep=endpoints[0];
+  ep.path='/users';ep.summary='List all users';ep.tags='Users';
+  ep.queryParams.push({id:seq++,name:'page',type:'integer',req:false,desc:'Page number',example:'1'});
+  ep.queryParams.push({id:seq++,name:'limit',type:'integer',req:false,desc:'Items per page',example:'20'});
+  ep.responses=[
+    {id:seq++,code:'200',desc:'Successful response',schema:'{"users":[{"id":"integer","name":"string","email":"string"}],"total":"integer"}',example:'{"users":[{"id":1,"name":"Alice","email":"alice@example.com"}],"total":1}'},
+    {id:seq++,code:'401',desc:'Unauthorized',schema:'',example:'{"error":"Unauthorized"}'}
+  ];
+
+  addEp();
+  const ep2=endpoints[1];
+  ep2.method='POST';ep2.path='/users';ep2.summary='Create a user';ep2.tags='Users';
+  ep2.reqBody.enabled=true;ep2.reqBody.schema='{"name":"string","email":"string","role":"string"}';ep2.reqBody.example='{"name":"Bob","email":"bob@example.com","role":"user"}';
+  ep2.responses=[
+    {id:seq++,code:'201',desc:'User created',schema:'{"id":"integer","name":"string","email":"string"}',example:'{"id":2,"name":"Bob","email":"bob@example.com"}'},
+    {id:seq++,code:'400',desc:'Validation error',schema:'',example:'{"error":"Email is required"}'},
+    {id:seq++,code:'401',desc:'Unauthorized',schema:'',example:''}
+  ];
+
+  selectedId=endpoints[0].id;
+  renderEpList();
+  renderEditor();
+})();
+</script>
+</body>
+</html>
