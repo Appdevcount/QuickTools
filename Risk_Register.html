@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk Register — QuickTools</title>
+<style>
+:root{
+  --bg:#fff1f2;--surface:#fff;--border:#fecdd3;
+  --accent:#e11d48;--accent2:#dc2626;
+  --green:#16a34a;--amber:#d97706;--red:#dc2626;
+  --text:#1e293b;--muted:#64748b;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#be123c,#e11d48);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(190,18,60,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#be123c;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:200px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:#fff1f2;color:var(--text);}
+.sb-btn.on{background:#fff1f2;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:1100px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(225,29,72,.07);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;resize:vertical;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{min-height:60px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:0 1px 6px rgba(225,29,72,.07);}
+.kpi-val{font-size:28px;font-weight:800;color:var(--accent);line-height:1;}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+/* Heat map */
+.heatmap-wrap{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;margin:8px 0;}
+.heatmap-ylbl{display:flex;flex-direction:column;justify-content:space-around;height:250px;align-items:flex-end;padding-right:6px;}
+.heatmap-ylbl span{font-size:10px;color:var(--muted);font-weight:600;}
+.heatmap-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
+.hm-cell{height:46px;border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;cursor:default;transition:transform .15s;}
+.hm-cell:hover{transform:scale(1.05);z-index:1;}
+.hm-c0{background:#dcfce7;}
+.hm-c1{background:#bbf7d0;}
+.hm-c2{background:#fef3c7;}
+.hm-c3{background:#fde68a;}
+.hm-c4{background:#fed7aa;}
+.hm-c5{background:#fca5a5;}
+.hm-c6{background:#f87171;}
+.hm-c7{background:#ef4444;}
+.hm-dot{width:20px;height:20px;border-radius:50%;background:#1e293b;border:2px solid #fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;cursor:pointer;position:absolute;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+.hm-xlbl{display:flex;justify-content:space-around;margin-top:4px;}
+.hm-xlbl span{font-size:10px;color:var(--muted);font-weight:600;}
+/* Risk score badge */
+.score{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;}
+.score-low{background:#dcfce7;color:#166534;}
+.score-med{background:#fef3c7;color:#92400e;}
+.score-high{background:#fed7aa;color:#c2410c;}
+.score-crit{background:#fee2e2;color:#991b1b;}
+.stat-badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;}
+.s-open{background:#dbeafe;color:#1e40af;}
+.s-mitigated{background:#dcfce7;color:#166534;}
+.s-accepted{background:#fef3c7;color:#92400e;}
+.s-closed{background:#f1f5f9;color:#475569;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#fff1f2;color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:9px 12px;border-bottom:1px solid #fce7f3;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fff5f5;}
+td select{border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:11px;background:#fff;color:var(--text);}
+.risk-detail{display:none;background:#fff5f5;border-top:1px solid var(--border);padding:14px 16px;}
+.risk-detail.open{display:block;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .ico{font-size:40px;margin-bottom:8px;}
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.filter-bar select,.filter-bar input{border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;background:#fff;color:var(--text);}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-icon">⚠️</div>
+  <div>
+    <div class="hdr-title">Risk Register</div>
+    <div class="hdr-sub">Log · Assess · Mitigate · Track</div>
+  </div>
+  <div class="hdr-actions">
+    <a href="index.html" class="btn btn-ghost btn-sm" style="text-decoration:none;">&#8592; Hub</a>
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">Export JSON</button>
+    <button class="btn btn-ghost btn-sm" onclick="importData()">Import</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-lbl">Views</div>
+    <button class="sb-btn on" id="nav-dashboard" onclick="nav('dashboard')">📊 Dashboard</button>
+    <button class="sb-btn" id="nav-heatmap" onclick="nav('heatmap')">🗺️ Heat Map</button>
+    <button class="sb-btn" id="nav-list" onclick="nav('list')">📋 Risk List</button>
+    <button class="sb-btn" id="nav-add" onclick="nav('add')">＋ Add Risk</button>
+    <div class="sb-lbl">Filter</div>
+    <div id="sb-stats" style="padding:8px 14px;font-size:12px;color:var(--muted);line-height:1.8"></div>
+  </div>
+  <div class="main">
+    <div class="content">
+
+      <div class="panel on" id="panel-dashboard">
+        <div class="g4" id="kpi-grid"></div>
+        <div id="dashboard-content"></div>
+      </div>
+
+      <div class="panel" id="panel-heatmap">
+        <div class="card">
+          <div class="card-hd">Risk Heat Map — Likelihood × Impact</div>
+          <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+            <div>
+              <div class="heatmap-wrap">
+                <div class="heatmap-ylbl">
+                  <span>5 Certain</span>
+                  <span>4 Likely</span>
+                  <span>3 Possible</span>
+                  <span>2 Unlikely</span>
+                  <span>1 Rare</span>
+                </div>
+                <div>
+                  <div class="heatmap-grid" id="heatmap-grid"></div>
+                  <div class="hm-xlbl"><span>1 Minor</span><span>2 Low</span><span>3 Moderate</span><span>4 Major</span><span>5 Severe</span></div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center">← Impact →</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Legend</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#dcfce7"></div> Low (1–4)</div>
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#fef3c7"></div> Medium (5–9)</div>
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#fed7aa"></div> High (10–14)</div>
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#fca5a5"></div> Critical (15–25)</div>
+              </div>
+              <div id="heatmap-legend-risks" style="margin-top:16px"></div>
+            </div>
+          </div>
+        </div>
+        <div id="heatmap-clicked-risks"></div>
+      </div>
+
+      <div class="panel" id="panel-list">
+        <div class="filter-bar">
+          <select id="filter-status" onchange="renderList()"><option value="">All Statuses</option><option>Open</option><option>Mitigated</option><option>Accepted</option><option>Closed</option></select>
+          <select id="filter-cat" onchange="renderList()"><option value="">All Categories</option><option>Technical</option><option>Schedule</option><option>Resource</option><option>External</option><option>Financial</option><option>Compliance</option><option>Other</option></select>
+          <select id="filter-score" onchange="renderList()"><option value="">All Levels</option><option value="crit">Critical (15+)</option><option value="high">High (10–14)</option><option value="med">Medium (5–9)</option><option value="low">Low (1–4)</option></select>
+          <input id="filter-search" placeholder="Search risks…" oninput="renderList()" style="flex:1;min-width:160px"/>
+        </div>
+        <div id="risk-list-content"></div>
+      </div>
+
+      <div class="panel" id="panel-add">
+        <div class="card">
+          <div class="card-hd" id="add-card-hd">Add New Risk</div>
+          <input type="hidden" id="edit-id"/>
+          <div class="g2">
+            <div class="fg"><label>Risk Title</label><input id="r-title" placeholder="e.g. Key person dependency on lead dev"/></div>
+            <div class="fg"><label>Category</label>
+              <select id="r-cat">
+                <option>Technical</option><option>Schedule</option><option>Resource</option>
+                <option>External</option><option>Financial</option><option>Compliance</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg"><label>Description</label><textarea id="r-desc" placeholder="Describe the risk in detail"></textarea></div>
+          <div class="g3">
+            <div class="fg"><label>Likelihood (1–5)</label>
+              <select id="r-like">
+                <option value="1">1 – Rare</option><option value="2">2 – Unlikely</option>
+                <option value="3" selected>3 – Possible</option><option value="4">4 – Likely</option><option value="5">5 – Certain</option>
+              </select>
+            </div>
+            <div class="fg"><label>Impact (1–5)</label>
+              <select id="r-impact">
+                <option value="1">1 – Minor</option><option value="2">2 – Low</option>
+                <option value="3" selected>3 – Moderate</option><option value="4">4 – Major</option><option value="5">5 – Severe</option>
+              </select>
+            </div>
+            <div class="fg"><label>Status</label>
+              <select id="r-status">
+                <option value="Open">Open</option><option value="Mitigated">Mitigated</option>
+                <option value="Accepted">Accepted</option><option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="fg"><label>Owner</label><input id="r-owner" placeholder="Risk owner name"/></div>
+            <div class="fg"><label>Review Date</label><input type="date" id="r-review"/></div>
+          </div>
+          <div class="fg"><label>Mitigation Plan</label><textarea id="r-mitigation" placeholder="What actions reduce likelihood or impact?"></textarea></div>
+          <div class="fg"><label>Contingency Plan</label><textarea id="r-contingency" placeholder="What do we do if the risk materialises?"></textarea></div>
+          <div id="risk-score-preview" style="margin-bottom:12px;font-size:13px;color:var(--muted)"></div>
+          <button class="btn btn-primary" onclick="saveRisk()">Save Risk</button>
+          <button class="btn btn-sm" style="margin-left:8px;background:#fff1f2;border:1px solid var(--border);color:var(--muted)" onclick="cancelEdit()">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+const SK = 'risk-v1';
+let S = (() => {
+  const d = localStorage.getItem(SK);
+  if(d) return JSON.parse(d);
+  return { risks:[], nid:1 };
+})();
+let activePanel = 'dashboard';
+let clickedCell = null;
+
+function save(){ localStorage.setItem(SK, JSON.stringify(S)); }
+function nid(){ return 'id'+(S.nid++); }
+
+function nav(p){
+  activePanel = p;
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(el=>el.classList.remove('on'));
+  document.getElementById('panel-'+p).classList.add('on');
+  const nb=document.getElementById('nav-'+p);
+  if(nb) nb.classList.add('on');
+  if(p==='dashboard') renderDashboard();
+  if(p==='heatmap') renderHeatmap();
+  if(p==='list') renderList();
+  renderSB();
+}
+
+function score(r){ return r.likelihood * r.impact; }
+function scoreClass(s){ return s>=15?'score-crit':s>=10?'score-high':s>=5?'score-med':'score-low'; }
+function scoreLabel(s){ return s>=15?'Critical':s>=10?'High':s>=5?'Medium':'Low'; }
+function statClass(st){ return st==='Open'?'s-open':st==='Mitigated'?'s-mitigated':st==='Accepted'?'s-accepted':'s-closed'; }
+
+function hmColor(l,i){
+  const s=l*i;
+  if(s>=20) return 'hm-c7';
+  if(s>=15) return 'hm-c6';
+  if(s>=12) return 'hm-c5';
+  if(s>=10) return 'hm-c4';
+  if(s>=6)  return 'hm-c3';
+  if(s>=4)  return 'hm-c2';
+  if(s>=2)  return 'hm-c1';
+  return 'hm-c0';
+}
+
+function renderSB(){
+  const open = S.risks.filter(r=>r.status==='Open').length;
+  const crit = S.risks.filter(r=>score(r)>=15).length;
+  document.getElementById('sb-stats').innerHTML =
+    `Total: <strong>${S.risks.length}</strong><br>Open: <strong>${open}</strong><br>Critical: <strong style="color:var(--red)">${crit}</strong>`;
+}
+
+function renderDashboard(){
+  const open=S.risks.filter(r=>r.status==='Open').length;
+  const crit=S.risks.filter(r=>score(r)>=15&&r.status==='Open').length;
+  const high=S.risks.filter(r=>score(r)>=10&&score(r)<15&&r.status==='Open').length;
+  const mit=S.risks.filter(r=>r.status==='Mitigated').length;
+  document.getElementById('kpi-grid').innerHTML=
+    `<div class="kpi"><div class="kpi-val">${S.risks.length}</div><div class="kpi-lbl">Total Risks</div></div>`+
+    `<div class="kpi" style="border-color:#fecaca"><div class="kpi-val" style="color:#dc2626">${crit}</div><div class="kpi-lbl">Critical Open</div></div>`+
+    `<div class="kpi" style="border-color:#fed7aa"><div class="kpi-val" style="color:#ea580c">${high}</div><div class="kpi-lbl">High Open</div></div>`+
+    `<div class="kpi" style="border-color:#d1fae5"><div class="kpi-val" style="color:#16a34a">${mit}</div><div class="kpi-lbl">Mitigated</div></div>`;
+
+  if(!S.risks.length){
+    document.getElementById('dashboard-content').innerHTML=`<div class="empty"><div class="ico">⚠️</div><div>No risks logged yet.</div><br><button class="btn btn-primary btn-sm" onclick="nav('add')">Log First Risk</button></div>`;
+    return;
+  }
+
+  const topRisks = S.risks.filter(r=>r.status==='Open').sort((a,b)=>score(b)-score(a)).slice(0,8);
+  document.getElementById('dashboard-content').innerHTML=`<div class="card">
+    <div class="card-hd">Top Open Risks</div>
+    <table>
+      <thead><tr><th>Risk</th><th>Category</th><th>L</th><th>I</th><th>Score</th><th>Owner</th><th>Status</th><th></th></tr></thead>
+      <tbody>${topRisks.map(r=>`
+        <tr>
+          <td style="font-weight:600;max-width:240px">${r.title}</td>
+          <td>${r.category||'-'}</td>
+          <td style="text-align:center">${r.likelihood}</td>
+          <td style="text-align:center">${r.impact}</td>
+          <td><span class="score ${scoreClass(score(r))}">${score(r)} ${scoreLabel(score(r))}</span></td>
+          <td>${r.owner||'-'}</td>
+          <td><select onchange="updStatus('${r.id}',this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:#fff">
+            <option${r.status==='Open'?' selected':''}>Open</option>
+            <option${r.status==='Mitigated'?' selected':''}>Mitigated</option>
+            <option${r.status==='Accepted'?' selected':''}>Accepted</option>
+            <option${r.status==='Closed'?' selected':''}>Closed</option>
+          </select></td>
+          <td><button class="btn btn-sm" style="background:#fff1f2;border:1px solid var(--border);color:var(--accent)" onclick="editRisk('${r.id}')">Edit</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderHeatmap(){
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = '';
+  // Rows: likelihood 5 down to 1; Cols: impact 1 to 5
+  for(let l=5;l>=1;l--){
+    for(let i=1;i<=5;i++){
+      const cellRisks = S.risks.filter(r=>r.likelihood===l&&r.impact===i&&r.status!=='Closed');
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell ' + hmColor(l,i);
+      cell.title = `L${l} × I${i} = ${l*i} | ${cellRisks.length} risk(s)`;
+      cell.onclick = ()=>{ clickedCell={l,i}; showCellRisks(l,i); };
+      if(cellRisks.length){
+        const dot = document.createElement('div');
+        dot.className = 'hm-dot';
+        dot.textContent = cellRisks.length;
+        cell.appendChild(dot);
+      }
+      grid.appendChild(cell);
+    }
+  }
+  document.getElementById('heatmap-clicked-risks').innerHTML='';
+  const legendEl = document.getElementById('heatmap-legend-risks');
+  const topRisks = S.risks.filter(r=>r.status!=='Closed').sort((a,b)=>score(b)-score(a)).slice(0,5);
+  legendEl.innerHTML = topRisks.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Top Active Risks</div>`+
+    topRisks.map(r=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px">
+      <span class="score ${scoreClass(score(r))}" style="min-width:24px;text-align:center">${score(r)}</span>
+      <span style="flex:1">${r.title}</span>
+    </div>`).join(''):'';
+}
+
+function showCellRisks(l,i){
+  const risks = S.risks.filter(r=>r.likelihood===l&&r.impact===i&&r.status!=='Closed');
+  const el=document.getElementById('heatmap-clicked-risks');
+  if(!risks.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="card"><div class="card-hd">Risks at L${l} × I${i} (Score: ${l*i})</div>
+    ${risks.map(r=>`<div style="border-bottom:1px solid var(--border);padding:10px 0">
+      <div style="font-weight:700">${r.title} <span class="stat-badge ${statClass(r.status)}">${r.status}</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${r.mitigation||'No mitigation plan'}</div>
+      <div style="margin-top:6px"><button class="btn btn-sm" style="background:#fff1f2;border:1px solid var(--border);color:var(--accent)" onclick="editRisk('${r.id}')">Edit</button></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderList(){
+  const filterStatus = document.getElementById('filter-status').value;
+  const filterCat = document.getElementById('filter-cat').value;
+  const filterScore = document.getElementById('filter-score').value;
+  const search = (document.getElementById('filter-search').value||'').toLowerCase();
+  let risks = S.risks.filter(r=>{
+    if(filterStatus && r.status!==filterStatus) return false;
+    if(filterCat && r.category!==filterCat) return false;
+    if(filterScore){
+      const s=score(r);
+      if(filterScore==='crit'&&s<15) return false;
+      if(filterScore==='high'&&(s<10||s>=15)) return false;
+      if(filterScore==='med'&&(s<5||s>=10)) return false;
+      if(filterScore==='low'&&s>=5) return false;
+    }
+    if(search && !r.title.toLowerCase().includes(search) && !(r.owner||'').toLowerCase().includes(search)) return false;
+    return true;
+  }).sort((a,b)=>score(b)-score(a));
+
+  if(!risks.length){
+    document.getElementById('risk-list-content').innerHTML='<div class="empty"><div class="ico">⚠️</div><div>No risks match the current filters.</div></div>';
+    return;
+  }
+  document.getElementById('risk-list-content').innerHTML=`<div class="card">
+    <div class="card-hd">${risks.length} Risk${risks.length!==1?'s':''}</div>
+    <table>
+      <thead><tr><th>Risk</th><th>Category</th><th>L×I</th><th>Score</th><th>Owner</th><th>Review</th><th>Status</th><th></th></tr></thead>
+      <tbody>${risks.map(r=>`
+        <tr style="cursor:pointer" onclick="toggleDetail('${r.id}')">
+          <td style="font-weight:600;max-width:220px">${r.title}</td>
+          <td><span style="font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:99px">${r.category||'-'}</span></td>
+          <td style="text-align:center;font-weight:700">${r.likelihood}×${r.impact}</td>
+          <td><span class="score ${scoreClass(score(r))}">${score(r)}</span></td>
+          <td>${r.owner||'-'}</td>
+          <td style="font-size:11px;color:var(--muted)">${r.reviewDate||'-'}</td>
+          <td><select onclick="event.stopPropagation()" onchange="updStatus('${r.id}',this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:#fff">
+            <option${r.status==='Open'?' selected':''}>Open</option>
+            <option${r.status==='Mitigated'?' selected':''}>Mitigated</option>
+            <option${r.status==='Accepted'?' selected':''}>Accepted</option>
+            <option${r.status==='Closed'?' selected':''}>Closed</option>
+          </select></td>
+          <td onclick="event.stopPropagation()"><button class="btn btn-sm" style="background:#fff1f2;border:1px solid var(--border);color:var(--accent)" onclick="editRisk('${r.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="delRisk('${r.id}')">✕</button></td>
+        </tr>
+        <tr><td colspan="8" style="padding:0">
+          <div class="risk-detail" id="detail-${r.id}">
+            ${r.description?`<div style="margin-bottom:8px"><strong>Description:</strong> ${r.description}</div>`:''}
+            ${r.mitigation?`<div style="margin-bottom:8px"><strong>Mitigation:</strong> ${r.mitigation}</div>`:''}
+            ${r.contingency?`<div><strong>Contingency:</strong> ${r.contingency}</div>`:''}
+          </div>
+        </td></tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function toggleDetail(id){
+  const el=document.getElementById('detail-'+id);
+  if(el) el.classList.toggle('open');
+}
+
+function updStatus(id,st){
+  const r=S.risks.find(r=>r.id===id);
+  if(r){ r.status=st; save(); renderSB(); if(activePanel==='dashboard') renderDashboard(); }
+}
+
+function saveRisk(){
+  const title=document.getElementById('r-title').value.trim();
+  if(!title){ alert('Title required'); return; }
+  const editId=document.getElementById('edit-id').value;
+  const risk = {
+    id: editId||nid(),
+    title,
+    category: document.getElementById('r-cat').value,
+    description: document.getElementById('r-desc').value.trim(),
+    likelihood: parseInt(document.getElementById('r-like').value),
+    impact: parseInt(document.getElementById('r-impact').value),
+    status: document.getElementById('r-status').value,
+    owner: document.getElementById('r-owner').value.trim(),
+    reviewDate: document.getElementById('r-review').value,
+    mitigation: document.getElementById('r-mitigation').value.trim(),
+    contingency: document.getElementById('r-contingency').value.trim()
+  };
+  if(editId){ const idx=S.risks.findIndex(r=>r.id===editId); if(idx>=0) S.risks[idx]=risk; }
+  else S.risks.push(risk);
+  save(); nav('list');
+}
+
+function editRisk(id){
+  const r=S.risks.find(r=>r.id===id);
+  if(!r) return;
+  nav('add');
+  document.getElementById('add-card-hd').textContent='Edit Risk';
+  document.getElementById('edit-id').value=r.id;
+  document.getElementById('r-title').value=r.title;
+  document.getElementById('r-cat').value=r.category||'Technical';
+  document.getElementById('r-desc').value=r.description||'';
+  document.getElementById('r-like').value=r.likelihood;
+  document.getElementById('r-impact').value=r.impact;
+  document.getElementById('r-status').value=r.status;
+  document.getElementById('r-owner').value=r.owner||'';
+  document.getElementById('r-review').value=r.reviewDate||'';
+  document.getElementById('r-mitigation').value=r.mitigation||'';
+  document.getElementById('r-contingency').value=r.contingency||'';
+}
+
+function cancelEdit(){
+  document.getElementById('add-card-hd').textContent='Add New Risk';
+  document.getElementById('edit-id').value='';
+  ['r-title','r-desc','r-owner','r-mitigation','r-contingency'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('r-like').value='3';
+  document.getElementById('r-impact').value='3';
+  document.getElementById('r-status').value='Open';
+  nav('list');
+}
+
+function delRisk(id){
+  if(!confirm('Delete this risk?')) return;
+  S.risks=S.risks.filter(r=>r.id!==id);
+  save(); renderList(); renderSB();
+}
+
+// Live score preview
+function updateScorePreview(){
+  const l=parseInt(document.getElementById('r-like').value)||3;
+  const i=parseInt(document.getElementById('r-impact').value)||3;
+  const s=l*i;
+  const el=document.getElementById('risk-score-preview');
+  if(el) el.innerHTML=`Risk Score: <span class="score ${scoreClass(s)}">${s} — ${scoreLabel(s)}</span>`;
+}
+document.addEventListener('change', e=>{ if(['r-like','r-impact'].includes(e.target.id)) updateScorePreview(); });
+
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='risk-register.json'; a.click();
+}
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const fr=new FileReader();
+    fr.onload=ev=>{ try{ S=JSON.parse(ev.target.result); save(); nav('dashboard'); }catch{ alert('Invalid JSON'); } };
+    fr.readAsText(e.target.files[0]);
+  }; inp.click();
+}
+
+renderDashboard();
+renderSB();
+updateScorePreview();
+</script>
+</body>
+</html>

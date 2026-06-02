@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1-on-1 Notes Tracker — QuickTools</title>
+<style>
+:root{
+  --bg:#f5f3ff;--surface:#fff;--border:#e4e0f5;
+  --accent:#4f46e5;--accent2:#7c3aed;
+  --green:#16a34a;--amber:#d97706;--red:#dc2626;
+  --text:#1e293b;--muted:#64748b;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#4338ca,#4f46e5);padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(67,56,202,.25);}
+.hdr-icon{width:40px;height:40px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.hdr-title{font-size:17px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;}
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;}
+.btn-ghost{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4);}
+.btn-ghost:hover{background:rgba(255,255,255,.3);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#4338ca;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.app{flex:1;display:flex;overflow:hidden;}
+.sb{width:220px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:12px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:6px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn .lbl{display:flex;align-items:center;gap:8px;}
+.sb-btn:hover{background:#f5f3ff;color:var(--text);}
+.sb-btn.on{background:#f5f3ff;border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.sb-count{font-size:10px;background:var(--border);border-radius:99px;padding:1px 6px;color:var(--muted);}
+.sb-btn.on .sb-count{background:#e0e7ff;color:var(--accent);}
+.main{flex:1;overflow-y:auto;}
+.content{padding:24px;max-width:900px;margin:0 auto;}
+.panel{display:none;}
+.panel.on{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;box-shadow:0 1px 6px rgba(79,70,229,.07);}
+.card-hd{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:16px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;resize:vertical;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{min-height:70px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+/* Person card in sidebar */
+.person-sb{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;border:none;border-left:3px solid transparent;background:transparent;cursor:pointer;text-align:left;transition:all .15s;}
+.person-sb:hover{background:#f5f3ff;}
+.person-sb.on{background:#f5f3ff;border-left-color:var(--accent);}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.person-name-sb{font-size:12.5px;font-weight:600;color:var(--text);}
+.person-role-sb{font-size:10px;color:var(--muted);}
+/* Session cards */
+.session-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;cursor:pointer;transition:all .15s;}
+.session-card:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(79,70,229,.12);}
+.session-card.active{border-color:var(--accent);box-shadow:0 2px 10px rgba(79,70,229,.12);}
+.session-date{font-size:13px;font-weight:700;}
+.session-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+.mood-display{display:inline-flex;gap:4px;margin-top:5px;}
+.mood-dot{width:10px;height:10px;border-radius:50%;background:#e2e8f0;}
+.mood-dot.filled{background:var(--accent);}
+/* Action items */
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px;background:#fafafe;}
+.action-item.done{opacity:.55;}
+.action-item.done .action-text{text-decoration:line-through;color:var(--muted);}
+.action-cb{width:18px;height:18px;border:2px solid #c7d2fe;border-radius:5px;background:#fff;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;}
+.action-item.done .action-cb{background:var(--accent);border-color:var(--accent);}
+.action-text{flex:1;font-size:13px;line-height:1.4;}
+.action-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.owner-pill{display:inline-block;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:700;}
+.owner-me{background:#e0e7ff;color:#3730a3;}
+.owner-them{background:#f3e8ff;color:#6b21a8;}
+.carryover-section{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:16px;}
+.carryover-hd{font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:8px;}
+/* Mood selector */
+.mood-sel{display:flex;gap:6px;margin-top:6px;}
+.mood-btn{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.mood-btn:hover,.mood-btn.on{border-color:var(--accent);background:#e0e7ff;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty .ico{font-size:40px;margin-bottom:8px;}
+.person-hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.person-big-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.tab-bar{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px;}
+.tab{padding:8px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-icon">💬</div>
+  <div>
+    <div class="hdr-title">1-on-1 Notes Tracker</div>
+    <div class="hdr-sub">Sessions · Action Items · Career Goals · Auto Roll-Forward</div>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">Export JSON</button>
+    <button class="btn btn-ghost btn-sm" onclick="importData()">Import</button>
+  </div>
+</div>
+<div class="app">
+  <div class="sb">
+    <div class="sb-lbl">Team Members</div>
+    <div id="sb-people"></div>
+    <button class="sb-btn" onclick="nav('add-person')"><span class="lbl">＋ Add Person</span></button>
+    <div class="sb-lbl">Views</div>
+    <button class="sb-btn" id="nav-dashboard" onclick="nav('dashboard')"><span class="lbl">📊 Dashboard</span></button>
+  </div>
+  <div class="main">
+    <div class="content">
+
+      <!-- Dashboard -->
+      <div class="panel on" id="panel-dashboard">
+        <div id="dashboard-content"></div>
+      </div>
+
+      <!-- Person view -->
+      <div class="panel" id="panel-person">
+        <div id="person-content"></div>
+      </div>
+
+      <!-- Add person -->
+      <div class="panel" id="panel-add-person">
+        <div class="card">
+          <div class="card-hd">Add Team Member</div>
+          <div class="g2">
+            <div class="fg"><label>Name</label><input id="ap-name" placeholder="Full name"/></div>
+            <div class="fg"><label>Role / Title</label><input id="ap-role" placeholder="e.g. Senior Engineer"/></div>
+          </div>
+          <div class="g2">
+            <div class="fg"><label>Team</label><input id="ap-team" placeholder="e.g. Platform Team"/></div>
+            <div class="fg"><label>Started</label><input type="date" id="ap-started"/></div>
+          </div>
+          <div class="fg"><label>Career Goals / Focus</label><textarea id="ap-goals" placeholder="What does this person want to achieve this year?"></textarea></div>
+          <button class="btn btn-primary" onclick="savePerson()">Save</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- New Session Modal -->
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)closeModal()">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative">
+    <button onclick="closeModal()" style="position:absolute;top:14px;right:14px;border:none;background:transparent;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
+    <div style="font-size:16px;font-weight:700;margin-bottom:18px;color:var(--accent)">New 1-on-1 Session</div>
+    <input type="hidden" id="modal-person-id"/>
+    <div class="g2">
+      <div class="fg"><label>Date</label><input type="date" id="m-date"/></div>
+      <div class="fg"><label>Duration (mins)</label><input type="number" id="m-duration" placeholder="30" min="5"/></div>
+    </div>
+    <div class="fg"><label>Mood / Energy (1–5)</label>
+      <div class="mood-sel" id="mood-sel">
+        <button class="mood-btn" onclick="setMood(1)" data-mood="1" title="Poor">😔</button>
+        <button class="mood-btn" onclick="setMood(2)" data-mood="2" title="Low">😐</button>
+        <button class="mood-btn on" onclick="setMood(3)" data-mood="3" title="OK">🙂</button>
+        <button class="mood-btn" onclick="setMood(4)" data-mood="4" title="Good">😊</button>
+        <button class="mood-btn" onclick="setMood(5)" data-mood="5" title="Excellent">🤩</button>
+      </div>
+    </div>
+    <div class="fg"><label>Topics Discussed</label><textarea id="m-topics" placeholder="Key discussion points, highlights, concerns…"></textarea></div>
+    <div class="fg"><label>Private Notes</label><textarea id="m-private" placeholder="Manager notes (not shared)…" style="min-height:50px"></textarea></div>
+
+    <!-- Carryover actions -->
+    <div id="modal-carryover"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">New Action Items</div>
+    <div id="modal-actions-list"></div>
+    <button class="btn btn-sm" style="background:#f5f3ff;border:1px solid var(--border);color:var(--accent);margin-bottom:16px" onclick="addModalAction()">＋ Add Action Item</button>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sm" style="background:#f1f5f9;border:1px solid var(--border);color:var(--muted)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSession()">Save Session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK = '1on1-v1';
+let S = (() => {
+  const d = localStorage.getItem(SK);
+  if(d) return JSON.parse(d);
+  return { people:[], nid:1 };
+})();
+let activePanel = 'dashboard';
+let currentPersonId = null;
+let currentMood = 3;
+let modalActions = [];
+
+function save(){ localStorage.setItem(SK, JSON.stringify(S)); }
+function nid(){ return 'id'+(S.nid++); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+function nav(p, personId){
+  activePanel = p;
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(el=>el.classList.remove('on'));
+  document.getElementById('panel-'+p).classList.add('on');
+  const nb=document.getElementById('nav-'+p);
+  if(nb) nb.classList.add('on');
+  if(p==='person' && personId){ currentPersonId=personId; renderPerson(personId); }
+  if(p==='dashboard') renderDashboard();
+  renderSB();
+}
+
+function renderSB(){
+  document.getElementById('sb-people').innerHTML = S.people.map(p=>{
+    const openActions = getOpenActions(p);
+    const lastSess = p.sessions&&p.sessions.length?p.sessions[p.sessions.length-1]:null;
+    return `<button class="person-sb${currentPersonId===p.id&&activePanel==='person'?' on':''}" onclick="nav('person','${p.id}')">
+      <div class="avatar">${initials(p.name)}</div>
+      <div style="flex:1;overflow:hidden">
+        <div class="person-name-sb" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+        <div class="person-role-sb">${p.role||'Team member'}</div>
+      </div>
+      ${openActions>0?`<span class="sb-count">${openActions}</span>`:''}
+    </button>`;
+  }).join('') || '<div style="padding:8px 14px;font-size:12px;color:var(--muted)">No team members yet</div>';
+}
+
+function getOpenActions(person){
+  if(!person.sessions) return 0;
+  return person.sessions.reduce((s,sess)=>s+(sess.actions||[]).filter(a=>a.status==='open').length,0);
+}
+
+function getCarryoverActions(person){
+  if(!person.sessions||person.sessions.length===0) return [];
+  return person.sessions.flatMap(sess=>
+    (sess.actions||[]).filter(a=>a.status==='open').map(a=>({...a, fromDate:sess.date}))
+  );
+}
+
+function renderDashboard(){
+  if(!S.people.length){
+    document.getElementById('dashboard-content').innerHTML=`<div class="empty"><div class="ico">💬</div><div>No team members yet.</div><br><button class="btn btn-primary btn-sm" onclick="nav('add-person')">Add Team Member</button></div>`;
+    return;
+  }
+  const allOpen = S.people.reduce((s,p)=>s+getOpenActions(p),0);
+  const withSessions = S.people.filter(p=>p.sessions&&p.sessions.length>0).length;
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
+    <div class="card" style="margin-bottom:0"><div style="font-size:28px;font-weight:800;color:var(--accent)">${S.people.length}</div><div style="font-size:11px;color:var(--muted)">Team Members</div></div>
+    <div class="card" style="margin-bottom:0;border-color:#fef3c7"><div style="font-size:28px;font-weight:800;color:#d97706">${allOpen}</div><div style="font-size:11px;color:var(--muted)">Open Actions</div></div>
+    <div class="card" style="margin-bottom:0;border-color:#e0e7ff"><div style="font-size:28px;font-weight:800;color:var(--accent)">${withSessions}</div><div style="font-size:11px;color:var(--muted)">Have Sessions</div></div>
+  </div>`;
+
+  html += '<div class="card"><div class="card-hd">Team Overview</div>';
+  for(const p of S.people){
+    const sessions = p.sessions||[];
+    const lastSess = sessions.length?sessions[sessions.length-1]:null;
+    const open = getOpenActions(p);
+    const moodEmoji = lastSess?['','😔','😐','🙂','😊','🤩'][lastSess.mood||3]:'–';
+    html += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav('person','${p.id}')">
+      <div class="avatar">${initials(p.name)}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${p.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${p.role||''} ${p.team?'· '+p.team:''}</div>
+      </div>
+      <div style="text-align:center;min-width:60px">
+        <div style="font-size:18px">${moodEmoji}</div>
+        <div style="font-size:10px;color:var(--muted)">Last mood</div>
+      </div>
+      <div style="text-align:center;min-width:60px">
+        <div style="font-size:16px;font-weight:700;color:${open>0?'#d97706':'#16a34a'}">${open}</div>
+        <div style="font-size:10px;color:var(--muted)">Open actions</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:11px;font-weight:600;color:var(--text)">${lastSess?lastSess.date:'No sessions'}</div>
+        <div style="font-size:10px;color:var(--muted)">Last 1:1</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openNewSession('${p.id}')">＋ Session</button>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('dashboard-content').innerHTML = html;
+}
+
+function renderPerson(personId){
+  const p = S.people.find(p=>p.id===personId);
+  if(!p){ document.getElementById('person-content').innerHTML=''; return; }
+  const sessions = (p.sessions||[]).slice().reverse();
+  const openActions = getOpenActions(p);
+
+  let html = `<div class="person-hdr">
+    <div class="person-big-avatar">${initials(p.name)}</div>
+    <div style="flex:1">
+      <div style="font-size:18px;font-weight:800">${p.name}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">${p.role||''}${p.team?' · '+p.team:''}</div>
+    </div>
+    <button class="btn btn-sm" style="background:#f5f3ff;border:1px solid var(--border);color:var(--accent)" onclick="editPerson('${p.id}')">Edit Profile</button>
+    <button class="btn btn-primary btn-sm" onclick="openNewSession('${p.id}')">＋ New Session</button>
+    <button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')">Delete</button>
+  </div>`;
+
+  // Tabs
+  html += `<div class="tab-bar">
+    <button class="tab on" id="tab-sessions" onclick="switchTab('sessions')">Sessions (${sessions.length})</button>
+    <button class="tab" id="tab-actions" onclick="switchTab('actions')">Open Actions (${openActions})</button>
+    <button class="tab" id="tab-profile" onclick="switchTab('profile')">Profile & Goals</button>
+  </div>`;
+
+  // Sessions tab
+  html += `<div id="tab-content-sessions">`;
+  if(!sessions.length){
+    html += `<div class="empty"><div class="ico">💬</div><div>No sessions yet for ${p.name}.</div><br><button class="btn btn-primary btn-sm" onclick="openNewSession('${p.id}')">Start First Session</button></div>`;
+  } else {
+    for(const sess of sessions){
+      const moodEmoji=['','😔','😐','🙂','😊','🤩'][sess.mood||3];
+      const doneActions=(sess.actions||[]).filter(a=>a.status==='done').length;
+      const totalActions=(sess.actions||[]).length;
+      html += `<div class="session-card" onclick="toggleSessionDetail('sess-detail-${sess.id}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1">
+            <div class="session-date">${sess.date} ${sess.duration?'· '+sess.duration+' min':''}</div>
+            <div class="session-meta">${totalActions} action${totalActions!==1?'s':''} (${doneActions} done) · Mood: ${moodEmoji}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteSession('${p.id}','${sess.id}')">Delete</button>
+        </div>
+        <div id="sess-detail-${sess.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          ${sess.topics?`<div style="font-size:13px;line-height:1.6;margin-bottom:10px"><strong>Topics:</strong> ${sess.topics}</div>`:''}
+          ${sess.privateNotes?`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;background:#f5f3ff;padding:8px 10px;border-radius:6px"><strong>Notes:</strong> ${sess.privateNotes}</div>`:''}
+          ${(sess.actions||[]).length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Action Items</div>`:''}
+          ${(sess.actions||[]).map(a=>`
+            <div class="action-item${a.status==='done'?' done':''}">
+              <div class="action-cb" onclick="event.stopPropagation();toggleAction('${p.id}','${sess.id}','${a.id}')">
+                ${a.status==='done'?'<svg width="11" height="9" viewBox="0 0 11 9"><polyline points="1,5 4,8 10,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+              </div>
+              <div style="flex:1">
+                <div class="action-text">${a.text}</div>
+                <div class="action-meta">
+                  <span class="owner-pill ${a.owner==='me'?'owner-me':'owner-them'}">${a.owner==='me'?'Me':'Them'}</span>
+                  ${a.dueDate?` · Due: ${a.dueDate}`:''}
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+
+  // Actions tab
+  const allOpenActions = (p.sessions||[]).flatMap(sess=>
+    (sess.actions||[]).filter(a=>a.status==='open').map(a=>({...a, sessId:sess.id, sessDate:sess.date}))
+  );
+  html += `<div id="tab-content-actions" style="display:none">`;
+  if(!allOpenActions.length){
+    html += `<div class="empty"><div class="ico">✅</div><div>No open action items for ${p.name}.</div></div>`;
+  } else {
+    html += `<div class="card"><div class="card-hd">Open Action Items (${allOpenActions.length})</div>`;
+    for(const a of allOpenActions){
+      html += `<div class="action-item">
+        <div class="action-cb" onclick="toggleAction('${p.id}','${a.sessId}','${a.id}')">
+          <svg width="11" height="9" viewBox="0 0 11 9" style="opacity:0"><polyline points="1,5 4,8 10,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1">
+          <div class="action-text">${a.text}</div>
+          <div class="action-meta">
+            <span class="owner-pill ${a.owner==='me'?'owner-me':'owner-them'}">${a.owner==='me'?'Me':'Them'}</span>
+            ${a.dueDate?` · Due: ${a.dueDate}`:''}
+            · From session: ${a.sessDate}
+          </div>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Profile tab
+  html += `<div id="tab-content-profile" style="display:none">
+    <div class="card">
+      <div class="card-hd">Profile</div>
+      <div class="g2" style="margin-bottom:12px">
+        <div><div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Role</div><div>${p.role||'–'}</div></div>
+        <div><div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Team</div><div>${p.team||'–'}</div></div>
+      </div>
+      ${p.started?`<div style="margin-bottom:12px"><div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Started</div><div>${p.started}</div></div>`:''}
+      ${p.careerGoals?`<div><div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Career Goals / Focus</div><div style="line-height:1.6">${p.careerGoals.replace(/\n/g,'<br>')}</div></div>`:'<div style="color:var(--muted)">No career goals recorded.</div>'}
+      <button class="btn btn-sm" style="background:#f5f3ff;border:1px solid var(--border);color:var(--accent);margin-top:14px" onclick="editPerson('${p.id}')">Edit Profile</button>
+    </div>
+  </div>`;
+
+  document.getElementById('person-content').innerHTML = html;
+}
+
+function switchTab(tab){
+  ['sessions','actions','profile'].forEach(t=>{
+    const btn=document.getElementById('tab-'+t);
+    const content=document.getElementById('tab-content-'+t);
+    if(btn) btn.classList.toggle('on',t===tab);
+    if(content) content.style.display=t===tab?'block':'none';
+  });
+}
+
+function toggleSessionDetail(id){
+  const el=document.getElementById(id);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function toggleAction(personId, sessId, actionId){
+  const p=S.people.find(p=>p.id===personId);
+  const sess=p&&(p.sessions||[]).find(s=>s.id===sessId);
+  const a=sess&&(sess.actions||[]).find(a=>a.id===actionId);
+  if(a){ a.status=a.status==='open'?'done':'open'; save(); renderPerson(personId); renderSB(); }
+}
+
+function openNewSession(personId){
+  currentPersonId = personId;
+  const p = S.people.find(p=>p.id===personId);
+  if(!p) return;
+  document.getElementById('modal-person-id').value = personId;
+  document.getElementById('m-date').value = today();
+  document.getElementById('m-duration').value = '30';
+  document.getElementById('m-topics').value = '';
+  document.getElementById('m-private').value = '';
+  currentMood = 3;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('on',b.dataset.mood==='3'));
+  modalActions = [];
+
+  // Carryover
+  const carryover = getCarryoverActions(p);
+  const coEl = document.getElementById('modal-carryover');
+  if(carryover.length){
+    coEl.innerHTML = `<div class="carryover-section">
+      <div class="carryover-hd">⚠️ ${carryover.length} open action${carryover.length!==1?'s':''} from previous sessions (auto-rolled forward)</div>
+      ${carryover.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;border-bottom:1px solid #fde68a">
+        <span class="owner-pill ${a.owner==='me'?'owner-me':'owner-them'}">${a.owner==='me'?'Me':'Them'}</span>
+        <span style="flex:1">${a.text}</span>
+        <span style="color:var(--muted)">from ${a.fromDate}</span>
+      </div>`).join('')}
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Mark these done from the Sessions tab after review.</div>
+    </div>`;
+  } else {
+    coEl.innerHTML = '';
+  }
+
+  renderModalActions();
+  const overlay=document.getElementById('modal-overlay');
+  overlay.style.display='flex';
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').style.display='none';
+}
+
+function setMood(n){
+  currentMood=n;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('on',parseInt(b.dataset.mood)===n));
+}
+
+function addModalAction(){
+  modalActions.push({id:nid(),text:'',owner:'me',dueDate:'',status:'open'});
+  renderModalActions();
+}
+
+function renderModalActions(){
+  document.getElementById('modal-actions-list').innerHTML = modalActions.map((a,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start">
+      <input value="${a.text}" placeholder="Action item…" style="flex:2;border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:12px;font-family:inherit" onchange="modalActions[${i}].text=this.value"/>
+      <select onchange="modalActions[${i}].owner=this.value" style="font-size:11px;border:1px solid var(--border);border-radius:7px;padding:7px 8px;background:#fff">
+        <option value="me"${a.owner==='me'?' selected':''}>Me</option>
+        <option value="them"${a.owner==='them'?' selected':''}>Them</option>
+      </select>
+      <input type="date" value="${a.dueDate||''}" style="border:1px solid var(--border);border-radius:7px;padding:7px 8px;font-size:12px;font-family:inherit" onchange="modalActions[${i}].dueDate=this.value"/>
+      <button class="btn btn-danger btn-sm" onclick="modalActions.splice(${i},1);renderModalActions()">✕</button>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">No action items yet.</div>';
+}
+
+function saveSession(){
+  const personId=document.getElementById('modal-person-id').value;
+  const p=S.people.find(p=>p.id===personId);
+  if(!p) return;
+  if(!p.sessions) p.sessions=[];
+  const sess={
+    id:nid(),
+    date:document.getElementById('m-date').value||today(),
+    duration:parseInt(document.getElementById('m-duration').value)||30,
+    mood:currentMood,
+    topics:document.getElementById('m-topics').value.trim(),
+    privateNotes:document.getElementById('m-private').value.trim(),
+    actions:modalActions.filter(a=>a.text.trim())
+  };
+  p.sessions.push(sess);
+  save();
+  closeModal();
+  nav('person', personId);
+}
+
+function savePerson(){
+  const name=document.getElementById('ap-name').value.trim();
+  if(!name){alert('Name required');return;}
+  const editId=document.getElementById('ap-name').dataset.editId||'';
+  if(editId){
+    const p=S.people.find(p=>p.id===editId);
+    if(p){
+      p.name=name; p.role=document.getElementById('ap-role').value.trim();
+      p.team=document.getElementById('ap-team').value.trim();
+      p.started=document.getElementById('ap-started').value;
+      p.careerGoals=document.getElementById('ap-goals').value.trim();
+      delete document.getElementById('ap-name').dataset.editId;
+    }
+  } else {
+    S.people.push({id:nid(),name,role:document.getElementById('ap-role').value.trim(),team:document.getElementById('ap-team').value.trim(),started:document.getElementById('ap-started').value,careerGoals:document.getElementById('ap-goals').value.trim(),sessions:[]});
+  }
+  ['ap-name','ap-role','ap-team','ap-goals'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ap-started').value='';
+  save();
+  nav('dashboard');
+}
+
+function editPerson(id){
+  const p=S.people.find(p=>p.id===id);
+  if(!p) return;
+  nav('add-person');
+  document.getElementById('ap-name').value=p.name;
+  document.getElementById('ap-name').dataset.editId=p.id;
+  document.getElementById('ap-role').value=p.role||'';
+  document.getElementById('ap-team').value=p.team||'';
+  document.getElementById('ap-started').value=p.started||'';
+  document.getElementById('ap-goals').value=p.careerGoals||'';
+  document.querySelector('#panel-add-person .card-hd').textContent='Edit Team Member';
+}
+
+function deletePerson(id){
+  if(!confirm('Delete this person and all their session data?')) return;
+  S.people=S.people.filter(p=>p.id!==id);
+  currentPersonId=null;
+  save(); nav('dashboard');
+}
+
+function deleteSession(personId, sessId){
+  if(!confirm('Delete this session?')) return;
+  const p=S.people.find(p=>p.id===personId);
+  if(p){ p.sessions=p.sessions.filter(s=>s.id!==sessId); save(); renderPerson(personId); renderSB(); }
+}
+
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='1on1-data.json'; a.click();
+}
+function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const fr=new FileReader();
+    fr.onload=ev=>{ try{ S=JSON.parse(ev.target.result); save(); nav('dashboard'); }catch{ alert('Invalid JSON'); } };
+    fr.readAsText(e.target.files[0]);
+  }; inp.click();
+}
+
+renderDashboard();
+renderSB();
+</script>
+</body>
+</html>
