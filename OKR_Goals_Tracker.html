@@ -136,16 +136,58 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 </div>
 <script>
 const SK = 'okr-v2';
-let S = (() => {
-  const d = localStorage.getItem(SK);
-  if (d) return JSON.parse(d);
-  return { quarters:['Q1 2026','Q2 2026','Q3 2026','Q4 2026'], currentQ:'Q2 2026', objectives:[], nid:1 };
-})();
+function tryLoad(){ try{ const d=localStorage.getItem(SK); if(d) return JSON.parse(d); }catch(e){} return null; }
+function trySave(s){ try{ localStorage.setItem(SK,JSON.stringify(s)); }catch(e){} }
+
+const DEMO = {
+  quarters:['Q1 2026','Q2 2026','Q3 2026','Q4 2026'], currentQ:'Q2 2026', nid:30,
+  objectives:[
+    {
+      id:'o1', quarter:'Q2 2026',
+      title:'Improve platform reliability to 99.9% uptime',
+      owner:'Platform Team', description:'Reduce incidents and improve response time.', ragOv:null,
+      keyResults:[
+        {id:'kr1',title:'Reduce P1 incidents to ≤2 per month',target:2,current:1,unit:'incidents',ragOv:'amber',initiatives:[
+          {id:'i1',title:'Implement automated alerting thresholds',owner:'Bob Smith',status:'done'},
+          {id:'i2',title:'Add circuit breakers to all external API calls',owner:'Alice Chen',status:'in-progress'}
+        ]},
+        {id:'kr2',title:'Improve MTTR to under 30 minutes',target:30,current:45,unit:'minutes',ragOv:null,initiatives:[
+          {id:'i3',title:'Create runbooks for top 5 incident types',owner:'Carol White',status:'not-started'}
+        ]}
+      ]
+    },
+    {
+      id:'o2', quarter:'Q2 2026',
+      title:'Grow developer adoption of internal API platform',
+      owner:'Developer Experience', description:'', ragOv:null,
+      keyResults:[
+        {id:'kr3',title:'Increase active API consumer teams',target:50,current:32,unit:'teams',ragOv:'green',initiatives:[
+          {id:'i4',title:'Launch API documentation portal',owner:'Carol White',status:'done'},
+          {id:'i5',title:'Run internal API onboarding workshop',owner:'Alice Chen',status:'in-progress'}
+        ]},
+        {id:'kr4',title:'API developer satisfaction score',target:8,current:7.2,unit:'/10',ragOv:'green',initiatives:[]}
+      ]
+    },
+    {
+      id:'o3', quarter:'Q3 2026',
+      title:'Launch mobile app v2.0',
+      owner:'Mobile Team', description:'', ragOv:null,
+      keyResults:[
+        {id:'kr5',title:'Ship v2.0 to app stores',target:1,current:0,unit:'release',ragOv:null,initiatives:[
+          {id:'i6',title:'Complete UX redesign',owner:'Design Team',status:'in-progress'}
+        ]}
+      ]
+    }
+  ]
+};
+
+let S = tryLoad() || JSON.parse(JSON.stringify(DEMO));
 let currentQ = S.currentQ || S.quarters[0];
 let activePanel = 'overview';
 
-function save(){ S.currentQ = currentQ; localStorage.setItem(SK, JSON.stringify(S)); }
+function save(){ S.currentQ = currentQ; trySave(S); }
 function nid(){ return 'id'+(S.nid++); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function nav(p){
   activePanel = p;
@@ -217,21 +259,21 @@ function renderOverview(){
     const krs=(obj.keyResults||[]).map(kr=>{
       const kp=krPct(kr);
       return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
-        <span style="flex:1">${kr.title}</span>
-        <span style="color:var(--muted);white-space:nowrap">${kr.current} / ${kr.target} ${kr.unit||''}</span>
+        <span style="flex:1">${esc(kr.title)}</span>
+        <span style="color:var(--muted);white-space:nowrap">${kr.current} / ${kr.target} ${esc(kr.unit||'')}</span>
         <div style="width:90px"><div class="bar-wrap"><div class="bar ${barCls(kp)}" style="width:${kp}%"></div></div></div>
         <span style="min-width:32px;text-align:right;font-weight:700">${kp}%</span>
       </div>`;
     }).join('');
     return `<div class="obj-card">
       <div class="obj-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
-        <div class="obj-title">${obj.title}</div>
+        <div class="obj-title">${esc(obj.title)}</div>
         <span class="rag ${r.cls}">${r.lbl}</span>
         <div style="display:flex;align-items:center;gap:8px;min-width:160px">
           <div class="bar-wrap"><div class="bar ${barCls(p)}" style="width:${p}%"></div></div>
           <span style="font-size:12px;font-weight:700">${p}%</span>
         </div>
-        <span style="font-size:11px;color:var(--muted)">${obj.owner||''}</span>
+        <span style="font-size:11px;color:var(--muted)">${esc(obj.owner||'')}</span>
       </div>
       <div style="display:none;padding:0 16px 16px;border-top:1px solid var(--border)">
         ${krs||'<div style="color:var(--muted);font-size:12px;padding:10px 0">No key results yet.</div>'}
@@ -265,13 +307,13 @@ function renderObjFull(){
             <option value="done"${ini.status==='done'?' selected':''}>Done</option>
             <option value="blocked"${ini.status==='blocked'?' selected':''}>Blocked</option>
           </select>
-          <span style="flex:1">${ini.title}</span>
-          <span style="color:var(--muted)">${ini.owner||''}</span>
+          <span style="flex:1">${esc(ini.title)}</span>
+          <span style="color:var(--muted)">${esc(ini.owner||'')}</span>
           <button class="btn btn-danger btn-sm" onclick="delInit('${obj.id}','${kr.id}','${ini.id}')">✕</button>
         </div>`).join('');
       return `<div class="kr-box">
         <div class="kr-top">
-          <div class="kr-title">${kr.title}</div>
+          <div class="kr-title">${esc(kr.title)}</div>
           <input type="number" value="${kr.current}" min="0" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px" onchange="updKRVal('${obj.id}','${kr.id}',this.value)" title="Current value"/>
           <span style="font-size:12px;color:var(--muted)">/ ${kr.target} ${kr.unit||''}</span>
           <input type="range" min="0" max="${kr.target||100}" value="${kr.current}" oninput="updKRSlide(event,'${obj.id}','${kr.id}',this.value)"/>
@@ -294,13 +336,13 @@ function renderObjFull(){
     }).join('');
     return `<div class="obj-card">
       <div class="obj-hd" onclick="toggleObjBody('${obj.id}')">
-        <div class="obj-title">${obj.title}</div>
+        <div class="obj-title">${esc(obj.title)}</div>
         <span class="rag ${r.cls}">${r.lbl}</span>
         <div style="display:flex;align-items:center;gap:8px;min-width:160px">
           <div class="bar-wrap"><div class="bar ${barCls(p)}" style="width:${p}%"></div></div>
           <span style="font-size:12px;font-weight:700">${p}%</span>
         </div>
-        <span style="font-size:11px;color:var(--muted)">${obj.owner||''}</span>
+        <span style="font-size:11px;color:var(--muted)">${esc(obj.owner||'')}</span>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delObj('${obj.id}')">Delete</button>
       </div>
       <div id="objbody-${obj.id}" style="display:none;padding:16px;border-top:1px solid var(--border)">

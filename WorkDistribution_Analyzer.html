@@ -174,20 +174,35 @@ textarea{min-height:160px;}
 </div>
 <script>
 const SK = 'wda-v1';
-let S = (() => {
-  const d = localStorage.getItem(SK);
-  if(d) return JSON.parse(d);
-  return {
-    sprint: 'Sprint 1', days: 10,
-    defaultCap: 8, overloadPct: 120,
-    members: [],
-    tasks: [], nid: 1
-  };
-})();
+function tryLoad(){ try{ const d=localStorage.getItem(SK); if(d) return JSON.parse(d); }catch(e){} return null; }
+function trySave(s){ try{ localStorage.setItem(SK,JSON.stringify(s)); }catch(e){} }
+
+const DEMO = {
+  sprint:'Sprint 14', days:10, defaultCap:8, overloadPct:120,
+  members:[
+    {id:'m1',name:'Alice Chen',cap:10},
+    {id:'m2',name:'Bob Smith',cap:8},
+    {id:'m3',name:'Carol White',cap:6}
+  ],
+  tasks:[
+    {id:'t1',name:'Fix login session timeout',assignee:'Alice Chen',pts:3,type:'bug'},
+    {id:'t2',name:'Implement dark mode toggle',assignee:'Bob Smith',pts:5,type:'story'},
+    {id:'t3',name:'API rate limiting middleware',assignee:'Alice Chen',pts:5,type:'story'},
+    {id:'t4',name:'Auth module unit tests',assignee:'Carol White',pts:3,type:'task'},
+    {id:'t5',name:'Database index optimisation',assignee:'Bob Smith',pts:3,type:'task'},
+    {id:'t6',name:'Update API documentation',assignee:'',pts:2,type:'chore'},
+    {id:'t7',name:'Performance profiling spike',assignee:'Carol White',pts:3,type:'spike'},
+    {id:'t8',name:'CI/CD pipeline for staging',assignee:'Alice Chen',pts:5,type:'task'},
+    {id:'t9',name:'Mobile responsive layout fixes',assignee:'',pts:3,type:'story'}
+  ],
+  nid:20
+};
+let S = tryLoad() || JSON.parse(JSON.stringify(DEMO));
 let activePanel = 'viz';
 
-function save(){ localStorage.setItem(SK, JSON.stringify(S)); }
+function save(){ trySave(S); }
 function nid(){ return 'id'+(S.nid++); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function nav(p){
   activePanel = p;
@@ -255,10 +270,10 @@ function renderViz(){
     const badge = isOver?'badge-over':isMed?'badge-ok':isLight?'badge-light':'badge-ok';
     const badgeTxt = isOver?'OVERLOADED':isMed?'AT CAPACITY':isLight?'LIGHT LOAD':'OK';
     const fillW = Math.min(100, pct) + '%';
-    const taskList = g.tasks.map(t=>`<span style="display:inline-block;background:#fff7ed;border:1px solid var(--border);border-radius:6px;padding:2px 8px;margin:2px;font-size:11px">${t.name} <span style="color:var(--muted)">(${t.pts||1}pt)</span></span>`).join('');
+    const taskList = g.tasks.map(t=>`<span style="display:inline-block;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:2px 8px;margin:2px;font-size:11px">${esc(t.name)} <span style="color:#92400e">(${t.pts||1}pt)</span></span>`).join('');
     html += `<div class="person-row">
       <div class="person-meta">
-        <div class="person-name">${person}</div>
+        <div class="person-name">${esc(person)}</div>
         <div class="person-pts">${g.pts} / ${cap} pts (${pct}%)</div>
         <span class="badge ${badge}">${badgeTxt}</span>
         <span style="font-size:11px;color:var(--muted)">${g.tasks.length} tasks</span>
@@ -279,10 +294,10 @@ function renderViz(){
       <div class="card-hd" style="color:#d97706">⚠️ Unassigned Tasks (${g.tasks.length})</div>
       <table><thead><tr><th>Task</th><th>Points</th><th>Type</th><th>Assign To</th></tr></thead><tbody>
       ${g.tasks.map(t=>`<tr>
-        <td>${t.name}</td><td>${t.pts||1}</td><td>${t.type||'-'}</td>
-        <td><select onchange="assignTask('${t.id}',this.value)" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:#fff">
+        <td>${esc(t.name)}</td><td>${t.pts||1}</td><td>${t.type||'-'}</td>
+        <td><select onchange="assignTask('${t.id}',this.value)" style="font-size:12px;border:1px solid #fed7aa;border-radius:6px;padding:4px 8px;background:#fff">
           <option value="">-- Assign to --</option>
-          ${[...new Set([...people,...S.members.map(m=>m.name)])].map(p=>`<option value="${p}">${p}</option>`).join('')}
+          ${[...new Set([...people,...S.members.map(m=>m.name)])].map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')}
         </select></td>
       </tr>`).join('')}
       </tbody></table>
@@ -300,8 +315,8 @@ function assignTask(taskId, assignee){
 function renderTaskTable(){
   document.getElementById('task-tbody').innerHTML = S.tasks.map(t=>`
     <tr>
-      <td><input value="${t.name}" onchange="updTask('${t.id}','name',this.value)" style="width:100%;min-width:180px"/></td>
-      <td><input value="${t.assignee||''}" placeholder="Unassigned" onchange="updTask('${t.id}','assignee',this.value)" style="width:120px"/></td>
+      <td><input value="${esc(t.name)}" onchange="updTask('${t.id}','name',this.value)" style="width:100%;min-width:180px"/></td>
+      <td><input value="${esc(t.assignee||'')}" placeholder="Unassigned" onchange="updTask('${t.id}','assignee',this.value)" style="width:120px"/></td>
       <td><input type="number" value="${t.pts||1}" min="0.5" step="0.5" onchange="updTask('${t.id}','pts',this.value)" style="width:70px"/></td>
       <td><select onchange="updTask('${t.id}','type',this.value)" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:5px 6px;background:#fff">
         <option value="story"${t.type==='story'?' selected':''}>Story</option>
