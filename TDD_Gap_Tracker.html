@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDD Gap Tracker — QuickTools</title>
+<style>
+:root{
+  --bg:#eef2ff;--surface:#fff;--border:#c7d2fe;
+  --accent:#2563eb;--accent2:#7c3aed;--accent-light:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --orange:#ea580c;--orange-bg:#fff7ed;
+  --purple:#7c3aed;
+  --text:#1e293b;--muted:#64748b;--radius:10px;
+  --shadow:0 1px 6px rgba(37,99,235,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:12px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(30,64,175,.25);}
+.hdr-icon{width:38px;height:38px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.hdr-title{font-size:16px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.75);margin-top:1px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.hdr-meta{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 12px;font-size:11px;color:#fff;display:flex;gap:14px;}
+.hdr-meta span{color:rgba(255,255,255,.65);}
+.hdr-meta strong{color:#fff;}
+#hdr-save-ind{font-size:11px;color:rgba(255,255,255,.55);opacity:0;transition:opacity .4s;white-space:nowrap;}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 13px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.btn-ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);}
+.btn-ghost:hover{background:rgba(255,255,255,.28);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-success{background:#15803d;color:#fff;}
+.btn-success:hover{background:#166534;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:#f1f5f9;}
+.btn-amber{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.btn-amber:hover{background:#fde68a;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* ── LAYOUT ── */
+.app{flex:1;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sb{width:218px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:11px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:5px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:var(--accent-light);color:var(--text);}
+.sb-btn.on{background:var(--accent-light);border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.sb-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;min-width:20px;text-align:center;}
+.sb-badge.red{background:var(--red);}
+.sb-badge.amber{background:var(--amber);}
+.sb-badge.green{background:var(--green);}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;}
+.content{padding:18px 24px;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+/* ── PANEL HEADER ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.ph h2{font-size:17px;font-weight:700;color:var(--text);}
+.ph p{font-size:11px;color:var(--muted);margin-top:2px;}
+.ph-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+
+/* ── KPI ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
+.kpi.red::before{background:var(--red);}
+.kpi.amber::before{background:var(--amber);}
+.kpi.green::before{background:var(--green);}
+.kpi.purple::before{background:var(--purple);}
+.kpi.orange::before{background:var(--orange);}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.kpi-value{font-size:24px;font-weight:800;margin:3px 0 2px;}
+.kpi-sub{font-size:10px;color:var(--muted);}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card-hd{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#f8fafc;border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:hover td{background:#fafcff;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge-critical{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-high{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.badge-medium{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-low{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-open{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-inprog{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.badge-resolved{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-waived{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;}
+.badge-draft{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;}
+.badge-review{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.badge-gapsid{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-rework{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.badge-approved{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-blocked{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-delay{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-clarif{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.badge-rework2{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+
+/* ── SERVICE TAGS ── */
+.svc-tag{display:inline-block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;margin:1px;}
+
+/* ── FORMS ── */
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{resize:vertical;min-height:65px;}
+
+/* ── FILTER ROW ── */
+.filter-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.filter-row input,.filter-row select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;color:var(--text);background:var(--surface);font-family:inherit;}
+.filter-row input:focus,.filter-row select:focus{outline:none;border-color:var(--accent);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:720px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;flex-shrink:0;}
+.modal-hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:15px 20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-hd h3{font-size:14px;font-weight:700;color:#fff;}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(255,255,255,.35);}
+.modal-body{padding:18px;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#f8fafc;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-grid .span2{grid-column:span 2;}
+
+/* ── ALERT BANNER ── */
+.alert-banner{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:13px;}
+.empty-icon{font-size:34px;margin-bottom:8px;}
+
+/* ── PATTERN BARS ── */
+.pat-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.pat-label{min-width:200px;font-size:12px;font-weight:600;color:var(--text);}
+.pat-bar-wrap{flex:1;background:#e2e8f0;border-radius:20px;height:14px;overflow:hidden;}
+.pat-bar{height:100%;border-radius:20px;transition:width .4s;}
+.pat-val{min-width:90px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);}
+.pat-sub{font-size:10px;color:var(--muted);min-width:60px;text-align:right;}
+
+/* ── REPORT SLIDES ── */
+.slide{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.slide-hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;}
+.slide-hd h3{color:#fff;font-size:12px;font-weight:700;}
+.slide-body{padding:14px;}
+.slide-content{font-size:12px;line-height:1.75;color:var(--text);white-space:pre-wrap;font-family:'Consolas','Courier New',monospace;}
+
+/* ── AZURE SERVICES CHECKBOX GRID ── */
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;}
+.svc-cb{display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:4px 6px;border-radius:5px;border:1px solid var(--border);}
+.svc-cb:hover{background:var(--accent-light);}
+.svc-cb input{accent-color:var(--accent);width:13px;height:13px;}
+
+/* ── LOAD MODAL ── */
+.load-mode-opt{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px;background:#f8fafc;}
+
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hdr-icon">📋</div>
+  <div>
+    <div class="hdr-title" id="hdrTitle">TDD Gap Tracker</div>
+    <div class="hdr-sub" id="hdrSub">Azure Integration Project — Technical Design Document Gap Analysis</div>
+  </div>
+  <div class="hdr-actions">
+    <div class="hdr-meta">
+      <span>Project: <strong id="hdrProject">—</strong></span>
+      <span>Week: <strong id="hdrWeek">—</strong></span>
+    </div>
+    <span id="hdr-save-ind">✓ Saved</span>
+    <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download full backup">💾 Save</button>
+    <button class="btn btn-ghost btn-sm" onclick="triggerLoad()" title="Load backup">📂 Load</button>
+    <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Settings</button>
+    <a href="index.html" class="btn btn-ghost btn-sm">← Hub</a>
+  </div>
+</header>
+
+<!-- ══ APP ══ -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sb">
+    <div class="sb-lbl">Tracker</div>
+    <button class="sb-btn on" data-panel="tdds" onclick="nav('tdds',this)">📋 TDD Register <span class="sb-badge" id="sb-tdds">0</span></button>
+    <button class="sb-btn" data-panel="gaps" onclick="nav('gaps',this)">🐛 Gap Log <span class="sb-badge red" id="sb-gaps" style="display:none">0</span></button>
+    <div class="sb-lbl">Analysis</div>
+    <button class="sb-btn" data-panel="patterns" onclick="nav('patterns',this)">📊 Pattern Analysis</button>
+    <button class="sb-btn" data-panel="report" onclick="nav('report',this)">📑 Weekly Report</button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── TDD REGISTER ── -->
+    <div class="content panel on" id="panel-tdds">
+      <div class="ph">
+        <div><h2>TDD Register</h2><p>Master list of all Technical Design Documents — track status, gaps, and time lost</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="openTDDModal()">+ Add TDD</button>
+        </div>
+      </div>
+      <div id="tdd-kpis" class="kpi-strip"></div>
+      <div id="tdd-banner" class="alert-banner" style="display:none">⚠ Critical gaps identified in one or more TDDs — review Gap Log immediately.</div>
+      <div class="card" style="padding:13px">
+        <div class="filter-row">
+          <input type="search" id="tf-search" placeholder="Search TDDs…" oninput="renderTDDs()" style="flex:1;min-width:160px">
+          <select id="tf-status" onchange="renderTDDs()">
+            <option value="">All Statuses</option>
+            <option>Draft</option><option>Under Review</option><option>Gaps Identified</option>
+            <option>Rework In Progress</option><option>Approved</option>
+          </select>
+          <select id="tf-author" onchange="renderTDDs()"><option value="">All Authors</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="clearTDDFilters()">✕ Clear</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:38px">#</th>
+              <th style="min-width:200px">TDD Title</th>
+              <th style="min-width:150px">Integration Flow</th>
+              <th style="width:120px">Author</th>
+              <th style="width:120px">Reviewer</th>
+              <th>Azure Services</th>
+              <th style="width:130px">Status</th>
+              <th style="width:100px">Received</th>
+              <th style="width:100px">Approved</th>
+              <th style="width:65px;text-align:center">Gaps</th>
+              <th style="width:80px;text-align:center">Time Lost</th>
+              <th style="width:80px">Actions</th>
+            </tr></thead>
+            <tbody id="tdd-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GAP LOG ── -->
+    <div class="content panel" id="panel-gaps">
+      <div class="ph">
+        <div><h2>Gap Log</h2><p>Log every gap found in a TDD — category, severity, impact, and time lost</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="openGapModal()">+ Log Gap</button>
+        </div>
+      </div>
+      <div id="gap-kpis" class="kpi-strip"></div>
+      <div class="card" style="padding:13px">
+        <div class="filter-row">
+          <input type="search" id="gf-search" placeholder="Search gaps…" oninput="renderGaps()" style="flex:1;min-width:140px">
+          <select id="gf-tdd" onchange="renderGaps()"><option value="">All TDDs</option></select>
+          <select id="gf-cat" onchange="renderGaps()"><option value="">All Categories</option></select>
+          <select id="gf-sev" onchange="renderGaps()">
+            <option value="">All Severities</option>
+            <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <select id="gf-status" onchange="renderGaps()">
+            <option value="">All Statuses</option>
+            <option>Open</option><option>In Progress</option><option>Resolved</option><option>Waived</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="clearGapFilters()">✕ Clear</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:42px">#</th>
+              <th style="width:120px">TDD</th>
+              <th style="width:175px">Category</th>
+              <th style="width:200px">Sub-type</th>
+              <th style="min-width:200px">Description</th>
+              <th style="width:85px">Severity</th>
+              <th style="width:110px">Impact</th>
+              <th style="width:75px;text-align:center">Time Lost</th>
+              <th style="width:110px">Assigned To</th>
+              <th style="width:90px">Date Found</th>
+              <th style="width:85px">Status</th>
+              <th style="width:80px">Actions</th>
+            </tr></thead>
+            <tbody id="gap-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PATTERN ANALYSIS ── -->
+    <div class="content panel" id="panel-patterns">
+      <div class="ph">
+        <div><h2>Pattern Analysis</h2><p>Auto-computed from Gap Log — find recurring root causes and cost of poor TDDs</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="renderPatterns()">↻ Refresh</button>
+        </div>
+      </div>
+      <div id="pat-summary" class="kpi-strip"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-hd">Gap Count by Category</div>
+          <div id="pat-count-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">Time Lost by Category (hours)</div>
+          <div id="pat-time-bars"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-hd">Worst TDDs — by Time Lost</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>TDD</th><th>Author</th><th style="text-align:center">Gaps</th><th style="text-align:center">Time Lost</th><th>Critical Open</th></tr></thead>
+              <tbody id="pat-tdd-table"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd">Severity Distribution</div>
+          <div id="pat-severity"></div>
+          <div class="card-hd" style="margin-top:18px">Impact Distribution</div>
+          <div id="pat-impact"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">Author Gap Pattern — Who Needs TDD Quality Support?</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Author</th><th style="text-align:center">TDDs</th><th style="text-align:center">Total Gaps</th><th style="text-align:center">Open Gaps</th><th style="text-align:center">Time Lost (h)</th><th style="text-align:center">Avg Gaps/TDD</th><th>Most Common Gap Type</th></tr></thead>
+            <tbody id="pat-author-table"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">Most Frequent Sub-types (Top 10)</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Gap Sub-type</th><th>Category</th><th style="text-align:center">Count</th><th style="text-align:center">Time Lost (h)</th><th style="text-align:center">Open</th></tr></thead>
+            <tbody id="pat-subtype-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WEEKLY REPORT ── -->
+    <div class="content panel" id="panel-report">
+      <div class="ph">
+        <div><h2>Weekly Report</h2><p>Auto-generated from live data — copy slide by slide or export as TXT</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="renderReport()">↻ Refresh</button>
+          <button class="btn btn-success btn-sm" onclick="exportReportTxt()">⬇ Export TXT</button>
+          <button class="btn btn-primary btn-sm" onclick="copyAllSlides()">⎘ Copy All</button>
+        </div>
+      </div>
+      <div id="report-slides"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ TDD MODAL ══ -->
+<div class="modal-overlay" id="tdd-modal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="tdd-modal-title">Add TDD</h3><button class="modal-close" onclick="closeModal('tdd-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="tm-id">
+      <div class="modal-grid">
+        <div class="fg span2"><label>TDD Title *</label><input type="text" id="tm-title" placeholder="e.g. SAP Invoice to Azure Integration Design"></div>
+        <div class="fg span2"><label>Integration Flow</label><input type="text" id="tm-flow" placeholder="e.g. SAP ECC → Azure Service Bus → D365 Finance"></div>
+        <div class="fg"><label>Author</label><input type="text" id="tm-author" placeholder="Name of TDD author"></div>
+        <div class="fg"><label>Reviewer / Assigned To</label><input type="text" id="tm-reviewer" placeholder="Reviewer or assignee"></div>
+        <div class="fg"><label>Status</label>
+          <select id="tm-status">
+            <option>Draft</option><option>Under Review</option><option>Gaps Identified</option>
+            <option>Rework In Progress</option><option>Approved</option>
+          </select>
+        </div>
+        <div class="fg"><label>Priority</label>
+          <select id="tm-priority"><option>Critical</option><option selected>High</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="fg"><label>Date Received</label><input type="date" id="tm-received"></div>
+        <div class="fg"><label>Date Approved</label><input type="date" id="tm-approved"></div>
+        <div class="fg span2">
+          <label>Azure Services Involved</label>
+          <div class="svc-grid" id="svc-grid"></div>
+        </div>
+        <div class="fg span2"><label>Notes</label><textarea id="tm-notes" placeholder="Any context, concerns, or observations about this TDD…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('tdd-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTDD()">Save TDD</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAP MODAL ══ -->
+<div class="modal-overlay" id="gap-modal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="gap-modal-title">Log Gap</h3><button class="modal-close" onclick="closeModal('gap-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="gm-id">
+      <div class="modal-grid">
+        <div class="fg span2"><label>TDD *</label><select id="gm-tdd"><option value="">— Select TDD —</option></select></div>
+        <div class="fg">
+          <label>Gap Category *</label>
+          <select id="gm-cat" onchange="populateSubtypes()"><option value="">— Select category —</option></select>
+        </div>
+        <div class="fg">
+          <label>Sub-type</label>
+          <select id="gm-sub"><option value="">— Select sub-type —</option></select>
+        </div>
+        <div class="fg span2"><label>Gap Description * — what exactly is missing or wrong</label>
+          <textarea id="gm-desc" placeholder="Be specific: which section of the TDD, what field/scenario/requirement is missing or ambiguous…"></textarea>
+        </div>
+        <div class="fg"><label>Severity</label>
+          <select id="gm-sev">
+            <option>Critical — blocks development</option>
+            <option selected>High — significant delay</option>
+            <option>Medium — minor rework needed</option>
+            <option>Low — clarification only</option>
+          </select>
+        </div>
+        <div class="fg"><label>Impact Type</label>
+          <select id="gm-impact">
+            <option>Blocked</option><option selected>Delay</option>
+            <option>Rework</option><option>Clarification Needed</option>
+          </select>
+        </div>
+        <div class="fg"><label>Time Lost (hours) — waiting + rework</label>
+          <input type="number" id="gm-time" min="0" step="0.5" placeholder="e.g. 4"></div>
+        <div class="fg"><label>Status</label>
+          <select id="gm-status"><option selected>Open</option><option>In Progress</option><option>Resolved</option><option>Waived</option></select>
+        </div>
+        <div class="fg"><label>Found By</label><input type="text" id="gm-foundby" placeholder="Who discovered this gap"></div>
+        <div class="fg"><label>Assigned To (TDD owner to fix)</label><input type="text" id="gm-assigned" placeholder="Who must address this gap"></div>
+        <div class="fg"><label>Date Found</label><input type="date" id="gm-datefound"></div>
+        <div class="fg"><label>Date Resolved</label><input type="date" id="gm-dateresolved"></div>
+        <div class="fg span2"><label>Resolution Notes</label>
+          <textarea id="gm-resnotes" placeholder="How was this gap resolved? What changed in the TDD?" style="min-height:50px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('gap-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveGap()">Save Gap</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOAD MODAL ══ -->
+<div class="modal-overlay" id="load-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hd"><h3>📂 Load Backup</h3><button class="modal-close" onclick="closeModal('load-modal')">×</button></div>
+    <div class="modal-body">
+      <div id="load-preview"></div>
+      <div style="margin-top:14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">Load Mode</div>
+        <label class="load-mode-opt">
+          <input type="radio" name="load-mode" value="replace" checked style="accent-color:var(--accent);flex-shrink:0;margin-top:2px">
+          <div><div style="font-weight:700;font-size:13px">Replace everything</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Clears current data and restores backup exactly.</div></div>
+        </label>
+        <label class="load-mode-opt">
+          <input type="radio" name="load-mode" value="merge" style="accent-color:var(--accent);flex-shrink:0;margin-top:2px">
+          <div><div style="font-weight:700;font-size:13px">Merge into current</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Adds TDDs and gaps from backup on top of existing data.</div></div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('load-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="load-confirm-btn" onclick="applyLoad()">Load</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><h3>Settings</h3><button class="modal-close" onclick="closeModal('settings-modal')">×</button></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg"><label>Project Name</label><input type="text" id="s-project" placeholder="e.g. Azure Integration Modernisation"></div>
+        <div class="fg"><label>Report Week</label><input type="text" id="s-week" placeholder="e.g. Week of 02 Jun 2026"></div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">Backup &amp; Restore</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="justify-content:center">💾 Save Backup</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerLoad()" style="justify-content:center">📂 Load Backup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()" style="margin-right:auto">⚠ Clear All</button>
+      <button class="btn btn-amber btn-sm" onclick="resetSample()" style="margin-right:8px">↺ Sample Data</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('settings-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════
+const GAP_CATS = {
+  'Interface & Field Mapping':       ['Missing field mapping','Incomplete transformation rules','Ambiguous data type conversion','Null/empty handling not defined','Conditional mapping logic absent','Lookup/reference data not specified'],
+  'Schema & Payload':                ['Source schema not documented','Target schema missing','No sample payloads provided','Schema version/evolution not addressed','No canonical data model reference'],
+  'Error Handling & Exceptions':     ['No retry policy defined','Dead-letter queue handling absent','Timeout values not specified','Compensation/rollback strategy missing','Error notification path not defined','Poison message handling missing'],
+  'Security & Authentication':       ['Auth mechanism not specified','App registration details missing','Key Vault references not defined','RBAC permissions not documented','VNet/Private Endpoint not addressed','Certificate handling missing'],
+  'Non-Functional Requirements':     ['SLA/response time not stated','Volume/throughput estimates missing','Concurrency/parallelism not addressed','Idempotency requirement not defined','Message ordering not specified'],
+  'Dependencies & Integration Points':['Upstream dependencies incomplete','API contract/Swagger not linked','Endpoint URLs per environment missing','Downstream impact not assessed','System-to-system auth details absent'],
+  'Infrastructure & Deployment':     ['Azure resource SKU/tier not justified','Environment-specific config not defined','IaC (Bicep/Terraform) not referenced','CI/CD pipeline details missing','Subscription/Resource Group not specified'],
+  'Testing & Acceptance Criteria':   ['No acceptance criteria written','Test scenarios missing','Test data strategy absent','Performance test benchmarks not defined','Go-live/cutover criteria missing'],
+  'Business Logic & Rules':          ['Business rules incomplete','Edge cases not documented','Conditional logic ambiguous','Data privacy/GDPR consideration missing','Regulatory constraints not captured'],
+  'Operational Readiness':           ['Monitoring/alerting design absent','Logging strategy not defined','No runbook/operational guide','DR/failover not addressed','Support escalation path missing']
+};
+const AZURE_SVCS = ['API Management','Logic Apps','Service Bus','Event Grid','Azure Functions','Azure Data Factory','Event Hub','Azure Storage','Azure SQL','Cosmos DB','Key Vault','Azure AD/Entra ID','Integration Runtime','API Center','Azure Monitor','Application Insights'];
+const SEV_ORDER  = {Critical:4,High:3,Medium:2,Low:1};
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let S = {
+  meta: { projectName: 'Azure Integration Project', reportWeek: '' },
+  tdds: [],  // {id,title,flow,author,reviewer,azureServices[],status,priority,dateReceived,dateApproved,notes}
+  gaps: []   // {id,tddId,category,subType,description,severity,impact,timeLostH,foundBy,assignedTo,dateFound,dateResolved,resolutionNotes,status}
+};
+let tid = 1, gid = 1;
+
+// ════════════════════════════════════════
+// PERSISTENCE
+// ════════════════════════════════════════
+function persist() {
+  localStorage.setItem('tddgap_v1', JSON.stringify(S));
+  localStorage.setItem('tddgap_ids', JSON.stringify({t:tid,g:gid}));
+  const ind = document.getElementById('hdr-save-ind');
+  if (ind) { ind.style.opacity='1'; clearTimeout(ind._t); ind._t=setTimeout(()=>ind.style.opacity='0',1800); }
+}
+function hydrate() {
+  try {
+    const d = localStorage.getItem('tddgap_v1');
+    if (d) S = JSON.parse(d);
+    const ids = localStorage.getItem('tddgap_ids');
+    if (ids) { const p=JSON.parse(ids); tid=p.t||1; gid=p.g||1; }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function fmtDate(d) { if(!d) return '—'; try { return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch { return d; } }
+function fmtDateShort(d) { if(!d) return '—'; try { return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); } catch { return d; } }
+function daysSince(d) { if(!d) return '—'; const ms=Date.now()-new Date(d+'T00:00:00').getTime(); return Math.max(0,Math.floor(ms/86400000))+'d'; }
+
+function sevBadge(s) {
+  const m={Critical:'badge-critical',High:'badge-high',Medium:'badge-medium',Low:'badge-low'};
+  const clean = (s||'').replace(/ —.*$/,'');
+  return `<span class="badge ${m[clean]||'badge-low'}">${clean}</span>`;
+}
+function impactBadge(s) {
+  const m={Blocked:'badge-blocked',Delay:'badge-delay',Rework:'badge-rework2','Clarification Needed':'badge-clarif'};
+  return `<span class="badge ${m[s]||'badge-clarif'}">${s}</span>`;
+}
+function statusBadge(s) {
+  const m={Open:'badge-open','In Progress':'badge-inprog',Resolved:'badge-resolved',Waived:'badge-waived'};
+  return `<span class="badge ${m[s]||'badge-open'}">${s}</span>`;
+}
+function tddStatusBadge(s) {
+  const m={Draft:'badge-draft','Under Review':'badge-review','Gaps Identified':'badge-gapsid','Rework In Progress':'badge-rework',Approved:'badge-approved'};
+  return `<span class="badge ${m[s]||'badge-draft'}">${s}</span>`;
+}
+function gapsForTDD(id) { return S.gaps.filter(g=>g.tddId===id); }
+function openGapsForTDD(id) { return S.gaps.filter(g=>g.tddId===id&&g.status==='Open'||g.tddId===id&&g.status==='In Progress'); }
+function timeLostForTDD(id) { return S.gaps.filter(g=>g.tddId===id).reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0); }
+function sevClean(s) { return (s||'').replace(/ —.*$/,''); }
+
+function updateSidebarBadges() {
+  document.getElementById('sb-tdds').textContent = S.tdds.length;
+  const openG = S.gaps.filter(g=>g.status==='Open'||g.status==='In Progress').length;
+  const sgb = document.getElementById('sb-gaps');
+  sgb.textContent = openG; sgb.style.display = openG?'':'none';
+}
+
+function updateHeader() {
+  document.getElementById('hdrProject').textContent = S.meta.projectName||'—';
+  document.getElementById('hdrWeek').textContent    = S.meta.reportWeek||'—';
+}
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+function nav(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  const renders={tdds:renderTDDs,gaps:renderGaps,patterns:renderPatterns,report:renderReport};
+  if(renders[id]) renders[id]();
+}
+
+// ════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════
+function openSettings() {
+  document.getElementById('s-project').value = S.meta.projectName||'';
+  document.getElementById('s-week').value    = S.meta.reportWeek||'';
+  openModal('settings-modal');
+}
+function saveSettings() {
+  S.meta.projectName = document.getElementById('s-project').value.trim()||'Azure Integration Project';
+  S.meta.reportWeek  = document.getElementById('s-week').value.trim();
+  persist(); updateHeader(); closeModal('settings-modal');
+}
+function clearAllData() {
+  if(!confirm('Delete ALL TDDs and gaps? This cannot be undone.')) return;
+  S = { meta:S.meta, tdds:[], gaps:[] }; tid=1; gid=1;
+  persist(); renderTDDs(); updateSidebarBadges(); closeModal('settings-modal');
+}
+
+// ════════════════════════════════════════
+// TDD REGISTER
+// ════════════════════════════════════════
+function buildSvcGrid(selected=[]) {
+  document.getElementById('svc-grid').innerHTML = AZURE_SVCS.map(s=>`
+    <label class="svc-cb">
+      <input type="checkbox" name="svc" value="${esc(s)}" ${selected.includes(s)?'checked':''}>
+      ${esc(s)}
+    </label>`).join('');
+}
+function getSelectedSvcs() {
+  return [...document.querySelectorAll('#svc-grid input[name=svc]:checked')].map(c=>c.value);
+}
+
+function openTDDModal(id) {
+  document.getElementById('tdd-modal-title').textContent = id?'Edit TDD':'Add TDD';
+  const t = id ? S.tdds.find(x=>x.id===id) : null;
+  document.getElementById('tm-id').value       = id||'';
+  document.getElementById('tm-title').value    = t?.title||'';
+  document.getElementById('tm-flow').value     = t?.flow||'';
+  document.getElementById('tm-author').value   = t?.author||'';
+  document.getElementById('tm-reviewer').value = t?.reviewer||'';
+  document.getElementById('tm-status').value   = t?.status||'Draft';
+  document.getElementById('tm-priority').value = t?.priority||'High';
+  document.getElementById('tm-received').value = t?.dateReceived||'';
+  document.getElementById('tm-approved').value = t?.dateApproved||'';
+  document.getElementById('tm-notes').value    = t?.notes||'';
+  buildSvcGrid(t?.azureServices||[]);
+  openModal('tdd-modal');
+}
+
+function saveTDD() {
+  const title = document.getElementById('tm-title').value.trim();
+  if(!title) { alert('TDD Title is required.'); return; }
+  const id = document.getElementById('tm-id').value;
+  const tdd = {
+    id: id?parseInt(id):tid++,
+    title,
+    flow:         document.getElementById('tm-flow').value.trim(),
+    author:       document.getElementById('tm-author').value.trim(),
+    reviewer:     document.getElementById('tm-reviewer').value.trim(),
+    status:       document.getElementById('tm-status').value,
+    priority:     document.getElementById('tm-priority').value,
+    dateReceived: document.getElementById('tm-received').value,
+    dateApproved: document.getElementById('tm-approved').value,
+    azureServices: getSelectedSvcs(),
+    notes:        document.getElementById('tm-notes').value.trim()
+  };
+  if(id) { const i=S.tdds.findIndex(t=>t.id===parseInt(id)); if(i>=0) S.tdds[i]=tdd; }
+  else S.tdds.push(tdd);
+  persist(); renderTDDs(); updateSidebarBadges(); closeModal('tdd-modal');
+}
+
+function deleteTDD(id) {
+  if(!confirm('Delete this TDD and ALL its gaps?')) return;
+  S.tdds = S.tdds.filter(t=>t.id!==id);
+  S.gaps = S.gaps.filter(g=>g.tddId!==id);
+  persist(); renderTDDs(); updateSidebarBadges();
+}
+
+function renderTDDs() {
+  const search = (document.getElementById('tf-search')?.value||'').toLowerCase();
+  const fS     = document.getElementById('tf-status')?.value||'';
+  const fA     = document.getElementById('tf-author')?.value||'';
+
+  // Populate author filter
+  const authors = [...new Set(S.tdds.map(t=>t.author).filter(Boolean))];
+  const afEl = document.getElementById('tf-author');
+  if(afEl) {
+    const cur = afEl.value;
+    while(afEl.options.length>1) afEl.remove(1);
+    authors.forEach(a=>{ const o=document.createElement('option'); o.value=a; o.text=a; afEl.appendChild(o); });
+    if(cur) afEl.value=cur;
+  }
+
+  const list = S.tdds.filter(t=>{
+    if(fS&&t.status!==fS) return false;
+    if(fA&&t.author!==fA) return false;
+    if(search&&!(t.title||'').toLowerCase().includes(search)&&!(t.flow||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // KPIs
+  const total=S.tdds.length, approved=S.tdds.filter(t=>t.status==='Approved').length;
+  const withGaps=S.tdds.filter(t=>gapsForTDD(t.id).length>0).length;
+  const totalTime=S.gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  const openG=S.gaps.filter(g=>g.status==='Open'||g.status==='In Progress').length;
+  const criticalOpen=S.gaps.filter(g=>sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+  document.getElementById('tdd-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total TDDs</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi green"><div class="kpi-label">Approved</div><div class="kpi-value" style="color:var(--green)">${approved}</div></div>
+    <div class="kpi amber"><div class="kpi-label">With Gaps</div><div class="kpi-value" style="color:var(--amber)">${withGaps}</div></div>
+    <div class="kpi red"><div class="kpi-label">Open Gaps</div><div class="kpi-value" style="color:var(--red)">${openG}</div></div>
+    <div class="kpi red"><div class="kpi-label">Critical Open</div><div class="kpi-value" style="color:var(--red)">${criticalOpen}</div></div>
+    <div class="kpi orange"><div class="kpi-label">Total Time Lost</div><div class="kpi-value" style="color:var(--orange)">${totalTime}h</div><div class="kpi-sub">across all TDDs</div></div>`;
+
+  document.getElementById('tdd-banner').style.display = criticalOpen>0?'flex':'none';
+
+  const tbody = document.getElementById('tdd-tbody');
+  if(!list.length) { tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="empty-icon">📋</div>No TDDs found. Click "+ Add TDD" to start.</div></td></tr>`; return; }
+
+  tbody.innerHTML = list.map(t=>{
+    const gc=gapsForTDD(t.id).length, tl=timeLostForTDD(t.id);
+    const critG=S.gaps.filter(g=>g.tddId===t.id&&sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+    const gcColor = gc===0?'color:var(--green)':critG>0?'color:var(--red);font-weight:800':'color:var(--amber);font-weight:700';
+    const svcs = (t.azureServices||[]).map(s=>`<span class="svc-tag">${esc(s)}</span>`).join('');
+    return `<tr>
+      <td style="color:var(--muted);font-size:10px;text-align:center">${t.id}</td>
+      <td><div style="font-weight:600;font-size:12px">${esc(t.title)}</div>${t.priority?`<span style="font-size:10px;color:var(--muted)">${esc(t.priority)}</span>`:''}</td>
+      <td style="font-size:11px;color:var(--muted)">${esc(t.flow||'—')}</td>
+      <td style="font-size:12px">${esc(t.author||'—')}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(t.reviewer||'—')}</td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:2px">${svcs||'<span style="font-size:11px;color:var(--muted)">—</span>'}</div></td>
+      <td>${tddStatusBadge(t.status)}</td>
+      <td style="font-size:11px">${fmtDate(t.dateReceived)}</td>
+      <td style="font-size:11px">${fmtDate(t.dateApproved)}</td>
+      <td style="text-align:center"><span style="font-size:14px;font-weight:800;${gcColor}">${gc}</span>${critG?`<div style="font-size:9px;color:var(--red);font-weight:700">${critG} crit</div>`:''}</td>
+      <td style="text-align:center;font-weight:700;font-size:13px;${tl>0?'color:var(--orange)':''}">${tl?tl+'h':'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" onclick="openTDDModal(${t.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteTDD(${t.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function clearTDDFilters() {
+  ['tf-search','tf-status','tf-author'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderTDDs();
+}
+
+// ════════════════════════════════════════
+// GAP LOG
+// ════════════════════════════════════════
+function populateTDDDropdowns() {
+  ['gm-tdd','gf-tdd'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    const cur=el.value;
+    while(el.options.length>1) el.remove(1);
+    S.tdds.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.text=`#${t.id} ${t.title}`;el.appendChild(o);});
+    if(cur) el.value=cur;
+  });
+}
+function populateCatDropdowns() {
+  const el=document.getElementById('gf-cat');
+  if(!el) return;
+  while(el.options.length>1) el.remove(1);
+  Object.keys(GAP_CATS).forEach(c=>{const o=document.createElement('option');o.value=c;o.text=c;el.appendChild(o);});
+  // Gap modal cat
+  const gmc=document.getElementById('gm-cat');
+  if(gmc&&gmc.options.length<=1) {
+    Object.keys(GAP_CATS).forEach(c=>{const o=document.createElement('option');o.value=c;o.text=c;gmc.appendChild(o);});
+  }
+}
+function populateSubtypes() {
+  const cat = document.getElementById('gm-cat')?.value;
+  const sub = document.getElementById('gm-sub');
+  if(!sub) return;
+  while(sub.options.length>1) sub.remove(1);
+  if(cat && GAP_CATS[cat]) {
+    GAP_CATS[cat].forEach(s=>{const o=document.createElement('option');o.value=s;o.text=s;sub.appendChild(o);});
+  }
+}
+
+function openGapModal(id) {
+  populateTDDDropdowns(); populateCatDropdowns();
+  document.getElementById('gap-modal-title').textContent = id?'Edit Gap':'Log Gap';
+  const g = id ? S.gaps.find(x=>x.id===id) : null;
+  document.getElementById('gm-id').value         = id||'';
+  document.getElementById('gm-tdd').value        = g?.tddId||'';
+  document.getElementById('gm-cat').value        = g?.category||'';
+  populateSubtypes();
+  document.getElementById('gm-sub').value        = g?.subType||'';
+  document.getElementById('gm-desc').value       = g?.description||'';
+  document.getElementById('gm-sev').value        = g?.severity||'High — significant delay';
+  document.getElementById('gm-impact').value     = g?.impact||'Delay';
+  document.getElementById('gm-time').value       = g?.timeLostH||'';
+  document.getElementById('gm-status').value     = g?.status||'Open';
+  document.getElementById('gm-foundby').value    = g?.foundBy||'';
+  document.getElementById('gm-assigned').value   = g?.assignedTo||'';
+  document.getElementById('gm-datefound').value  = g?.dateFound||new Date().toISOString().slice(0,10);
+  document.getElementById('gm-dateresolved').value = g?.dateResolved||'';
+  document.getElementById('gm-resnotes').value   = g?.resolutionNotes||'';
+  openModal('gap-modal');
+}
+
+function saveGap() {
+  const tddId = parseInt(document.getElementById('gm-tdd').value);
+  const desc  = document.getElementById('gm-desc').value.trim();
+  if(!tddId) { alert('Please select a TDD.'); return; }
+  if(!desc)  { alert('Gap description is required.'); return; }
+  const id = document.getElementById('gm-id').value;
+  const gap = {
+    id:          id?parseInt(id):gid++,
+    tddId,
+    category:    document.getElementById('gm-cat').value,
+    subType:     document.getElementById('gm-sub').value,
+    description: desc,
+    severity:    document.getElementById('gm-sev').value,
+    impact:      document.getElementById('gm-impact').value,
+    timeLostH:   parseFloat(document.getElementById('gm-time').value)||0,
+    status:      document.getElementById('gm-status').value,
+    foundBy:     document.getElementById('gm-foundby').value.trim(),
+    assignedTo:  document.getElementById('gm-assigned').value.trim(),
+    dateFound:   document.getElementById('gm-datefound').value,
+    dateResolved:document.getElementById('gm-dateresolved').value,
+    resolutionNotes: document.getElementById('gm-resnotes').value.trim()
+  };
+  if(id) { const i=S.gaps.findIndex(g=>g.id===parseInt(id)); if(i>=0) S.gaps[i]=gap; }
+  else S.gaps.push(gap);
+  persist(); renderGaps(); updateSidebarBadges(); renderTDDs(); closeModal('gap-modal');
+}
+
+function deleteGap(id) {
+  if(!confirm('Delete this gap record?')) return;
+  S.gaps = S.gaps.filter(g=>g.id!==id);
+  persist(); renderGaps(); updateSidebarBadges(); renderTDDs();
+}
+
+function renderGaps() {
+  populateTDDDropdowns(); populateCatDropdowns();
+  const search = (document.getElementById('gf-search')?.value||'').toLowerCase();
+  const fT     = document.getElementById('gf-tdd')?.value||'';
+  const fC     = document.getElementById('gf-cat')?.value||'';
+  const fSev   = document.getElementById('gf-sev')?.value||'';
+  const fSt    = document.getElementById('gf-status')?.value||'';
+
+  const list = S.gaps.filter(g=>{
+    if(fT && g.tddId!==parseInt(fT)) return false;
+    if(fC && g.category!==fC) return false;
+    if(fSev && sevClean(g.severity)!==fSev) return false;
+    if(fSt && g.status!==fSt) return false;
+    if(search && !(g.description||'').toLowerCase().includes(search) && !(g.subType||'').toLowerCase().includes(search)) return false;
+    return true;
+  }).sort((a,b)=>(SEV_ORDER[sevClean(b.severity)]||0)-(SEV_ORDER[sevClean(a.severity)]||0));
+
+  // KPIs
+  const total=S.gaps.length, open=S.gaps.filter(g=>g.status==='Open').length, inprog=S.gaps.filter(g=>g.status==='In Progress').length;
+  const resolved=S.gaps.filter(g=>g.status==='Resolved').length;
+  const totalTime=S.gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  const critOpen=S.gaps.filter(g=>sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+  document.getElementById('gap-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total Gaps</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi red"><div class="kpi-label">Open</div><div class="kpi-value" style="color:var(--red)">${open}</div></div>
+    <div class="kpi"><div class="kpi-label">In Progress</div><div class="kpi-value" style="color:var(--accent)">${inprog}</div></div>
+    <div class="kpi green"><div class="kpi-label">Resolved</div><div class="kpi-value" style="color:var(--green)">${resolved}</div></div>
+    <div class="kpi red"><div class="kpi-label">Critical Open</div><div class="kpi-value" style="color:var(--red)">${critOpen}</div></div>
+    <div class="kpi orange"><div class="kpi-label">Total Time Lost</div><div class="kpi-value" style="color:var(--orange)">${totalTime}h</div><div class="kpi-sub">across all gaps</div></div>`;
+
+  const tbody = document.getElementById('gap-tbody');
+  if(!list.length) { tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="empty-icon">🐛</div>No gaps found. Click "+ Log Gap" to record one.</div></td></tr>`; return; }
+
+  tbody.innerHTML = list.map(g=>{
+    const tdd = S.tdds.find(t=>t.id===g.tddId);
+    const age = g.status!=='Resolved'&&g.status!=='Waived' ? `<div style="font-size:10px;color:var(--muted)">Age: ${daysSince(g.dateFound)}</div>` : '';
+    return `<tr>
+      <td style="color:var(--muted);font-size:10px;text-align:center">G${g.id}</td>
+      <td style="font-size:11px"><div style="font-weight:600">#${tdd?.id||'?'}</div><div style="color:var(--muted);font-size:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(tdd?.title||'Unknown TDD')}</div></td>
+      <td style="font-size:11px;color:var(--accent)">${esc(g.category||'—')}</td>
+      <td style="font-size:11px;color:var(--muted)">${esc(g.subType||'—')}</td>
+      <td><div style="font-size:12px;max-width:220px">${esc(g.description)}</div></td>
+      <td>${sevBadge(g.severity)}</td>
+      <td>${impactBadge(g.impact)}</td>
+      <td style="text-align:center;font-weight:700;font-size:13px;${g.timeLostH>0?'color:var(--orange)':''}">${g.timeLostH||'—'}${g.timeLostH?'h':''}</td>
+      <td style="font-size:11px">${esc(g.assignedTo||'—')}</td>
+      <td style="font-size:11px">${fmtDateShort(g.dateFound)}${age}</td>
+      <td>${statusBadge(g.status)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" onclick="openGapModal(${g.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteGap(${g.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function clearGapFilters() {
+  ['gf-search','gf-tdd','gf-cat','gf-sev','gf-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderGaps();
+}
+
+// ════════════════════════════════════════
+// PATTERN ANALYSIS
+// ════════════════════════════════════════
+function renderPatterns() {
+  const gaps = S.gaps;
+
+  // Summary KPIs
+  const total=gaps.length, open=gaps.filter(g=>g.status==='Open'||g.status==='In Progress').length;
+  const totalTime=gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  const resolveRate=total?Math.round((gaps.filter(g=>g.status==='Resolved').length/total)*100):0;
+  const topCat = (() => {
+    const m=new Map();
+    gaps.forEach(g=>m.set(g.category,(m.get(g.category)||0)+1));
+    let best='—',bv=0;
+    m.forEach((v,k)=>{ if(v>bv){bv=v;best=k;} });
+    return best;
+  })();
+  document.getElementById('pat-summary').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total Gaps</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi red"><div class="kpi-label">Open / In Progress</div><div class="kpi-value" style="color:var(--red)">${open}</div></div>
+    <div class="kpi orange"><div class="kpi-label">Total Hours Lost</div><div class="kpi-value" style="color:var(--orange)">${totalTime}h</div></div>
+    <div class="kpi green"><div class="kpi-label">Resolution Rate</div><div class="kpi-value" style="color:var(--green)">${resolveRate}%</div></div>
+    <div class="kpi purple"><div class="kpi-label">Top Gap Area</div><div class="kpi-value" style="font-size:12px;font-weight:700;color:var(--purple);margin-top:6px">${topCat}</div></div>`;
+
+  if(!total) {
+    ['pat-count-bars','pat-time-bars','pat-tdd-table','pat-severity','pat-impact','pat-author-table','pat-subtype-table']
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML='<div class="empty" style="padding:18px"><div class="empty-icon">📊</div>No gaps yet</div>'; });
+    return;
+  }
+
+  // ── Gap count by category
+  const catCount=new Map(), catTime=new Map();
+  gaps.forEach(g=>{
+    catCount.set(g.category,(catCount.get(g.category)||0)+1);
+    catTime.set(g.category,(catTime.get(g.category)||0)+(parseFloat(g.timeLostH)||0));
+  });
+  const catCols=['#dc2626','#ea580c','#d97706','#16a34a','#2563eb','#7c3aed','#0891b2','#db2777','#65a30d','#c2410c'];
+  const maxCount=Math.max(...catCount.values(),1), maxTime=Math.max(...catTime.values(),1);
+  const sortedByCnt=[...catCount.entries()].sort((a,b)=>b[1]-a[1]);
+  const sortedByTime=[...catTime.entries()].sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('pat-count-bars').innerHTML = sortedByCnt.map(([cat,cnt],i)=>`
+    <div class="pat-row">
+      <div class="pat-label" title="${esc(cat)}">${esc(cat.length>28?cat.slice(0,26)+'…':cat)}</div>
+      <div class="pat-bar-wrap"><div class="pat-bar" style="width:${Math.round(cnt/maxCount*100)}%;background:${catCols[i%catCols.length]}"></div></div>
+      <div class="pat-val" style="color:${catCols[i%catCols.length]}">${cnt} gap${cnt!==1?'s':''}</div>
+    </div>`).join('');
+
+  document.getElementById('pat-time-bars').innerHTML = sortedByTime.map(([cat,h],i)=>`
+    <div class="pat-row">
+      <div class="pat-label" title="${esc(cat)}">${esc(cat.length>28?cat.slice(0,26)+'…':cat)}</div>
+      <div class="pat-bar-wrap"><div class="pat-bar" style="width:${Math.round(h/maxTime*100)}%;background:${catCols[i%catCols.length]}"></div></div>
+      <div class="pat-val" style="color:${catCols[i%catCols.length]}">${h}h</div>
+    </div>`).join('');
+
+  // ── Worst TDDs
+  const tddStats = S.tdds.map(t=>{
+    const tGaps=gapsForTDD(t.id), tTime=timeLostForTDD(t.id);
+    const critOpen=tGaps.filter(g=>sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+    return {t,count:tGaps.length,time:tTime,critOpen};
+  }).filter(x=>x.count>0).sort((a,b)=>b.time-a.time||b.count-a.count);
+
+  document.getElementById('pat-tdd-table').innerHTML = tddStats.length
+    ? tddStats.map(({t,count,time,critOpen})=>`<tr>
+        <td style="font-weight:600;font-size:12px">${esc(t.title)}</td>
+        <td style="font-size:11px;color:var(--muted)">${esc(t.author||'—')}</td>
+        <td style="text-align:center;font-weight:700;color:${count>5?'var(--red)':'var(--amber)'}">${count}</td>
+        <td style="text-align:center;font-weight:700;color:var(--orange)">${time}h</td>
+        <td style="text-align:center">${critOpen?`<span style="color:var(--red);font-weight:700">${critOpen} 🔴</span>`:'<span style="color:var(--green)">✓ None</span>'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">No TDDs with gaps.</td></tr>';
+
+  // ── Severity distribution
+  const sevMap={Critical:0,High:0,Medium:0,Low:0};
+  gaps.forEach(g=>{ const s=sevClean(g.severity); if(sevMap[s]!==undefined) sevMap[s]++; });
+  const sevColors={Critical:'#dc2626',High:'#ea580c',Medium:'#d97706',Low:'#16a34a'};
+  document.getElementById('pat-severity').innerHTML = Object.entries(sevMap).map(([s,c])=>`
+    <div class="pat-row" style="margin-bottom:7px">
+      <div class="pat-label" style="min-width:80px;font-size:12px">${s}</div>
+      <div class="pat-bar-wrap"><div class="pat-bar" style="width:${total?Math.round(c/total*100):0}%;background:${sevColors[s]}"></div></div>
+      <div class="pat-val" style="color:${sevColors[s]}">${c}</div>
+    </div>`).join('');
+
+  // ── Impact distribution
+  const impMap={'Blocked':0,'Delay':0,'Rework':0,'Clarification Needed':0};
+  gaps.forEach(g=>{ if(impMap[g.impact]!==undefined) impMap[g.impact]++; });
+  const impColors={'Blocked':'#dc2626','Delay':'#d97706','Rework':'#ea580c','Clarification Needed':'#2563eb'};
+  document.getElementById('pat-impact').innerHTML = Object.entries(impMap).map(([s,c])=>`
+    <div class="pat-row" style="margin-bottom:7px">
+      <div class="pat-label" style="min-width:160px;font-size:12px">${s}</div>
+      <div class="pat-bar-wrap"><div class="pat-bar" style="width:${total?Math.round(c/total*100):0}%;background:${impColors[s]}"></div></div>
+      <div class="pat-val" style="color:${impColors[s]}">${c}</div>
+    </div>`).join('');
+
+  // ── Author pattern
+  const authorMap=new Map();
+  S.tdds.forEach(t=>{
+    const author=t.author||'Unknown';
+    if(!authorMap.has(author)) authorMap.set(author,{tdds:0,gaps:0,openGaps:0,time:0,catCounts:new Map()});
+    const a=authorMap.get(author);
+    a.tdds++;
+    const tGaps=gapsForTDD(t.id);
+    a.gaps+=tGaps.length;
+    a.openGaps+=tGaps.filter(g=>g.status==='Open'||g.status==='In Progress').length;
+    a.time+=timeLostForTDD(t.id);
+    tGaps.forEach(g=>a.catCounts.set(g.category,(a.catCounts.get(g.category)||0)+1));
+  });
+  const authorRows=[...authorMap.entries()].sort((a,b)=>b[1].time-a[1].time);
+  document.getElementById('pat-author-table').innerHTML = authorRows.length
+    ? authorRows.map(([author,a])=>{
+        let topCat='—',topV=0;
+        a.catCounts.forEach((v,k)=>{ if(v>topV){topV=v;topCat=k;} });
+        const avgGaps=a.tdds?Math.round(a.gaps/a.tdds*10)/10:0;
+        const concern = a.gaps/a.tdds>3?'color:var(--red);font-weight:700':a.gaps/a.tdds>1.5?'color:var(--amber);font-weight:700':'color:var(--green)';
+        return `<tr>
+          <td style="font-weight:600">${esc(author)}</td>
+          <td style="text-align:center">${a.tdds}</td>
+          <td style="text-align:center;font-weight:700;${a.gaps>5?'color:var(--red)':'color:var(--amber)'}">${a.gaps}</td>
+          <td style="text-align:center;color:var(--red);font-weight:${a.openGaps?700:400}">${a.openGaps}</td>
+          <td style="text-align:center;font-weight:700;color:var(--orange)">${a.time}h</td>
+          <td style="text-align:center;${concern}">${avgGaps}</td>
+          <td style="font-size:11px;color:var(--muted)">${esc(topCat)}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" class="empty">No data.</td></tr>';
+
+  // ── Top sub-types
+  const subMap=new Map();
+  gaps.forEach(g=>{
+    const key=g.subType||'(No sub-type)';
+    if(!subMap.has(key)) subMap.set(key,{count:0,time:0,open:0,cat:g.category});
+    const e=subMap.get(key);
+    e.count++; e.time+=(parseFloat(g.timeLostH)||0);
+    if(g.status==='Open'||g.status==='In Progress') e.open++;
+  });
+  const topSubs=[...subMap.entries()].sort((a,b)=>b[1].time-a[1].time||b[1].count-a[1].count).slice(0,10);
+  document.getElementById('pat-subtype-table').innerHTML = topSubs.length
+    ? topSubs.map(([sub,v])=>`<tr>
+        <td style="font-weight:600;font-size:12px">${esc(sub)}</td>
+        <td style="font-size:11px;color:var(--accent)">${esc(v.cat||'—')}</td>
+        <td style="text-align:center;font-weight:700">${v.count}</td>
+        <td style="text-align:center;font-weight:700;color:var(--orange)">${v.time}h</td>
+        <td style="text-align:center;${v.open?'color:var(--red);font-weight:700':'color:var(--green)'}">${v.open||'✓'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">No data.</td></tr>';
+}
+
+// ════════════════════════════════════════
+// WEEKLY REPORT
+// ════════════════════════════════════════
+function slideText(n) {
+  const gaps=S.gaps, tdds=S.tdds, meta=S.meta;
+  const total=gaps.length, open=gaps.filter(g=>g.status==='Open').length, inprog=gaps.filter(g=>g.status==='In Progress').length;
+  const resolved=gaps.filter(g=>g.status==='Resolved').length;
+  const totalTime=gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  const critOpen=gaps.filter(g=>sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress'));
+  const approvedTDDs=tdds.filter(t=>t.status==='Approved').length;
+  const tddsWithGaps=tdds.filter(t=>gapsForTDD(t.id).length>0).length;
+  const resolveRate=total?Math.round(resolved/total*100):0;
+
+  const catTime=new Map();
+  gaps.forEach(g=>catTime.set(g.category,(catTime.get(g.category)||0)+(parseFloat(g.timeLostH)||0)));
+  const topCats=[...catTime.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  const subCount=new Map();
+  gaps.forEach(g=>subCount.set(g.subType||'General',(subCount.get(g.subType||'General')||0)+1));
+  const topSubs=[...subCount.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const authorGaps=new Map();
+  tdds.forEach(t=>{ if(t.author) authorGaps.set(t.author,(authorGaps.get(t.author)||0)+gapsForTDD(t.id).length); });
+  const topAuthor=[...authorGaps.entries()].sort((a,b)=>b[1]-a[1])[0];
+
+  const L='─'.repeat(55);
+  const slides={
+    1:`SLIDE 1 — EXECUTIVE SUMMARY
+${L}
+Project        : ${meta.projectName||'Azure Integration Project'}
+Reporting Week : ${meta.reportWeek||'Week not set — configure in ⚙ Settings'}
+Generated      : ${new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+
+TDD REGISTER STATUS
+  Total TDDs         : ${tdds.length}
+  Approved           : ${approvedTDDs}
+  With Open Gaps     : ${tddsWithGaps}
+
+GAP SUMMARY
+  Total Gaps Logged  : ${total}
+  Open               : ${open}
+  In Progress        : ${inprog}
+  Resolved           : ${resolved} (${resolveRate}% resolution rate)
+  Critical Open      : ${critOpen.length} ${critOpen.length>0?'⚠ REQUIRES IMMEDIATE ACTION':'✅'}
+  Total Time Lost    : ${totalTime}h across all TDDs
+
+OVERALL HEALTH  : ${critOpen.length>0?'🔴 AT RISK — Critical gaps unresolved':open+inprog===0?'🟢 ON TRACK — All gaps resolved':'🟡 NEEDS ATTENTION — Open gaps require resolution'}`,
+
+    2:`SLIDE 2 — TDD STATUS OVERVIEW
+${L}
+${tdds.length?tdds.map(t=>{
+  const gc=gapsForTDD(t.id).length, tl=timeLostForTDD(t.id);
+  const crit=S.gaps.filter(g=>g.tddId===t.id&&sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+  return `  #${t.id} ${t.title}\n     Author: ${t.author||'—'} | Status: ${t.status} | Gaps: ${gc} | Time Lost: ${tl}h${crit?' | 🔴 '+crit+' Critical Open':''}${t.flow?'\n     Flow: '+t.flow:''}`;
+}).join('\n\n'):'  • No TDDs registered yet'}`,
+
+    3:`SLIDE 3 — TOP GAP PATTERNS THIS PERIOD
+${L}
+GAP CATEGORIES BY TIME LOST:
+${topCats.length?topCats.map(([cat,h],i)=>`  ${i+1}. ${cat}\n     Time Lost: ${h}h | Gaps: ${gaps.filter(g=>g.category===cat).length} | Open: ${gaps.filter(g=>g.category===cat&&(g.status==='Open'||g.status==='In Progress')).length}`).join('\n\n'):'  • No gap data yet'}
+
+MOST FREQUENT GAP SUB-TYPES:
+${topSubs.length?topSubs.map(([s,c])=>`  • ${s} (${c} occurrence${c!==1?'s':''})`).join('\n'):'  • No data yet'}
+
+PATTERN INSIGHT:
+${topCats[0]?`  The most costly gap category is "${topCats[0][0]}" accounting for ${topCats[0][1]}h of time lost.\n  This suggests TDD templates and review checklists must be strengthened in this area.`:'  Insufficient data to identify patterns. Log more gaps to build analysis.'}
+${topAuthor&&topAuthor[1]>2?`\n  Author "${topAuthor[0]}" has ${topAuthor[1]} gaps across their TDDs — consider targeted TDD quality coaching.`:''}`,
+
+    4:`SLIDE 4 — CRITICAL OPEN GAPS — IMMEDIATE ACTION REQUIRED
+${L}
+${critOpen.length?critOpen.map(g=>{
+  const tdd=S.tdds.find(t=>t.id===g.tddId);
+  return `  🔴 [G${g.id}] ${tdd?tdd.title:'Unknown TDD'}\n     Category : ${g.category}\n     Sub-type : ${g.subType||'—'}\n     Gap      : ${g.description}\n     Impact   : ${g.impact} | Time Lost So Far: ${g.timeLostH}h\n     Assigned : ${g.assignedTo||'Unassigned'} | Found: ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)`;
+}).join('\n\n'):'  ✅ No critical open gaps — all critical issues resolved or waived.'}`,
+
+    5:`SLIDE 5 — ALL OPEN GAPS BY SEVERITY
+${L}
+${['Critical','High','Medium','Low'].map(sev=>{
+  const sevGaps=gaps.filter(g=>sevClean(g.severity)===sev&&(g.status==='Open'||g.status==='In Progress'));
+  if(!sevGaps.length) return `  [${sev}] — None`;
+  return `  [${sev}] — ${sevGaps.length} open\n`+sevGaps.slice(0,5).map(g=>{
+    const tdd=S.tdds.find(t=>t.id===g.tddId);
+    return `  → G${g.id} | ${tdd?'TDD #'+tdd.id:'?'}: ${g.description.slice(0,80)}${g.description.length>80?'…':''}\n     Assigned: ${g.assignedTo||'—'} | ${g.timeLostH}h lost | ${daysSince(g.dateFound)} old`;
+  }).join('\n')+(sevGaps.length>5?`\n  ... and ${sevGaps.length-5} more`:'');
+}).join('\n\n')}`,
+
+    6:`SLIDE 6 — RECOMMENDATIONS
+${L}
+Based on gap data to date:
+
+${topCats[0]?`1. STRENGTHEN "${topCats[0][0].toUpperCase()}" IN TDD TEMPLATE\n   This category accounts for the most time lost (${topCats[0][1]}h). Add a mandatory checklist\n   section covering ${(GAP_CATS[topCats[0][0]]||[]).slice(0,3).join(', ')}.`:'1. No pattern data yet — log gaps to generate recommendations.'}
+
+${topCats[1]?`2. ADD PEER REVIEW GATE FOR "${topCats[1][0].toUpperCase()}"\n   ${topCats[1][1]}h lost to this gap type. A 30-minute peer review checkpoint before TDD submission\n   can catch these issues before they block development.`:''}
+
+${critOpen.length>0?`3. ESCALATE ${critOpen.length} CRITICAL OPEN GAP${critOpen.length!==1?'S':''} TO PROJECT MANAGER\n   These are actively blocking or significantly delaying delivery. Each day without resolution\n   adds to the ${totalTime}h already lost.`:'3. MAINTAIN RESOLUTION RATE\n   Current resolution rate is '+resolveRate+'%. Continue tracking and resolving promptly.'}
+
+4. INTRODUCE TDD QUALITY GATE\n   Establish a mandatory pre-submission checklist covering all 10 gap categories.\n   Target: zero Critical gaps reaching the review stage.
+
+5. TRACK TREND WEEK-ON-WEEK\n   Use this report each week to monitor whether gap count per TDD is improving.`
+  };
+  return slides[n]||'';
+}
+
+function renderReport() {
+  const titles=['','Executive Summary','TDD Status Overview','Top Gap Patterns','Critical Open Gaps','All Open Gaps','Recommendations'];
+  let html='';
+  for(let i=1;i<=6;i++) {
+    html+=`<div class="slide">
+      <div class="slide-hd">
+        <h3>Slide ${i} — ${titles[i]}</h3>
+        <button class="btn btn-ghost btn-sm" onclick="copySlide(${i},this)">⎘ Copy Slide ${i}</button>
+      </div>
+      <div class="slide-body"><pre class="slide-content" id="sc-${i}">${esc(slideText(i))}</pre></div>
+    </div>`;
+  }
+  document.getElementById('report-slides').innerHTML=html;
+}
+
+function copySlide(n,btn) {
+  navigator.clipboard.writeText(slideText(n)).then(()=>{
+    if(btn){btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent=`⎘ Copy Slide ${n}`,2000);}
+  });
+}
+function copyAllSlides() {
+  let all=`TDD GAP TRACKER — WEEKLY REPORT\nGenerated: ${new Date().toLocaleString('en-GB')}\n${'═'.repeat(55)}\n\n`;
+  for(let i=1;i<=6;i++) all+=slideText(i)+'\n\n'+'═'.repeat(55)+'\n\n';
+  navigator.clipboard.writeText(all).then(()=>{
+    const btn=document.querySelector('button[onclick="copyAllSlides()"]');
+    if(btn){btn.textContent='✓ All Copied!';setTimeout(()=>btn.textContent='⎘ Copy All',2500);}
+  });
+}
+function exportReportTxt() {
+  let content=`TDD GAP TRACKER — WEEKLY REPORT\nProject: ${S.meta.projectName||'—'}\nGenerated: ${new Date().toLocaleString('en-GB')}\n${'═'.repeat(55)}\n\n`;
+  for(let i=1;i<=6;i++) content+=slideText(i)+'\n\n'+'═'.repeat(55)+'\n\n';
+  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`TDD_Gap_Report_${(S.meta.projectName||'project').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ════════════════════════════════════════
+// BACKUP / RESTORE
+// ════════════════════════════════════════
+function exportAllData() {
+  const payload={tool:'TDDGapTracker',version:'1',exportDate:new Date().toISOString(),meta:S.meta,tdds:S.tdds,gaps:S.gaps,ids:{tid,gid}};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`TDD_Gaps_${(S.meta.projectName||'project').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  const btn=document.querySelector('[onclick="exportAllData()"]');
+  if(btn){const t=btn.textContent;btn.textContent='✓ Saved!';setTimeout(()=>btn.textContent=t,2000);}
+}
+
+let _loadData=null;
+function triggerLoad() {
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=evt=>{
+      try {
+        const d=JSON.parse(evt.target.result);
+        if(d.tool!=='TDDGapTracker'){alert('This file is not a TDD Gap Tracker backup.');return;}
+        _loadData=d; showLoadPreview(d);
+      } catch{alert('Invalid JSON file.');}
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+function showLoadPreview(d) {
+  const inc={tdds:(d.tdds||[]).length,gaps:(d.gaps||[]).length};
+  const savedOn=d.exportDate?new Date(d.exportDate).toLocaleString('en-GB'):'Unknown';
+  const cur={tdds:S.tdds.length,gaps:S.gaps.length};
+  document.getElementById('load-preview').innerHTML=`
+    <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(d.meta?.projectName||'Unknown Project')}</div>
+      <div style="font-size:11px;color:var(--muted)">Saved: ${savedOn}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--accent)">${inc.tdds}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">TDDs</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--red)">${inc.gaps}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">Gaps</div>
+        </div>
+      </div>
+    </div>
+    ${cur.tdds>0?`<div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:7px;padding:9px 12px;font-size:12px;color:#92400e">⚠ Current session has ${cur.tdds} TDD(s) and ${cur.gaps} gap(s). "Replace" will overwrite them.</div>`:''}`;
+  document.getElementById('load-confirm-btn').textContent=`Load ${inc.tdds} TDD${inc.tdds!==1?'s':''}, ${inc.gaps} Gap${inc.gaps!==1?'s':''}`;
+  openModal('load-modal');
+}
+function applyLoad() {
+  if(!_loadData) return;
+  const mode=document.querySelector('input[name="load-mode"]:checked')?.value||'replace';
+  if(mode==='replace') {
+    S.meta=_loadData.meta||S.meta; S.tdds=_loadData.tdds||[]; S.gaps=_loadData.gaps||[];
+    if(_loadData.ids){tid=_loadData.ids.tid||1;gid=_loadData.ids.gid||1;}
+    else{tid=S.tdds.reduce((m,t)=>Math.max(m,t.id||0),0)+1;gid=S.gaps.reduce((m,g)=>Math.max(m,g.id||0),0)+1;}
+  } else {
+    const tddIdRemap=new Map();
+    (_loadData.tdds||[]).forEach(t=>{const newId=tid++;tddIdRemap.set(t.id,newId);S.tdds.push({...t,id:newId});});
+    (_loadData.gaps||[]).forEach(g=>S.gaps.push({...g,id:gid++,tddId:tddIdRemap.get(g.tddId)??g.tddId}));
+  }
+  persist(); updateHeader(); renderTDDs(); updateSidebarBadges(); closeModal('load-modal');
+  alert(`✅ Backup loaded successfully!`);
+}
+
+// ════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));});
+
+// ════════════════════════════════════════
+// SAMPLE DATA
+// ════════════════════════════════════════
+function loadSampleData() {
+  S.meta={projectName:'Azure Integration Modernisation',reportWeek:'Week of 02 Jun 2026'};
+  S.tdds=[
+    {id:1,title:'SAP Invoice to Azure Integration',flow:'SAP ECC → Azure Service Bus → D365 Finance',author:'James Whitfield',reviewer:'Siraj R',priority:'Critical',status:'Gaps Identified',dateReceived:'2026-05-12',dateApproved:'',azureServices:['Service Bus','API Management','Logic Apps','Key Vault'],notes:'Critical path for month-end close. Delays here affect finance reporting.'},
+    {id:2,title:'CRM Customer Sync to Azure',flow:'Salesforce CRM → Azure Functions → Azure SQL',author:'Priya Nair',reviewer:'Siraj R',priority:'High',status:'Rework In Progress',dateReceived:'2026-05-19',dateApproved:'',azureServices:['Azure Functions','Azure SQL','API Management','Application Insights'],notes:''},
+    {id:3,title:'On-Premise ERP to Data Warehouse',flow:'On-Prem ERP → Integration Runtime → ADF → Azure SQL DWH',author:'Tom Greer',reviewer:'Siraj R',priority:'High',status:'Under Review',dateReceived:'2026-05-26',dateApproved:'',azureServices:['Azure Data Factory','Azure SQL','Integration Runtime','Azure Monitor'],notes:'Incremental load strategy needs clarification before this can proceed.'},
+    {id:4,title:'Event-Driven Order Processing',flow:'E-Commerce → Event Grid → Service Bus → Azure Functions → OMS',author:'James Whitfield',reviewer:'Siraj R',priority:'Critical',status:'Approved',dateReceived:'2026-05-05',dateApproved:'2026-05-22',azureServices:['Event Grid','Service Bus','Azure Functions','Application Insights','Key Vault'],notes:'Approved. Minor operational items noted as improvements for next sprint.'},
+    {id:5,title:'Azure AD B2C Identity Federation',flow:'Partner Apps → API Management → Azure AD/Entra ID → Internal APIs',author:'Meera Sundaram',reviewer:'Siraj R',priority:'High',status:'Draft',dateReceived:'2026-06-02',dateApproved:'',azureServices:['API Management','Azure AD/Entra ID','Key Vault'],notes:'Just received. Initial review pending.'}
+  ];
+  tid=6;
+  S.gaps=[
+    {id:1,tddId:1,category:'Interface & Field Mapping',subType:'Missing field mapping',description:'BSEG accounting document line items: fields WRBTR (amount in doc currency) and DMBTR (amount in local currency) are not mapped in the transformation layer. Target D365 schema requires both — currently only WRBTR is specified.',severity:'Critical — blocks development',impact:'Blocked',timeLostH:8,foundBy:'Siraj R',assignedTo:'James Whitfield',dateFound:'2026-05-18',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:2,tddId:1,category:'Error Handling & Exceptions',subType:'Dead-letter queue handling absent',description:'No dead-letter queue (DLQ) strategy defined for the Service Bus topic. If message processing fails after 3 retries, the message will be dead-lettered — TDD does not specify who monitors DLQ, what the reprocessing procedure is, or alerting thresholds.',severity:'Critical — blocks development',impact:'Delay',timeLostH:4,foundBy:'Siraj R',assignedTo:'James Whitfield',dateFound:'2026-05-19',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:3,tddId:1,category:'Security & Authentication',subType:'Key Vault references not defined',description:'TDD states "connection strings will be stored securely" but does not specify Key Vault name, secret naming convention, managed identity configuration, or which service principals need access. This must be defined before infrastructure provisioning.',severity:'High — significant delay',impact:'Delay',timeLostH:3,foundBy:'Siraj R',assignedTo:'James Whitfield',dateFound:'2026-05-20',dateResolved:'',resolutionNotes:'',status:'In Progress'},
+    {id:4,tddId:2,category:'Schema & Payload',subType:'Source schema not documented',description:'Salesforce CRM API version not specified. TDD references "CRM customer object" without attaching the API contract or field list. Developer cannot write the Function code without knowing which Salesforce API version and object fields are being consumed.',severity:'Critical — blocks development',impact:'Blocked',timeLostH:12,foundBy:'Siraj R',assignedTo:'Priya Nair',dateFound:'2026-05-22',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:5,tddId:2,category:'Testing & Acceptance Criteria',subType:'No acceptance criteria written',description:'The customer deduplication logic section states "duplicates will be handled" with no defined criteria. No acceptance tests specified for: what constitutes a duplicate, which record wins, what triggers a merge vs update, and how conflicts are logged.',severity:'High — significant delay',impact:'Rework',timeLostH:6,foundBy:'Siraj R',assignedTo:'Priya Nair',dateFound:'2026-05-23',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:6,tddId:2,category:'Non-Functional Requirements',subType:'Volume/throughput estimates missing',description:'No peak load estimates provided. Integration must handle CRM batch sync events — without knowing expected volume (records per run, frequency, peak concurrent events), the Azure Functions plan and Service Bus tier cannot be sized correctly.',severity:'Medium — minor rework needed',impact:'Delay',timeLostH:2,foundBy:'Siraj R',assignedTo:'Priya Nair',dateFound:'2026-05-24',dateResolved:'2026-05-28',resolutionNotes:'Priya confirmed: 50K records per nightly batch, 200 concurrent peak events. Documented in TDD v1.2.',status:'Resolved'},
+    {id:7,tddId:3,category:'Business Logic & Rules',subType:'Business rules incomplete',description:'TDD does not define the incremental load strategy: full vs delta load, watermark column to be used, handling of soft-deletes, and what to do with records modified in both source and target between runs. This is the core logic of the integration.',severity:'Critical — blocks development',impact:'Blocked',timeLostH:16,foundBy:'Siraj R',assignedTo:'Tom Greer',dateFound:'2026-05-28',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:8,tddId:3,category:'Schema & Payload',subType:'Target schema missing',description:'Target Azure SQL DWH schema not documented in TDD. No table definitions, column data types, primary keys, or index strategy. Cannot validate transformation mappings or write ADF pipeline without this.',severity:'High — significant delay',impact:'Delay',timeLostH:8,foundBy:'Siraj R',assignedTo:'Tom Greer',dateFound:'2026-05-29',dateResolved:'',resolutionNotes:'',status:'In Progress'},
+    {id:9,tddId:3,category:'Infrastructure & Deployment',subType:'IaC (Bicep/Terraform) not referenced',description:'TDD does not reference how Azure Data Factory, Integration Runtime, and Azure SQL will be provisioned. No Bicep/Terraform templates referenced. Environment-specific parameters (DEV/SIT/UAT/PROD) not defined — DevOps team cannot build the pipeline.',severity:'Medium — minor rework needed',impact:'Delay',timeLostH:4,foundBy:'Siraj R',assignedTo:'Tom Greer',dateFound:'2026-05-30',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:10,tddId:4,category:'Error Handling & Exceptions',subType:'No retry policy defined',description:'Event Grid to Service Bus retry policy not specified. Default Event Grid retry policy is 24 hours / 30 attempts which may be too aggressive for OMS downstream. TDD should specify max retry count, backoff strategy, and what happens after max retries.',severity:'Medium — minor rework needed',impact:'Rework',timeLostH:3,foundBy:'Siraj R',assignedTo:'James Whitfield',dateFound:'2026-05-10',dateResolved:'2026-05-16',resolutionNotes:'Agreed: 10 retries with exponential backoff (1min to 1hr). DLQ monitoring via Azure Monitor alert. Documented in TDD v2.1.',status:'Resolved'},
+    {id:11,tddId:4,category:'Non-Functional Requirements',subType:'Idempotency requirement not defined',description:'Order events may be delivered more than once (Event Grid at-least-once delivery). TDD does not define idempotency key strategy for the OMS Function — risk of duplicate order creation in OMS.',severity:'High — significant delay',impact:'Rework',timeLostH:5,foundBy:'Siraj R',assignedTo:'James Whitfield',dateFound:'2026-05-12',dateResolved:'2026-05-20',resolutionNotes:'Using OrderId + EventTimestamp as composite idempotency key stored in Azure Table Storage with 7-day TTL.',status:'Resolved'},
+    {id:12,tddId:5,category:'Security & Authentication',subType:'Auth mechanism not specified',description:'TDD states "partners will authenticate via API Management" but does not specify the auth flow: OAuth 2.0 client credentials, authorization code, API key, or mutual TLS. Each option has significantly different implementation and onboarding requirements.',severity:'High — significant delay',impact:'Delay',timeLostH:0,foundBy:'Siraj R',assignedTo:'Meera Sundaram',dateFound:'2026-06-03',dateResolved:'',resolutionNotes:'',status:'Open'},
+    {id:13,tddId:5,category:'Dependencies & Integration Points',subType:'App registration details missing',description:'Azure AD/Entra ID app registrations needed for DEV, SIT, UAT, and PROD environments not listed. Client IDs, tenant IDs, required API permissions, and token audience not specified. Cannot configure APIM JWT validation policy without this.',severity:'High — significant delay',impact:'Blocked',timeLostH:0,foundBy:'Siraj R',assignedTo:'Meera Sundaram',dateFound:'2026-06-03',dateResolved:'',resolutionNotes:'',status:'Open'}
+  ];
+  gid=14;
+  persist();
+}
+
+function resetSample() {
+  if(!confirm('Replace all data with sample Azure Integration project data?')) return;
+  S={meta:{},tdds:[],gaps:[]}; tid=1; gid=1;
+  loadSampleData(); updateHeader(); renderTDDs(); updateSidebarBadges(); closeModal('settings-modal');
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+hydrate();
+if(!S.tdds.length&&!S.gaps.length) loadSampleData();
+updateHeader();
+renderTDDs();
+updateSidebarBadges();
+populateCatDropdowns();
+</script>
+</body>
+</html>

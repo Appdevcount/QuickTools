@@ -696,8 +696,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
   <div class="card">
     <div class="card-title">📋 Feature Task Table
-      <span class="ml-auto" style="display:flex;gap:8px;align-items:center;">
+      <span class="ml-auto" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span id="feat-module-hint" style="font-size:11px;color:var(--muted);font-weight:400;">Module list syncs from Req. Analysis tab</span>
+        <button class="btn btn-success btn-sm no-print" onclick="exportToProjectTracker()" title="Export all feature tasks grouped by module — importable in Project Tracker Dashboard">📤 Export to Project Tracker</button>
         <button class="btn btn-primary btn-sm no-print" onclick="addFeatureRow()">+ Add Task</button>
       </span>
     </div>
@@ -3439,6 +3440,7 @@ function recalcAll() {
   if (reportPanel && reportPanel.classList.contains('active')) generateTextReport();
 
   saveToLocalStorage();
+  if (_seInit) _isDirty = true;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3877,6 +3879,7 @@ function downloadReport() {
   generateTextReport();
   const ta = document.getElementById('textReport');
   if (!ta || !ta.value) return;
+  _isDirty = false;
   const projectName = (document.getElementById('po-name')?.value || 'estimation').trim().replace(/[^a-z0-9_\-]/gi, '_');
   const today = new Date().toISOString().slice(0, 10);
   const filename = `${projectName}_${today}.txt`;
@@ -3901,8 +3904,86 @@ function downloadReportJSON() {
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  _isDirty = false;
   const btn = document.querySelector('[onclick="downloadReportJSON()"]');
   if (btn) { const orig = btn.textContent; btn.textContent = '✅ JSON Saved!'; setTimeout(() => btn.textContent = orig, 2200); }
+}
+
+// ════════════════════════════════════════════════════════════
+// EXPORT TO PROJECT TRACKER DASHBOARD
+// Produces a bridge JSON file importable by ProjectTracker_Dashboard.html
+// ════════════════════════════════════════════════════════════
+function exportToProjectTracker() {
+  const snap = captureSnapshot();
+  const gv = id => (document.getElementById(id)?.value || '').trim();
+  const projectName = gv('po-name') || 'Unnamed Project';
+  const client      = gv('po-client');
+  const desc        = gv('po-desc');
+
+  // Group tasks by module/feature
+  // snap.features rows: [mod, task, resType, skill, assigned, effort, deps, status]
+  const moduleMap = new Map();
+  snap.features.forEach(f => {
+    const [mod, task, resType, skill, assigned, effort, deps, status] = f;
+    const modKey = (mod || '').trim() || 'General';
+    const taskName = (task || '').trim();
+    if (!taskName) return;
+    if (!moduleMap.has(modKey)) moduleMap.set(modKey, []);
+    moduleMap.get(modKey).push({
+      name:         taskName,
+      resourceType: (resType   || '').trim(),
+      skill:        (skill     || '').trim(),
+      assignee:     (assigned === 'TBD' ? '' : assigned || '').trim(),
+      effort:       parseFloat(effort) || 0,
+      dependency:   (deps === 'None'   ? '' : deps    || '').trim(),
+      estStatus:    status || 'Not Started'
+    });
+  });
+
+  if (moduleMap.size === 0) {
+    alert('No feature tasks found.\nAdd tasks to the Feature Task Breakdown table first, then export.');
+    return;
+  }
+
+  const features = [];
+  moduleMap.forEach((tasks, module) => {
+    features.push({
+      module,
+      totalEffortHours: tasks.reduce((s, t) => s + t.effort, 0),
+      tasks
+    });
+  });
+
+  const payload = {
+    source:           'SoftwareEstimationTool',
+    version:          '1',
+    exportDate:       new Date().toISOString().slice(0, 10),
+    projectName,
+    client,
+    description:      desc,
+    features,
+    totalFeatures:    features.length,
+    totalTasks:       features.reduce((s, f) => s + f.tasks.length, 0),
+    totalEffortHours: features.reduce((s, f) => s + f.totalEffortHours, 0)
+  };
+
+  const safeName = projectName.replace(/[^a-z0-9_\-]/gi, '_');
+  const filename = `${safeName}_for_ProjectTracker_${payload.exportDate}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  const btn = document.querySelector('[onclick="exportToProjectTracker()"]');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ Exported!';
+    setTimeout(() => btn.innerHTML = orig, 2400);
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3927,6 +4008,7 @@ function initDefaults() {
 
 function resetAll(silent = false) {
   if (!silent && !confirm('Reset all data to defaults?')) return;
+  _isDirty = false;
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
   window._modParams = {};
   const baseEl = document.getElementById('f-baseEffort');
@@ -4132,7 +4214,7 @@ function importReport(event) {
   reader.readAsText(file);
 }
 
-function loadFromSnapshot(data) {
+function loadFromSnapshot(data, silent = false) {
   // Silent reset — clear all tables without default rows
   const baseEl = document.getElementById('f-baseEffort');
   if (baseEl) delete baseEl.dataset.overridden;
@@ -4179,14 +4261,21 @@ function loadFromSnapshot(data) {
   const summaryBtn = document.querySelector('.tab-btn');
   if (summaryBtn) showTab('tab-summary', summaryBtn);
 
-  const importedName = data.overview?.['po-name'] || 'project';
-  setTimeout(() => alert(`✅ Report imported successfully!\nProject: "${importedName}"\nAll tabs, tables, and formula engine values have been restored.`), 200);
+  if (!silent) {
+    const importedName = data.overview?.['po-name'] || 'project';
+    setTimeout(() => alert(`✅ Report imported successfully!\nProject: "${importedName}"\nAll tabs, tables, and formula engine values have been restored.`), 200);
+  }
 }
 
 // ════════════════════════════════════════════════════════════
 // LOCAL STORAGE — auto-save on every recalc, restore on load
 // ════════════════════════════════════════════════════════════
 const LS_KEY = 'sestool-v1';
+let _isDirty = false, _seInit = false;
+
+window.addEventListener('beforeunload', e => {
+  if (_isDirty) { e.preventDefault(); e.returnValue = ''; }
+});
 
 function saveToLocalStorage() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(captureSnapshot())); } catch(e) {}
@@ -4195,13 +4284,14 @@ function saveToLocalStorage() {
 function loadFromLocalStorage() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) { loadFromSnapshot(JSON.parse(raw)); return true; }
+    if (raw) { loadFromSnapshot(JSON.parse(raw), true); return true; }
   } catch(e) {}
   return false;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   if (!loadFromLocalStorage()) initDefaults();
+  setTimeout(() => { _seInit = true; }, 0);
 });
 </script>
 </body>

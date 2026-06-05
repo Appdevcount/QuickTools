@@ -181,6 +181,9 @@ nav {
 .card-14::before { background: linear-gradient(90deg, #be123c, #e11d48); }
 .card-14:hover   { border-color: #be123c; }
 
+.card-15::before { background: linear-gradient(90deg, #0369a1, #38bdf8); }
+.card-15:hover   { border-color: #0369a1; }
+
 .card-icon {
   width: 48px;
   height: 48px;
@@ -205,6 +208,7 @@ nav {
 .card-12 .card-icon { background: rgba(194,65,12,0.15); }
 .card-13 .card-icon { background: rgba(15,118,110,0.15); }
 .card-14 .card-icon { background: rgba(190,18,60,0.15); }
+.card-15 .card-icon { background: rgba(3,105,161,0.15); }
 
 .card-meta { flex: 1; }
 .card-meta h2 {
@@ -261,6 +265,7 @@ nav {
 .card-12 .card-cta { color: #fb923c; }
 .card-13 .card-cta { color: #2dd4bf; }
 .card-14 .card-cta { color: #fb7185; }
+.card-15 .card-cta { color: #38bdf8; }
 
 .card-6 .tag { background: rgba(29,78,216,0.12); color: #818cf8; border-color: rgba(29,78,216,0.25); }
 .card-7 .tag { background: rgba(109,40,217,0.12); color: #c084fc; border-color: rgba(109,40,217,0.25); }
@@ -271,6 +276,17 @@ nav {
 .card-12 .tag { background: rgba(194,65,12,0.12);   color: #fb923c;  border-color: rgba(194,65,12,0.25); }
 .card-13 .tag { background: rgba(15,118,110,0.12);  color: #2dd4bf;  border-color: rgba(15,118,110,0.25); }
 .card-14 .tag { background: rgba(190,18,60,0.12);   color: #fb7185;  border-color: rgba(190,18,60,0.25); }
+.card-15 .tag { background: rgba(3,105,161,0.12);   color: #38bdf8;  border-color: rgba(3,105,161,0.25); }
+.card-16::before { background: linear-gradient(90deg, #1e3a8a, #6366f1); }
+.card-16:hover   { border-color: #2563eb; }
+.card-16 .card-icon { background: rgba(37,99,235,0.15); }
+.card-17::before { background: linear-gradient(90deg, #dc2626, #ea580c); }
+.card-17:hover   { border-color: #dc2626; }
+.card-17 .card-icon { background: rgba(220,38,38,0.12); }
+.card-17 .card-cta { color: #fb923c; }
+.card-17 .tag { background: rgba(220,38,38,0.10); color: #fb923c; border-color: rgba(220,38,38,0.25); }
+.card-16 .card-cta { color: #818cf8; }
+.card-16 .tag { background: rgba(37,99,235,0.12); color: #818cf8; border-color: rgba(37,99,235,0.25); }
 
 .arrow {
   font-size: 18px;
@@ -302,7 +318,7 @@ footer {
     <span class="icon">⚡</span>
     QuickTools
   </a>
-  <span class="nav-badge">14 tools</span>
+  <span class="nav-badge">15 tools</span>
 </nav>
 
 <section class="hero">
@@ -485,6 +501,39 @@ footer {
     </div>
   </a>
 
+  <a class="card card-17" href="TDD_Gap_Tracker.html">
+    <div class="card-icon">📋</div>
+    <div class="card-meta">
+      <h2>TDD Gap Tracker</h2>
+      <p>Track Technical Design Document gaps in integration projects. Log missing mappings, schema gaps, error handling omissions, and security holes. Identify recurring patterns, measure time lost, and generate weekly reports.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">TDD Review</span>
+      <span class="tag">Gap Analysis</span>
+      <span class="tag">Azure Integration</span>
+      <span class="tag">Pattern Tracking</span>
+    </div>
+    <div class="card-cta">Open tool <span class="arrow">→</span></div>
+  </a>
+
+  <a class="card card-16" href="ProjectTracker_Dashboard.html">
+    <div class="card-icon">📊</div>
+    <div class="card-meta">
+      <h2>Project Tracker Dashboard</h2>
+      <p>360° unified project tracker — daily task status, team capacity planner, workload distribution analyzer, risk register, and auto-generated weekly PPT report in one tool.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Tasks</span>
+      <span class="tag">Capacity</span>
+      <span class="tag">Risk</span>
+      <span class="tag">Weekly Report</span>
+      <span class="tag">360° View</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
   <a class="card card-14" href="Risk_Register.html">
     <div class="card-icon">⚠️</div>
     <div class="card-meta">
@@ -547,57 +596,6 @@ footer {
       <span class="tag">Agile</span>
       <span class="tag">Voting</span>
       <span class="tag">Sprint</span>
-    </div>
-    <div class="card-cta">
-      Open tool <span class="arrow">→</span>
-    </div>
-  </a>
-
-  <a class="card card-12" href="WorkDistribution_Analyzer.html">
-    <div class="card-icon">⚖️</div>
-    <div class="card-meta">
-      <h2>Work Distribution Analyzer</h2>
-      <p>Paste or enter sprint tasks and instantly visualize workload per person. Spot overloaded team members, surface unassigned tasks, and assign them inline with configurable per-person capacity.</p>
-    </div>
-    <div class="card-tags">
-      <span class="tag">Sprint</span>
-      <span class="tag">Workload</span>
-      <span class="tag">Capacity</span>
-      <span class="tag">Team Lead</span>
-    </div>
-    <div class="card-cta">
-      Open tool <span class="arrow">→</span>
-    </div>
-  </a>
-
-  <a class="card card-13" href="DefinitionOfDone_Checklist.html">
-    <div class="card-icon">✅</div>
-    <div class="card-meta">
-      <h2>Definition of Done Checklist</h2>
-      <p>Create reusable DoD templates (code quality, testing, deployment, sign-off) and instantiate per sprint or release. Track completion progress and earn the Ship It badge when all gates pass.</p>
-    </div>
-    <div class="card-tags">
-      <span class="tag">DoD</span>
-      <span class="tag">Quality</span>
-      <span class="tag">Release</span>
-      <span class="tag">Sprint</span>
-    </div>
-    <div class="card-cta">
-      Open tool <span class="arrow">→</span>
-    </div>
-  </a>
-
-  <a class="card card-14" href="Risk_Register.html">
-    <div class="card-icon">⚠️</div>
-    <div class="card-meta">
-      <h2>Risk Register</h2>
-      <p>Log project risks with likelihood × impact scoring. Visualize exposure on an interactive 5×5 heat map, assign owners, document mitigation and contingency plans, and track status to closure.</p>
-    </div>
-    <div class="card-tags">
-      <span class="tag">Risk</span>
-      <span class="tag">Heat Map</span>
-      <span class="tag">Mitigation</span>
-      <span class="tag">Project</span>
     </div>
     <div class="card-cta">
       Open tool <span class="arrow">→</span>

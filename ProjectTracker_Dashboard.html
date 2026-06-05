@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Tracker Dashboard — QuickTools</title>
+<style>
+:root{
+  --bg:#eef2ff;--surface:#fff;--border:#c7d2fe;
+  --accent:#2563eb;--accent2:#7c3aed;--accent-light:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --purple:#7c3aed;
+  --text:#1e293b;--muted:#64748b;--radius:10px;
+  --shadow:0 1px 6px rgba(37,99,235,.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:12px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 2px 12px rgba(30,64,175,.25);}
+.hdr-icon{width:38px;height:38px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.hdr-title{font-size:16px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.75);margin-top:1px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.hdr-meta{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:4px 12px;font-size:11px;color:#fff;display:flex;gap:14px;}
+.hdr-meta span{color:rgba(255,255,255,.65);}
+.hdr-meta strong{color:#fff;}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 13px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.btn-ghost{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);}
+.btn-ghost:hover{background:rgba(255,255,255,.28);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-success{background:#15803d;color:#fff;}
+.btn-success:hover{background:#166534;}
+.btn-amber{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.btn-amber:hover{background:#fde68a;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:#f1f5f9;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* ── LAYOUT ── */
+.app{flex:1;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sb{width:218px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:8px 0;flex-shrink:0;}
+.sb-lbl{padding:11px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-top:1px solid var(--border);margin-top:5px;}
+.sb-lbl:first-child{border-top:none;margin-top:0;padding-top:10px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;border:none;border-left:3px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:500;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:var(--accent-light);color:var(--text);}
+.sb-btn.on{background:var(--accent-light);border-left-color:var(--accent);color:var(--accent);font-weight:700;}
+.sb-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;min-width:20px;text-align:center;}
+.sb-badge.red{background:var(--red);}
+.sb-badge.amber{background:var(--amber);}
+.sb-badge.green{background:var(--green);}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;}
+.content{padding:18px 24px;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+/* ── INLINE TABLE CONTROLS ── */
+.tbl-sel{border:1px solid transparent;border-radius:5px;padding:3px 5px;font-size:11px;font-weight:600;background:transparent;cursor:pointer;width:100%;font-family:inherit;color:inherit;}
+.tbl-sel:hover,.tbl-sel:focus{border-color:var(--accent);background:#fff;outline:none;}
+.tbl-inp{border:1px solid transparent;border-radius:5px;padding:3px 6px;font-size:12px;background:transparent;width:100%;font-family:inherit;color:var(--text);}
+.tbl-inp:hover,.tbl-inp:focus{border-color:var(--border);background:#fff;outline:none;}
+.tbl-inp.blocker-inp:not([value=""]){background:#fef2f2;border-color:#fecaca;color:#991b1b;}
+/* Priority palette */
+.sel-critical{background:#fef2f2!important;color:#991b1b;}
+.sel-high{background:#fff7ed!important;color:#c2410c;}
+.sel-medium{background:#fffbeb!important;color:#92400e;}
+.sel-low{background:#f0fdf4!important;color:#166534;}
+/* HL Status palette */
+.sel-ns{background:#f8fafc!important;color:#64748b;}
+.sel-ip{background:#eff6ff!important;color:#1d4ed8;}
+.sel-ar{background:#fffbeb!important;color:#92400e;}
+.sel-bl{background:#fef2f2!important;color:#991b1b;}
+.sel-dn{background:#f0fdf4!important;color:#166534;}
+/* Editable name cell */
+.edit-name{padding:3px 5px;border-radius:4px;border:1px solid transparent;font-weight:600;font-size:12px;min-height:20px;outline:none;cursor:text;word-break:break-word;}
+.edit-name:hover{border-color:var(--border);background:#fff;}
+.edit-name:focus{border-color:var(--accent);background:#fff;}
+/* Expand row */
+.expand-row>td{background:#f5f8ff!important;padding:0!important;border-left:3px solid var(--accent);}
+.expand-row.blocked-expand>td{border-left-color:var(--red);}
+.expand-row.atrisk-expand>td{border-left-color:var(--amber);}
+.expand-content{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px;}
+.expand-meta{grid-column:span 2;display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.expand-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:4px;}
+.expand-ta{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:12px;min-height:80px;resize:vertical;font-family:inherit;background:var(--surface);}
+.expand-ta:focus{outline:none;border-color:var(--accent);}
+.expand-inp{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:var(--surface);}
+.expand-inp:focus{outline:none;border-color:var(--accent);}
+
+/* ── PANEL HEADER ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.ph h2{font-size:17px;font-weight:700;color:var(--text);}
+.ph p{font-size:11px;color:var(--muted);margin-top:2px;}
+.ph-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card-hd{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
+.kpi.red::before{background:var(--red);}
+.kpi.amber::before{background:var(--amber);}
+.kpi.green::before{background:var(--green);}
+.kpi.purple::before{background:var(--purple);}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.kpi-value{font-size:24px;font-weight:800;margin:3px 0 2px;}
+.kpi-sub{font-size:10px;color:var(--muted);}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#f8fafc;border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:hover td{background:#fafcff;}
+tr.overburn-row td{background:#fff5f5!important;}
+tr.overburn-row:hover td{background:#fee2e2!important;}
+tr.blocked-row td{border-left:3px solid var(--red);}
+tr.atrisk-row td{border-left:3px solid var(--amber);}
+tr.done-row td{opacity:.65;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.badge-critical{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-high{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.badge-medium{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-low{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-blocked{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-atrisk{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-inprogress{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.badge-notstarted{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;}
+.badge-done{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-open{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-mitigated{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-closed{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.badge-escalated{background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;}
+.badge-rh{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.badge-rm{background:#fffbeb;color:#92400e;border:1px solid #fde68a;}
+.badge-rl{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+
+/* ── PROGRESS BARS ── */
+.bar-wrap{background:#e2e8f0;border-radius:20px;overflow:hidden;height:10px;}
+.bar-fill{height:100%;border-radius:20px;transition:width .3s;background:var(--accent);}
+.bar-fill.over{background:var(--red);}
+.bar-fill.warn{background:var(--amber);}
+.bar-fill.ok{background:var(--green);}
+
+/* ── FORMS ── */
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:13px;color:var(--text);background:var(--surface);transition:border-color .15s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--accent);}
+.fg textarea{resize:vertical;min-height:65px;}
+
+/* ── FILTER ROW ── */
+.filter-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.filter-row input,.filter-row select{padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;color:var(--text);background:var(--surface);font-family:inherit;}
+.filter-row input:focus,.filter-row select:focus{outline:none;border-color:var(--accent);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:36px 16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:680px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;flex-shrink:0;}
+.modal-hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:15px 20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-hd h3{font-size:14px;font-weight:700;color:#fff;}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:rgba(255,255,255,.35);}
+.modal-body{padding:18px;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#f8fafc;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-grid .span2{grid-column:span 2;}
+
+/* ── OVERVIEW ── */
+.ov-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.alert-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.alert-item{padding:8px 11px;border-radius:7px;font-size:12px;display:flex;align-items:flex-start;gap:8px;}
+.alert-item.err{background:var(--red-bg);color:#991b1b;border:1px solid #fecaca;}
+.alert-item.warn{background:var(--amber-bg);color:#92400e;border:1px solid #fde68a;}
+.alert-item.info{background:var(--accent-light);color:#1d4ed8;border:1px solid #bfdbfe;}
+
+/* ── CAPACITY ── */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:18px;}
+.cap-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow);}
+.cap-card.overburn{border-left:3px solid var(--red);background:#fff8f8;}
+.cap-card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.cap-name{font-size:13px;font-weight:700;}
+.cap-role{font-size:11px;color:var(--muted);margin-top:1px;}
+.cap-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
+.cap-num{display:flex;flex-direction:column;gap:1px;}
+.cap-num-label{font-size:9px;text-transform:uppercase;font-weight:600;color:var(--muted);letter-spacing:.04em;}
+.cap-num-val{font-size:14px;font-weight:800;}
+
+/* ── WORKLOAD ── */
+.wl-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.wl-name{min-width:105px;font-size:12px;font-weight:600;truncate:ellipsis;}
+.wl-bar-wrap{flex:1;background:#e2e8f0;border-radius:20px;height:13px;overflow:hidden;}
+.wl-bar{height:100%;border-radius:20px;transition:width .4s;}
+.wl-pct{min-width:42px;text-align:right;font-size:11px;font-weight:700;}
+.wl-detail{font-size:10px;color:var(--muted);min-width:110px;}
+
+/* ── REPORT SLIDES ── */
+.slide{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.slide-hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;}
+.slide-hd h3{color:#fff;font-size:12px;font-weight:700;}
+.slide-body{padding:14px;}
+.slide-content{font-size:12px;line-height:1.75;color:var(--text);white-space:pre-wrap;font-family:'Consolas','Courier New',monospace;}
+
+/* ── BLOCKER FLAG ── */
+.blocker-flag{font-size:10px;color:var(--red);font-weight:600;background:var(--red-bg);padding:2px 6px;border-radius:4px;border:1px solid #fecaca;white-space:nowrap;}
+
+/* ── ALERT BANNER ── */
+.alert-banner{background:var(--red-bg);border:1px solid #fecaca;color:#991b1b;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:13px;}
+.empty-icon{font-size:34px;margin-bottom:8px;}
+
+/* ── MISC ── */
+.cell-text{word-break:break-word;max-width:145px;}
+.cell-long{word-break:break-word;max-width:190px;}
+.overbum-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--red);background:var(--red-bg);padding:2px 8px;border-radius:5px;border:1px solid #fecaca;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+
+@media(max-width:900px){.ov-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hdr-icon">📊</div>
+  <div>
+    <div class="hdr-title" id="hdrTitle">Project Tracker Dashboard</div>
+    <div class="hdr-sub" id="hdrSub">360° View — Tasks · Capacity · Risks · Weekly Report</div>
+  </div>
+  <div class="hdr-actions">
+    <div class="hdr-meta">
+      <span>Sprint: <strong id="hdrSprint">—</strong></span>
+      <span>Week: <strong id="hdrWeek">—</strong></span>
+    </div>
+    <span id="hdr-save-ind" style="font-size:11px;color:rgba(255,255,255,.55);opacity:0;transition:opacity .4s;white-space:nowrap">✓ Saved</span>
+    <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download a full backup of all tasks, team, risks and settings as JSON">💾 Save Backup</button>
+    <button class="btn btn-ghost btn-sm" onclick="triggerLoadBackup()" title="Load a previously saved backup JSON to restore or merge data">📂 Load Backup</button>
+    <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Settings</button>
+    <a href="index.html" class="btn btn-ghost btn-sm">← Hub</a>
+  </div>
+</header>
+
+<!-- ══ APP ══ -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sb">
+    <div class="sb-lbl">Dashboard</div>
+    <button class="sb-btn on" data-panel="overview" onclick="nav('overview',this)">📊 Overview <span class="sb-badge green" id="sb-health">OK</span></button>
+    <div class="sb-lbl">Tracking</div>
+    <button class="sb-btn" data-panel="tasks" onclick="nav('tasks',this)">📋 Task Tracker <span class="sb-badge" id="sb-tasks">0</span></button>
+    <button class="sb-btn" data-panel="capacity" onclick="nav('capacity',this)">👥 Capacity Planner <span class="sb-badge amber" id="sb-overburn" style="display:none">!</span></button>
+    <button class="sb-btn" data-panel="workload" onclick="nav('workload',this)">⚖ Workload Analyzer</button>
+    <div class="sb-lbl">Risk &amp; Report</div>
+    <button class="sb-btn" data-panel="risks" onclick="nav('risks',this)">⚠ Risk Register <span class="sb-badge red" id="sb-risks" style="display:none">0</span></button>
+    <button class="sb-btn" data-panel="report" onclick="nav('report',this)">📑 Weekly Report</button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="content panel on" id="panel-overview">
+      <div class="ph">
+        <div><h2>Project Overview</h2><p>360° health snapshot — updated live from all modules</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="nav('tasks',document.querySelector('[data-panel=tasks]'));setTimeout(openTaskModal,80)">+ Quick Add Task</button>
+        </div>
+      </div>
+      <div id="ov-kpis"></div>
+      <div id="ov-alerts"></div>
+      <div class="ov-grid">
+        <div>
+          <div class="card"><div class="card-hd">Active Blockers</div><div id="ov-blockers"></div></div>
+          <div class="card"><div class="card-hd">Top Open Risks</div><div id="ov-risks"></div></div>
+        </div>
+        <div>
+          <div class="card"><div class="card-hd">Team Load</div><div id="ov-load"></div></div>
+          <div class="card"><div class="card-hd">Status Breakdown</div><div id="ov-status"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TASK TRACKER ── -->
+    <div class="content panel" id="panel-tasks">
+      <div class="ph">
+        <div><h2>Task Status Tracker</h2><p>Daily individual tracking with full detail fields</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="triggerImport()" title="Import features and tasks from a Software Estimation Tool export (.json)">📥 Import from Estimation Tool</button>
+          <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add Task</button>
+        </div>
+      </div>
+      <div class="card" style="padding:13px">
+        <div class="filter-row">
+          <input type="search" id="f-search" placeholder="Search tasks…" oninput="renderTasks()" style="flex:1;min-width:160px">
+          <select id="f-assignee" onchange="renderTasks()"><option value="">All Assignees</option></select>
+          <select id="f-status" onchange="renderTasks()">
+            <option value="">All Statuses</option>
+            <option>Not Started</option><option>In Progress</option><option>At Risk</option><option>Blocked</option><option>Done</option>
+          </select>
+          <select id="f-priority" onchange="renderTasks()">
+            <option value="">All Priorities</option>
+            <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="clearTaskFilters()">✕ Clear</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:38px">#</th>
+              <th style="min-width:220px">Task Name</th>
+              <th style="width:145px">Assignee</th>
+              <th style="width:108px">Priority</th>
+              <th style="width:135px">HL Status</th>
+              <th style="width:128px">ETA</th>
+              <th style="width:76px">Effort (h)</th>
+              <th style="min-width:220px">Blocker</th>
+              <th style="width:44px;text-align:center" title="Risk flag">⚠ Risk</th>
+              <th style="width:92px">Details</th>
+            </tr></thead>
+            <tbody id="task-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CAPACITY PLANNER ── -->
+    <div class="content panel" id="panel-capacity">
+      <div class="ph">
+        <div><h2>Team Capacity Planner</h2><p>Monthly bandwidth vs allocated effort — over-burn highlighted</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="openMemberModal()">+ Add Member</button>
+        </div>
+      </div>
+      <div id="cap-banner" class="alert-banner" style="display:none">🔥 Over-burn detected — one or more team members are allocated beyond monthly capacity!</div>
+      <div class="cap-grid" id="cap-cards"></div>
+      <div class="card">
+        <div class="card-hd">Effort Allocation Summary</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Member</th><th>Role</th><th>Available (days)</th><th>Available (h)</th><th>Allocated (h)</th>
+              <th>Utilization</th><th>Remaining</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="cap-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WORKLOAD ANALYZER ── -->
+    <div class="content panel" id="panel-workload">
+      <div class="ph">
+        <div><h2>Workload Distribution Analyzer</h2><p>Visual effort and priority breakdown per team member</p></div>
+        <div class="ph-actions">
+          <select id="wl-mode" onchange="renderWorkload()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px">
+            <option value="effort">By Effort (hours)</option>
+            <option value="count">By Task Count</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-hd">Workload Distribution</div><div id="wl-bars"></div></div>
+        <div class="card"><div class="card-hd">Priority Breakdown per Member</div><div id="wl-priority"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">Detailed Workload Table</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Member</th><th>Tasks</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th>
+              <th>Effort (h)</th><th>% Team</th><th>Cap %</th><th>Load Status</th>
+            </tr></thead>
+            <tbody id="wl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RISK REGISTER ── -->
+    <div class="content panel" id="panel-risks">
+      <div class="ph">
+        <div><h2>Risk Register</h2><p>Score-driven risk tracking — includes incremental refinement &amp; information gaps</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="openRiskModal()">+ Add Risk</button>
+        </div>
+      </div>
+      <div id="risk-kpis" class="kpi-strip" style="margin-bottom:16px"></div>
+      <div class="card" style="padding:13px">
+        <div class="filter-row">
+          <select id="fr-cat" onchange="renderRisks()">
+            <option value="">All Categories</option>
+            <option>Incremental Refinement Tracking</option>
+            <option>Lack of Information vs Expected Deliverables</option>
+            <option>Schedule Risk</option><option>Resource Risk</option>
+            <option>Technical Risk</option><option>Other</option>
+          </select>
+          <select id="fr-status" onchange="renderRisks()">
+            <option value="">All Statuses</option>
+            <option>Open</option><option>Mitigated</option><option>Closed</option><option>Escalated</option>
+          </select>
+          <select id="fr-score" onchange="renderRisks()">
+            <option value="">All Scores</option>
+            <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Description</th><th>Category</th><th>Impact</th><th>Likelihood</th>
+              <th>Score</th><th>Mitigation</th><th>Owner</th><th>Status</th><th>ETA</th><th>Linked Task</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="risk-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WEEKLY REPORT ── -->
+    <div class="content panel" id="panel-report">
+      <div class="ph">
+        <div><h2>Weekly Report Generator</h2><p>Auto-generated from live data — paste slides into PowerPoint or export as TXT</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="renderReport()">↻ Refresh</button>
+          <button class="btn btn-success btn-sm" onclick="exportTxt()">⬇ Export as TXT</button>
+          <button class="btn btn-primary btn-sm" onclick="copyAll()">⎘ Copy All</button>
+        </div>
+      </div>
+      <div id="report-slides"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ TASK MODAL ══ -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="task-modal-title">Add Task</h3><button class="modal-close" onclick="closeModal('task-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="t-id">
+      <div class="modal-grid">
+        <div class="fg span2"><label>Task Name *</label><input type="text" id="t-name" placeholder="e.g. Implement login API"></div>
+        <div class="fg span2"><label>Feature / Module <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(optional — groups tasks by feature)</span></label><input type="text" id="t-feature" placeholder="e.g. Authentication, Payment Gateway, Dashboard UI…"></div>
+        <div class="fg"><label>Assignee</label><select id="t-assignee"><option value="">Unassigned</option></select></div>
+        <div class="fg"><label>Priority</label>
+          <select id="t-priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
+        </div>
+        <div class="fg"><label>Start Date</label><input type="date" id="t-start"></div>
+        <div class="fg"><label>ETA</label><input type="date" id="t-eta"></div>
+        <div class="fg"><label>Delivery Date</label><input type="date" id="t-delivery"></div>
+        <div class="fg"><label>Effort (hours)</label><input type="number" id="t-effort" min="0" step="0.5" placeholder="e.g. 8"></div>
+        <div class="fg span2"><label>High-Level Status</label>
+          <select id="t-hlstatus"><option>Not Started</option><option>In Progress</option><option>At Risk</option><option>Blocked</option><option>Done</option></select>
+        </div>
+        <div class="fg span2"><label>Detailed Status</label><textarea id="t-detailed" placeholder="Describe current progress in detail…"></textarea></div>
+        <div class="fg span2"><label>Blocker (leave blank if none)</label><input type="text" id="t-blocker" placeholder="Describe blocking issue…"></div>
+        <div class="fg span2"><label>Dependency</label><input type="text" id="t-dep" placeholder="e.g. Depends on Task #3, Waiting for API spec"></div>
+        <div class="fg span2"><label>Comments</label><textarea id="t-comments" placeholder="Notes, decisions, context…" style="min-height:50px"></textarea></div>
+        <div class="fg span2">
+          <label style="display:flex;align-items:center;gap:7px;text-transform:none;font-size:12px;font-weight:500;cursor:pointer">
+            <input type="checkbox" id="t-risk" style="width:14px;height:14px;accent-color:var(--accent)">
+            Flag as risk (auto-creates linked entry in Risk Register)
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMBER MODAL ══ -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd"><h3 id="member-modal-title">Add Team Member</h3><button class="modal-close" onclick="closeModal('member-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg"><label>Name *</label><input type="text" id="m-name" placeholder="e.g. Sarah Chen"></div>
+        <div class="fg"><label>Role</label><input type="text" id="m-role" placeholder="e.g. Frontend Dev, Tech Lead"></div>
+        <div class="fg">
+          <label>Available Working Days This Month</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="number" id="m-days" min="1" max="35" value="20" placeholder="20" style="width:90px"
+              oninput="document.getElementById('m-days-hint').textContent=this.value+'d × '+hpd()+'h/d = '+(parseFloat(this.value)||0)*hpd()+'h'">
+            <span id="m-days-hint" style="font-size:12px;font-weight:600;color:var(--accent)">20d × 8h/d = 160h</span>
+          </div>
+          <span style="font-size:10px;color:var(--muted);margin-top:3px">Standard month ≈ 22 days. Reduce for leaves, part-time, or shared resources. Hours/day set in ⚙ Settings.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('member-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RISK MODAL ══ -->
+<div class="modal-overlay" id="risk-modal">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="risk-modal-title">Add Risk</h3><button class="modal-close" onclick="closeModal('risk-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="r-id">
+      <div class="modal-grid">
+        <div class="fg span2"><label>Risk Description *</label><textarea id="r-desc" placeholder="Describe the risk in detail…"></textarea></div>
+        <div class="fg span2"><label>Category</label>
+          <select id="r-cat">
+            <option>Incremental Refinement Tracking</option>
+            <option>Lack of Information vs Expected Deliverables</option>
+            <option>Schedule Risk</option><option>Resource Risk</option>
+            <option>Technical Risk</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label>Impact</label><select id="r-impact"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+        <div class="fg"><label>Likelihood</label><select id="r-likelihood"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
+        <div class="fg span2"><label>Mitigation Plan</label><textarea id="r-mitigation" placeholder="How will this risk be mitigated or monitored?"></textarea></div>
+        <div class="fg"><label>Owner</label><select id="r-owner"><option value="">Unassigned</option></select></div>
+        <div class="fg"><label>Status</label><select id="r-status"><option>Open</option><option>Mitigated</option><option>Closed</option><option>Escalated</option></select></div>
+        <div class="fg"><label>ETA / Review Date</label><input type="date" id="r-eta"></div>
+        <div class="fg"><label>Linked Task</label><select id="r-task"><option value="">None</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('risk-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRisk()">Save Risk</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOAD BACKUP MODAL ══ -->
+<div class="modal-overlay" id="load-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd">
+      <h3>📂 Load Project Backup</h3>
+      <button class="modal-close" onclick="closeModal('load-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="load-preview"></div>
+      <div style="margin-top:14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">Load Mode</div>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:8px;background:#f8fafc">
+          <input type="radio" name="load-mode" value="replace" checked style="margin-top:2px;accent-color:var(--accent);flex-shrink:0">
+          <div>
+            <div style="font-weight:700;font-size:13px">Replace everything</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Clears the current session completely and restores the backup exactly as it was saved. Best for resuming where you left off.</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:#f8fafc">
+          <input type="radio" name="load-mode" value="merge" style="margin-top:2px;accent-color:var(--accent);flex-shrink:0">
+          <div>
+            <div style="font-weight:700;font-size:13px">Merge into current session</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Adds tasks, team members, and risks from the backup on top of existing data. IDs are remapped automatically. Useful for combining two sessions.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('load-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="load-confirm-btn" onclick="applyLoadBackup()">Load</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-hd">
+      <h3>📥 Import Features &amp; Tasks from Estimation Tool</h3>
+      <button class="modal-close" onclick="closeModal('import-modal')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto;padding:16px 18px">
+      <!-- Source info banner -->
+      <div id="im-meta"></div>
+      <!-- Feature checkboxes -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">
+        Select Features / Modules to Import
+        <button class="btn btn-secondary btn-xs" style="margin-left:8px" onclick="imToggleAll(true)">All</button>
+        <button class="btn btn-secondary btn-xs" onclick="imToggleAll(false)">None</button>
+      </div>
+      <div id="im-features"></div>
+      <!-- Import options -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="fg">
+          <label>Import Status</label>
+          <select id="im-status" onchange="imUpdateCount()">
+            <option value="Not Started" selected>Not Started (recommended)</option>
+            <option value="keep">Keep from Estimation</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Priority Mapping</label>
+          <select id="im-priority">
+            <option value="auto" selected>Auto — by effort hours</option>
+            <option value="High">All High</option>
+            <option value="Medium">All Medium</option>
+            <option value="Low">All Low</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>On Duplicate</label>
+          <select id="im-dup">
+            <option value="add" selected>Add anyway</option>
+            <option value="skip">Skip if same name exists</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;background:var(--accent-light);padding:8px 10px;border-radius:6px">
+        ℹ Imported tasks arrive with <strong>Not Started</strong> status and no dates — open each task in the tracker to set ETA, Delivery Date, and Assignee to complete your sprint plan.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('import-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="im-confirm-btn" onclick="confirmImport()">Import Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><h3>Project Settings</h3><button class="modal-close" onclick="closeModal('settings-modal')">×</button></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- ── Global Capacity Config ── -->
+        <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:13px 14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--accent);letter-spacing:.05em;margin-bottom:10px">⚙ Global Capacity Config</div>
+          <div class="fg">
+            <label>Workable Hours Per Day</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="number" id="s-hpd" min="1" max="24" step="0.5" value="8" style="width:90px"
+                oninput="document.getElementById('s-hpd-hint').textContent='e.g. 20 days × '+this.value+'h = '+(20*(parseFloat(this.value)||8))+'h/month'">
+              <span id="s-hpd-hint" style="font-size:11px;color:var(--muted)">e.g. 20 days × 8h = 160h/month</span>
+            </div>
+            <span style="font-size:10px;color:var(--muted);margin-top:3px">Used globally to convert team member days ↔ hours in all capacity calculations. Change this first before adding team members.</span>
+          </div>
+        </div>
+        <!-- ── Project Info ── -->
+        <div class="fg"><label>Project Name</label><input type="text" id="s-name" placeholder="e.g. Platform Migration Q3"></div>
+        <div class="fg"><label>Sprint / Iteration</label><input type="text" id="s-sprint" placeholder="e.g. Sprint 12"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Week Start</label><input type="date" id="s-wstart"></div>
+          <div class="fg"><label>Week End</label><input type="date" id="s-wend"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">Data Backup &amp; Restore</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="justify-content:center">💾 Save Backup (.json)</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerLoadBackup()" style="justify-content:center">📂 Load Backup (.json)</button>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px">All tasks, team members, risks and settings are saved to a single file. Load it later to resume exactly where you left off.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="clearAll()" style="margin-right:auto">⚠ Clear All Data</button>
+      <button class="btn btn-amber btn-sm" onclick="resetSample()" style="margin-right:8px">↺ Load Sample Data</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('settings-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STATE & PERSISTENCE
+// ════════════════════════════════════════
+let S = {
+  meta: { projectName: 'My Project', sprint: 'Sprint 1', wStart: '', wEnd: '', hoursPerDay: 8 },
+  team: [],   // {id,name,role,days}  — days = working days available this month
+  tasks: [],  // {id,name,assignee,priority,startDate,eta,deliveryDate,hlStatus,detailedStatus,blocker,dependency,riskFlag,comments,effort}
+  risks: []   // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
+};
+let tid = 1, mid = 1, rid = 1;
+let _isDirty = false, _ptInit = false;
+
+function persist() {
+  localStorage.setItem('pt2_s', JSON.stringify(S));
+  localStorage.setItem('pt2_ids', JSON.stringify({t:tid,m:mid,r:rid}));
+  if (_ptInit) _isDirty = true;
+  const ind = document.getElementById('hdr-save-ind');
+  if (ind) {
+    ind.style.opacity = '1';
+    clearTimeout(ind._t);
+    ind._t = setTimeout(() => { ind.style.opacity = '0'; }, 1800);
+  }
+}
+
+window.addEventListener('beforeunload', e => {
+  if (_isDirty) { e.preventDefault(); e.returnValue = ''; }
+});
+function hydrate() {
+  try {
+    const d = localStorage.getItem('pt2_s');
+    if (d) {
+      S = JSON.parse(d);
+      // Migrate legacy hours → days for team members saved before this version
+      const hpd_ = parseFloat(S.meta?.hoursPerDay) || 8;
+      S.team = (S.team||[]).map(m => {
+        if (m.hours !== undefined && m.days === undefined) {
+          return { id:m.id, name:m.name, role:m.role, days: Math.round(m.hours / hpd_) };
+        }
+        return m;
+      });
+      if (!S.meta.hoursPerDay) S.meta.hoursPerDay = 8;
+    }
+    const ids = localStorage.getItem('pt2_ids');
+    if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+function nav(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('panel-' + id).classList.add('on');
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  const renders = { overview: renderOverview, tasks: renderTasks, capacity: renderCapacity, workload: renderWorkload, risks: renderRisks, report: renderReport };
+  if (renders[id]) renders[id]();
+}
+
+// ════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// Global hours-per-day config — all capacity maths flows through these
+function hpd()         { return parseFloat(S.meta.hoursPerDay) || 8; }
+function daysToH(days) { return (parseFloat(days) || 0) * hpd(); }
+function hToDays(h)    { const d = (parseFloat(h)||0) / hpd(); return Number.isInteger(d) ? d : d.toFixed(1); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+  catch { return d; }
+}
+function fmtDateShort(d) {
+  if (!d) return '—';
+  try { return new Date(d + 'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); }
+  catch { return d; }
+}
+
+function pBadge(p) {
+  const m = {Critical:'badge-critical',High:'badge-high',Medium:'badge-medium',Low:'badge-low'};
+  return `<span class="badge ${m[p]||'badge-low'}">${p||'Low'}</span>`;
+}
+function sBadge(s) {
+  const m = {'Not Started':'badge-notstarted','In Progress':'badge-inprogress','At Risk':'badge-atrisk','Blocked':'badge-blocked','Done':'badge-done'};
+  return `<span class="badge ${m[s]||'badge-notstarted'}">${s||'Not Started'}</span>`;
+}
+function rsBadge(s) {
+  const m = {Open:'badge-open',Mitigated:'badge-mitigated',Closed:'badge-closed',Escalated:'badge-escalated'};
+  return `<span class="badge ${m[s]||'badge-open'}">${s}</span>`;
+}
+function scoreBadge(v) {
+  const m = {High:'badge-rh',Medium:'badge-rm',Low:'badge-rl'};
+  return `<span class="badge ${m[v]||'badge-rm'}">${v}</span>`;
+}
+function calcScore(impact, likelihood) {
+  const w = {High:3,Medium:2,Low:1};
+  const n = (w[impact]||1)*(w[likelihood]||1);
+  return n>=6?'High':n>=3?'Medium':'Low';
+}
+function allocatedFor(name) {
+  return S.tasks.filter(t=>t.assignee===name).reduce((s,t)=>s+(parseFloat(t.effort)||0),0);
+}
+
+function fillAssignees(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    while (el.options.length > 1) el.remove(1);
+    S.team.forEach(m => { const o=document.createElement('option'); o.value=m.name; o.text=m.name; el.appendChild(o); });
+    if (cur) el.value = cur;
+  });
+}
+function fillTaskDropdown() {
+  const el = document.getElementById('r-task');
+  if (!el) return;
+  while (el.options.length > 1) el.remove(1);
+  S.tasks.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.text=`#${t.id} ${t.name||'Unnamed'}`; el.appendChild(o); });
+}
+
+function badges() {
+  const tasks = S.tasks;
+  document.getElementById('sb-tasks').textContent = tasks.length;
+  const openR = S.risks.filter(r=>r.status==='Open'||r.status==='Escalated').length;
+  const sbr = document.getElementById('sb-risks');
+  sbr.textContent = openR; sbr.style.display = openR ? '' : 'none';
+  const overburnExists = S.team.some(m=>allocatedFor(m.name)>(daysToH(m.days||20)));
+  document.getElementById('sb-overburn').style.display = overburnExists ? '' : 'none';
+  const hRisks = S.risks.filter(r=>r.score==='High'&&(r.status==='Open'||r.status==='Escalated')).length;
+  const blocked = tasks.filter(t=>t.hlStatus==='Blocked').length;
+  const sbh = document.getElementById('sb-health');
+  if (blocked>0||hRisks>0||overburnExists) { sbh.textContent='!'; sbh.className='sb-badge red'; }
+  else { sbh.textContent='OK'; sbh.className='sb-badge green'; }
+}
+
+function updateHeader() {
+  document.getElementById('hdrTitle').textContent = S.meta.projectName || 'Project Tracker Dashboard';
+  document.getElementById('hdrSprint').textContent = S.meta.sprint || '—';
+  const ws = S.meta.wStart ? fmtDateShort(S.meta.wStart) : '—';
+  const we = S.meta.wEnd ? fmtDateShort(S.meta.wEnd) : '—';
+  document.getElementById('hdrWeek').textContent = `${ws} – ${we}`;
+}
+
+// ════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════
+function openSettings() {
+  document.getElementById('s-hpd').value   = S.meta.hoursPerDay || 8;
+  document.getElementById('s-hpd-hint').textContent = `e.g. 20 days × ${S.meta.hoursPerDay||8}h = ${20*(S.meta.hoursPerDay||8)}h/month`;
+  document.getElementById('s-name').value  = S.meta.projectName||'';
+  document.getElementById('s-sprint').value = S.meta.sprint||'';
+  document.getElementById('s-wstart').value = S.meta.wStart||'';
+  document.getElementById('s-wend').value   = S.meta.wEnd||'';
+  openModal('settings-modal');
+}
+function saveSettings() {
+  const newHpd = parseFloat(document.getElementById('s-hpd').value) || 8;
+  S.meta.hoursPerDay  = newHpd;
+  S.meta.projectName  = document.getElementById('s-name').value.trim()||'My Project';
+  S.meta.sprint       = document.getElementById('s-sprint').value.trim()||'Sprint 1';
+  S.meta.wStart       = document.getElementById('s-wstart').value;
+  S.meta.wEnd         = document.getElementById('s-wend').value;
+  persist(); updateHeader(); closeModal('settings-modal');
+}
+function clearAll() {
+  if (!confirm('Delete ALL tasks, team members, and risks? This cannot be undone.')) return;
+  S = { meta: S.meta, team: [], tasks: [], risks: [] };
+  tid=1; mid=1; rid=1;
+  persist(); _isDirty = false; renderOverview(); badges(); closeModal('settings-modal');
+}
+function resetSample() {
+  if (!confirm('Replace all data with the "Digital Banking Platform Relaunch" sample project? Your current data will be lost.')) return;
+  S = { meta:{}, team:[], tasks:[], risks:[] };
+  tid=1; mid=1; rid=1;
+  loadSampleData();
+  updateHeader(); renderOverview(); badges(); closeModal('settings-modal');
+}
+
+// ════════════════════════════════════════
+// OVERVIEW
+// ════════════════════════════════════════
+function renderOverview() {
+  const tasks = S.tasks;
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.hlStatus==='Done').length;
+  const inprog = tasks.filter(t=>t.hlStatus==='In Progress').length;
+  const blocked = tasks.filter(t=>t.hlStatus==='Blocked').length;
+  const atrisk = tasks.filter(t=>t.hlStatus==='At Risk').length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdue = tasks.filter(t=>t.hlStatus!=='Done'&&t.eta&&new Date(t.eta)<today).length;
+  const openRisks = S.risks.filter(r=>r.status==='Open'||r.status==='Escalated').length;
+
+  document.getElementById('ov-kpis').innerHTML = `<div class="kpi-strip">
+    <div class="kpi"><div class="kpi-label">Total Tasks</div><div class="kpi-value">${total}</div><div class="kpi-sub">${pct}% complete</div></div>
+    <div class="kpi green"><div class="kpi-label">Completed</div><div class="kpi-value" style="color:var(--green)">${done}</div><div class="kpi-sub">tasks done</div></div>
+    <div class="kpi"><div class="kpi-label">In Progress</div><div class="kpi-value" style="color:var(--accent)">${inprog}</div><div class="kpi-sub">active</div></div>
+    <div class="kpi amber"><div class="kpi-label">At Risk</div><div class="kpi-value" style="color:var(--amber)">${atrisk}</div><div class="kpi-sub">watch closely</div></div>
+    <div class="kpi red"><div class="kpi-label">Blocked</div><div class="kpi-value" style="color:var(--red)">${blocked}</div><div class="kpi-sub">action needed</div></div>
+    <div class="kpi red"><div class="kpi-label">Overdue</div><div class="kpi-value" style="color:var(--red)">${overdue}</div><div class="kpi-sub">past ETA</div></div>
+    <div class="kpi purple"><div class="kpi-label">Open Risks</div><div class="kpi-value" style="color:var(--purple)">${openRisks}</div><div class="kpi-sub">in register</div></div>
+  </div>`;
+
+  let alerts = '';
+  if (blocked>0) alerts += `<div class="alert-item err">🚫 <strong>${blocked} task(s) blocked</strong> — immediate action required</div>`;
+  if (overdue>0) alerts += `<div class="alert-item err">⏰ <strong>${overdue} task(s) overdue</strong> — past ETA date</div>`;
+  if (atrisk>0) alerts += `<div class="alert-item warn">⚠ <strong>${atrisk} task(s) at risk</strong> — monitor closely</div>`;
+  const overburnMembers = S.team.filter(m=>allocatedFor(m.name)>(daysToH(m.days||20)));
+  if (overburnMembers.length) alerts += `<div class="alert-item err">🔥 <strong>Over-burn:</strong> ${overburnMembers.map(m=>m.name).join(', ')} exceed monthly capacity</div>`;
+  const hRisks = S.risks.filter(r=>r.score==='High'&&(r.status==='Open'||r.status==='Escalated')).length;
+  if (hRisks>0) alerts += `<div class="alert-item err">⚠ <strong>${hRisks} high-score risk(s)</strong> — escalation recommended</div>`;
+  document.getElementById('ov-alerts').innerHTML = alerts ? `<div class="alert-list">${alerts}</div>` : '';
+
+  // Blockers
+  const bTasks = tasks.filter(t=>t.blocker&&t.blocker.trim());
+  document.getElementById('ov-blockers').innerHTML = bTasks.length
+    ? bTasks.slice(0,5).map(t=>`<div style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">${pBadge(t.priority)}<strong>${esc(t.name)}</strong><span style="color:var(--muted);font-size:11px">${esc(t.assignee||'—')}</span></div>
+        <div class="blocker-flag">🚫 ${esc(t.blocker)}</div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:18px"><div class="empty-icon">✅</div>No active blockers</div>';
+
+  // Risks
+  const topR = S.risks.filter(r=>r.status!=='Closed').sort((a,b)=>({High:3,Medium:2,Low:1}[b.score]||0)-({High:3,Medium:2,Low:1}[a.score]||0)).slice(0,4);
+  document.getElementById('ov-risks').innerHTML = topR.length
+    ? topR.map(r=>`<div style="padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px">${scoreBadge(r.score)}${rsBadge(r.status)}<span style="font-size:10px;color:var(--muted)">${esc(r.category)}</span></div>
+        <div>${esc(r.description)}</div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:18px"><div class="empty-icon">🛡</div>No open risks</div>';
+
+  // Team load
+  document.getElementById('ov-load').innerHTML = S.team.length
+    ? S.team.map(m=>{
+        const alloc=allocatedFor(m.name), avail=daysToH(m.days||20);
+        const pctU=Math.min(Math.round(alloc/avail*100),120), over=alloc>avail;
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span style="font-weight:600">${esc(m.name)}</span>
+            <span style="${over?'color:var(--red);font-weight:700':'color:var(--muted)'}">${alloc}h / ${avail}h${over?' 🔥':''}</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill ${over?'over':pctU>85?'warn':'ok'}" style="width:${Math.min(pctU,100)}%"></div></div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:8px 0">No team members yet.</div>';
+
+  // Status breakdown
+  const statuses = [
+    {l:'Not Started',c:tasks.filter(t=>t.hlStatus==='Not Started').length,col:'#94a3b8'},
+    {l:'In Progress',c:inprog,col:'var(--accent)'},{l:'At Risk',c:atrisk,col:'var(--amber)'},
+    {l:'Blocked',c:blocked,col:'var(--red)'},{l:'Done',c:done,col:'var(--green)'}
+  ];
+  document.getElementById('ov-status').innerHTML = total
+    ? statuses.map(s=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:12px">
+        <div style="width:9px;height:9px;border-radius:50%;background:${s.col};flex-shrink:0"></div>
+        <span style="flex:1">${s.l}</span>
+        <div class="bar-wrap" style="flex:2"><div class="bar-fill" style="width:${Math.round(s.c/total*100)}%;background:${s.col}"></div></div>
+        <span style="min-width:24px;text-align:right;font-weight:700">${s.c}</span>
+      </div>`).join('')
+    : '<div class="empty" style="padding:18px"><div class="empty-icon">📋</div>No tasks yet</div>';
+
+  badges();
+}
+
+// ════════════════════════════════════════
+// TASK TRACKER
+// ════════════════════════════════════════
+// Track which expand rows are open (survives filter changes)
+const _expanded = new Set();
+
+function renderTasks() {
+  fillAssignees(['f-assignee','t-assignee']);
+  const search = (document.getElementById('f-search')?.value||'').toLowerCase();
+  const fA = document.getElementById('f-assignee')?.value||'';
+  const fS = document.getElementById('f-status')?.value||'';
+  const fP = document.getElementById('f-priority')?.value||'';
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const list = S.tasks.filter(t=>{
+    if(fA && t.assignee!==fA) return false;
+    if(fS && t.hlStatus!==fS) return false;
+    if(fP && t.priority!==fP) return false;
+    if(search && !(t.name||'').toLowerCase().includes(search) && !(t.blocker||'').toLowerCase().includes(search) && !(t.comments||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('task-tbody');
+  if (!list.length) {
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-icon">📋</div>No tasks found. Add one with "+ Add Task".</div></td></tr>`;
+    return;
+  }
+
+  const statusCls = {'Not Started':'sel-ns','In Progress':'sel-ip','At Risk':'sel-ar','Blocked':'sel-bl','Done':'sel-dn'};
+  const priCls    = {Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'};
+
+  tbody.innerHTML = list.flatMap(t => {
+    const overdue  = t.hlStatus!=='Done' && t.eta && new Date(t.eta+'T00:00:00') < today;
+    const rowCls   = t.hlStatus==='Blocked'?'blocked-row':t.hlStatus==='At Risk'?'atrisk-row':t.hlStatus==='Done'?'done-row':'';
+    const expCls   = t.hlStatus==='Blocked'?'blocked-expand':t.hlStatus==='At Risk'?'atrisk-expand':'';
+    const isOpen   = _expanded.has(t.id);
+
+    const aOpts = `<option value="">Unassigned</option>`+S.team.map(m=>`<option value="${esc(m.name)}"${m.name===t.assignee?' selected':''}>${esc(m.name)}</option>`).join('');
+
+    const main = `<tr class="${rowCls}" data-tid="${t.id}">
+      <td style="color:var(--muted);font-size:10px;text-align:center;width:38px">${t.id}</td>
+      <td style="min-width:220px">
+        <div class="edit-name" contenteditable="true"
+          onblur="quickSave(${t.id},'name',this.innerText.trim()||'Unnamed')"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+        >${esc(t.name||'Unnamed')}</div>
+        ${t.feature?`<span style="display:inline-block;margin-top:3px;font-size:10px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">${esc(t.feature)}</span>`:''}
+      </td>
+      <td style="width:145px">
+        <select class="tbl-sel" onchange="quickSave(${t.id},'assignee',this.value)">${aOpts}</select>
+      </td>
+      <td style="width:108px">
+        <select class="tbl-sel ${priCls[t.priority]||'sel-low'}" id="pri-${t.id}"
+          onchange="quickSave(${t.id},'priority',this.value);this.className='tbl-sel '+({Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'}[this.value]||'sel-low')">
+          ${['Critical','High','Medium','Low'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('')}
+        </select>
+      </td>
+      <td style="width:135px">
+        <select class="tbl-sel ${statusCls[t.hlStatus]||'sel-ns'}" id="st-${t.id}"
+          onchange="quickSave(${t.id},'hlStatus',this.value);applyRowStyle(${t.id},this.value)">
+          ${['Not Started','In Progress','At Risk','Blocked','Done'].map(s=>`<option${s===t.hlStatus?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="width:128px">
+        <input type="date" class="tbl-inp" value="${t.eta||''}" id="eta-${t.id}"
+          style="${overdue?'color:var(--red);font-weight:700;border-color:#fecaca':''}"
+          onchange="quickSave(${t.id},'eta',this.value);refreshOverdueStyle(${t.id})">
+        ${overdue?'<div style="font-size:9px;color:var(--red);font-weight:700;margin-top:2px">OVERDUE</div>':''}
+      </td>
+      <td style="width:76px">
+        <input type="number" class="tbl-inp" value="${t.effort||''}" min="0" step="0.5"
+          placeholder="h" style="text-align:center;width:58px"
+          onchange="quickSave(${t.id},'effort',parseFloat(this.value)||0)">
+      </td>
+      <td style="min-width:220px">
+        <input type="text" class="tbl-inp" id="blk-${t.id}" value="${esc(t.blocker||'')}"
+          placeholder="No blocker"
+          style="${t.blocker?'background:#fef2f2;border-color:#fecaca;color:#991b1b;':''}"
+          onblur="quickSave(${t.id},'blocker',this.value);this.style=this.value?'background:#fef2f2;border-color:#fecaca;color:#991b1b':''"
+          onkeydown="if(event.key==='Enter')this.blur()">
+      </td>
+      <td style="width:44px;text-align:center">
+        <input type="checkbox" ${t.riskFlag?'checked':''} title="Flag as risk"
+          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer"
+          onchange="quickSave(${t.id},'riskFlag',this.checked)">
+      </td>
+      <td style="width:92px;white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" id="expbtn-${t.id}"
+          onclick="toggleExpand(${t.id})"
+          style="width:100%;margin-bottom:3px;font-size:11px"
+          title="Edit Detailed Status, Comments, dates, dependency"
+        >${isOpen?'▲ Less':'▼ Details'}</button>
+        <button class="btn btn-danger btn-xs" onclick="delTask(${t.id})" style="width:100%">✕ Del</button>
+      </td>
+    </tr>`;
+
+    const detail = `<tr id="exp-${t.id}" class="expand-row ${expCls}" style="display:${isOpen?'table-row':'none'}">
+      <td colspan="10">
+        <div class="expand-content">
+          <div class="expand-meta">
+            <div>
+              <div class="expand-label">Start Date</div>
+              <input type="date" class="expand-inp" value="${t.startDate||''}"
+                onchange="quickSave(${t.id},'startDate',this.value)">
+            </div>
+            <div>
+              <div class="expand-label">ETA</div>
+              <input type="date" class="expand-inp" value="${t.eta||''}"
+                onchange="quickSave(${t.id},'eta',this.value);document.getElementById('eta-${t.id}').value=this.value;refreshOverdueStyle(${t.id})">
+            </div>
+            <div>
+              <div class="expand-label">Delivery Date</div>
+              <input type="date" class="expand-inp" value="${t.deliveryDate||''}"
+                onchange="quickSave(${t.id},'deliveryDate',this.value)">
+            </div>
+            <div>
+              <div class="expand-label">Dependency</div>
+              <input type="text" class="expand-inp" value="${esc(t.dependency||'')}"
+                placeholder="e.g. Depends on Task #3, waiting for API spec"
+                onblur="quickSave(${t.id},'dependency',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur()">
+            </div>
+          </div>
+          <div>
+            <div class="expand-label">Detailed Status <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— what is done, what is in progress, decisions needed</span></div>
+            <textarea class="expand-ta"
+              placeholder="Describe current progress in detail — what's complete, what's in flight, any blockers or decisions needed…"
+              onblur="quickSave(${t.id},'detailedStatus',this.value)">${esc(t.detailedStatus||'')}</textarea>
+          </div>
+          <div>
+            <div class="expand-label">Comments &amp; Decisions <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— notes, meeting outcomes, stakeholder actions</span></div>
+            <textarea class="expand-ta"
+              placeholder="Notes, decisions, context, meeting outcomes, risks flagged, stakeholder actions required…"
+              onblur="quickSave(${t.id},'comments',this.value)">${esc(t.comments||'')}</textarea>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+
+    return [main, detail];
+  }).join('');
+}
+
+// Inline save — updates state + persists without re-rendering the whole table
+function quickSave(id, field, value) {
+  const task = S.tasks.find(t => t.id === id);
+  if (!task) return;
+  task[field] = value;
+  persist();
+  badges();
+}
+
+// Toggle expand row open/closed; preserves state across filter changes
+function toggleExpand(id) {
+  const row = document.getElementById('exp-' + id);
+  const btn = document.getElementById('expbtn-' + id);
+  if (!row) return;
+  const nowOpen = row.style.display === 'table-row';
+  if (nowOpen) {
+    row.style.display = 'none';
+    _expanded.delete(id);
+    if (btn) btn.textContent = '▼ Details';
+  } else {
+    row.style.display = 'table-row';
+    _expanded.add(id);
+    if (btn) btn.textContent = '▲ Less';
+  }
+}
+
+// Re-colour the row and status select after an inline status change
+function applyRowStyle(id, newStatus) {
+  quickSave(id, 'hlStatus', newStatus);
+  const row = document.querySelector(`tr[data-tid="${id}"]`);
+  if (row) row.className = newStatus==='Blocked'?'blocked-row':newStatus==='At Risk'?'atrisk-row':newStatus==='Done'?'done-row':'';
+  const expRow = document.getElementById('exp-'+id);
+  if (expRow) expRow.className = 'expand-row '+(newStatus==='Blocked'?'blocked-expand':newStatus==='At Risk'?'atrisk-expand':'');
+  const sel = document.getElementById('st-'+id);
+  const statusCls = {'Not Started':'sel-ns','In Progress':'sel-ip','At Risk':'sel-ar','Blocked':'sel-bl','Done':'sel-dn'};
+  if (sel) sel.className = 'tbl-sel '+(statusCls[newStatus]||'sel-ns');
+}
+
+// Refresh overdue indicator on ETA input after a date change
+function refreshOverdueStyle(id) {
+  const task = S.tasks.find(t => t.id === id);
+  const inp = document.getElementById('eta-'+id);
+  if (!task || !inp) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdue = task.hlStatus !== 'Done' && task.eta && new Date(task.eta+'T00:00:00') < today;
+  inp.style.color = overdue ? 'var(--red)' : '';
+  inp.style.fontWeight = overdue ? '700' : '';
+  inp.style.borderColor = overdue ? '#fecaca' : '';
+}
+
+function clearTaskFilters() {
+  ['f-search','f-assignee','f-status','f-priority'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderTasks();
+}
+
+function openTaskModal(id) {
+  fillAssignees(['t-assignee']);
+  document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Add Task';
+  const t = id ? S.tasks.find(x=>x.id===id) : null;
+  document.getElementById('t-id').value = id||'';
+  document.getElementById('t-name').value = t?.name||'';
+  document.getElementById('t-assignee').value = t?.assignee||'';
+  document.getElementById('t-priority').value = t?.priority||'Medium';
+  document.getElementById('t-start').value = t?.startDate||'';
+  document.getElementById('t-eta').value = t?.eta||'';
+  document.getElementById('t-delivery').value = t?.deliveryDate||'';
+  document.getElementById('t-effort').value = t?.effort||'';
+  document.getElementById('t-hlstatus').value = t?.hlStatus||'Not Started';
+  document.getElementById('t-detailed').value = t?.detailedStatus||'';
+  document.getElementById('t-feature').value = t?.feature||'';
+  document.getElementById('t-blocker').value = t?.blocker||'';
+  document.getElementById('t-dep').value = t?.dependency||'';
+  document.getElementById('t-comments').value = t?.comments||'';
+  document.getElementById('t-risk').checked = t?.riskFlag||false;
+  openModal('task-modal');
+}
+
+function saveTask() {
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) { alert('Task name is required.'); return; }
+  const id = document.getElementById('t-id').value;
+  const task = {
+    id: id ? parseInt(id) : tid++,
+    name, assignee: document.getElementById('t-assignee').value,
+    priority: document.getElementById('t-priority').value,
+    startDate: document.getElementById('t-start').value,
+    eta: document.getElementById('t-eta').value,
+    deliveryDate: document.getElementById('t-delivery').value,
+    effort: parseFloat(document.getElementById('t-effort').value)||0,
+    hlStatus: document.getElementById('t-hlstatus').value,
+    detailedStatus: document.getElementById('t-detailed').value,
+    feature: document.getElementById('t-feature').value.trim(),
+    blocker: document.getElementById('t-blocker').value,
+    dependency: document.getElementById('t-dep').value,
+    comments: document.getElementById('t-comments').value,
+    riskFlag: document.getElementById('t-risk').checked
+  };
+  if (id) {
+    const idx = S.tasks.findIndex(t=>t.id===parseInt(id));
+    if (idx>=0) S.tasks[idx]=task;
+  } else {
+    S.tasks.push(task);
+    if (task.riskFlag) {
+      S.risks.push({id:rid++,description:`Risk from task: ${task.name}`,category:'Other',
+        impact:'Medium',likelihood:'Medium',score:'Medium',mitigation:'',
+        owner:task.assignee||'',status:'Open',eta:task.eta||'',linkedTaskId:task.id});
+    }
+  }
+  persist(); renderTasks(); badges(); closeModal('task-modal');
+}
+
+function delTask(id) {
+  if (!confirm('Delete this task?')) return;
+  S.tasks = S.tasks.filter(t=>t.id!==id);
+  persist(); renderTasks(); badges();
+}
+
+// ════════════════════════════════════════
+// CAPACITY PLANNER
+// ════════════════════════════════════════
+function openMemberModal(id) {
+  document.getElementById('member-modal-title').textContent = id ? 'Edit Member' : 'Add Team Member';
+  const m = id ? S.team.find(x=>x.id===id) : null;
+  document.getElementById('m-id').value   = id||'';
+  document.getElementById('m-name').value = m?.name||'';
+  document.getElementById('m-role').value = m?.role||'';
+  const days = m?.days || 20;
+  document.getElementById('m-days').value = days;
+  document.getElementById('m-days-hint').textContent = `${days}d × ${hpd()}h/d = ${daysToH(days)}h`;
+  openModal('member-modal');
+}
+
+function saveMember() {
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+  const id   = document.getElementById('m-id').value;
+  const days = parseFloat(document.getElementById('m-days').value) || 20;
+  const member = { id: id?parseInt(id):mid++, name, role: document.getElementById('m-role').value.trim(), days };
+  if (id) { const idx=S.team.findIndex(m=>m.id===parseInt(id)); if(idx>=0) S.team[idx]=member; }
+  else S.team.push(member);
+  persist(); renderCapacity(); fillAssignees(['f-assignee','t-assignee','r-owner']); badges(); closeModal('member-modal');
+}
+
+function delMember(id) {
+  if (!confirm('Remove this team member?')) return;
+  S.team = S.team.filter(m=>m.id!==id);
+  persist(); renderCapacity(); fillAssignees(['f-assignee','t-assignee','r-owner']); badges();
+}
+
+function renderCapacity() {
+  const hasOverburn = S.team.some(m=>allocatedFor(m.name)>(daysToH(m.days||20)));
+  document.getElementById('cap-banner').style.display = hasOverburn ? 'flex' : 'none';
+
+  if (!S.team.length) {
+    document.getElementById('cap-cards').innerHTML='<div class="empty" style="grid-column:span 4"><div class="empty-icon">👥</div>No team members yet. Click "+ Add Member".</div>';
+    document.getElementById('cap-tbody').innerHTML='<tr><td colspan="8" class="empty">No members.</td></tr>';
+    return;
+  }
+
+  let cards='', rows='';
+  S.team.forEach(m=>{
+    const alloc=allocatedFor(m.name), avail=daysToH(m.days||20);
+    const pctU=Math.round(alloc/avail*100), over=alloc>avail, rem=avail-alloc;
+    const barCls = over?'over':pctU>85?'warn':'ok';
+    const numColor = over?'color:var(--red);':'';
+
+    const remD  = hToDays(rem);
+    const allocD = hToDays(alloc);
+    cards += `<div class="cap-card ${over?'overburn':''}">
+      <div class="cap-card-hd">
+        <div>
+          <div class="cap-name">${esc(m.name)} ${over?`<span class="overbum-tag">🔥 Over-burn</span>`:''}</div>
+          <div class="cap-role">${esc(m.role||'Team Member')}</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-secondary btn-xs" onclick="openMemberModal(${m.id})">Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="delMember(${m.id})">✕</button>
+        </div>
+      </div>
+      <div class="cap-nums" style="grid-template-columns:repeat(4,1fr)">
+        <div class="cap-num">
+          <div class="cap-num-label">Available</div>
+          <div class="cap-num-val">${m.days||20}<span style="font-size:11px;font-weight:500">d</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${avail}h @ ${hpd()}h/d</div>
+        </div>
+        <div class="cap-num">
+          <div class="cap-num-label">Allocated</div>
+          <div class="cap-num-val" style="${numColor}">${alloc}<span style="font-size:11px;font-weight:500">h</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">≈ ${allocD}d</div>
+        </div>
+        <div class="cap-num">
+          <div class="cap-num-label">Remaining</div>
+          <div class="cap-num-val" style="${rem<0?'color:var(--red)':'color:var(--green)'}">${rem}<span style="font-size:11px;font-weight:500">h</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">≈ ${remD}d</div>
+        </div>
+        <div class="cap-num">
+          <div class="cap-num-label">Utilized</div>
+          <div class="cap-num-val" style="${over?'color:var(--red)':pctU>85?'color:var(--amber)':'color:var(--green)'}">${pctU}<span style="font-size:11px;font-weight:500">%</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${over?'🔥 Over':pctU>85?'⚠ High':pctU<40?'⬇ Low':'✓ OK'}</div>
+        </div>
+      </div>
+      <div class="bar-wrap" style="height:11px;margin-top:6px"><div class="bar-fill ${barCls}" style="width:${Math.min(pctU,100)}%"></div></div>
+      ${over?`<div style="margin-top:7px;font-size:11px;color:var(--red)">Over-allocated by ${Math.abs(rem)}h (${hToDays(Math.abs(rem))}d) — reduce task load or increase available days</div>`:''}
+    </div>`;
+
+    const utilLabel = over
+      ? '<span style="color:var(--red);font-weight:700">🔥 Over-burn</span>'
+      : pctU>85 ? '<span style="color:var(--amber);font-weight:700">⚠ High Load</span>'
+      : pctU<40 ? '<span style="color:var(--accent)">⬇ Under-utilized</span>'
+      : '<span style="color:var(--green)">✓ Balanced</span>';
+
+    rows += `<tr class="${over?'overburn-row':''}">
+      <td style="font-weight:600">${esc(m.name)}</td>
+      <td style="color:var(--muted)">${esc(m.role||'—')}</td>
+      <td style="font-weight:700">${m.days||20}d</td>
+      <td>${avail}h</td>
+      <td style="${over?'color:var(--red);font-weight:700':''}">${alloc}h <span style="font-size:10px;color:var(--muted)">(≈${hToDays(alloc)}d)</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="bar-wrap" style="flex:1;min-width:80px"><div class="bar-fill ${barCls}" style="width:${Math.min(pctU,100)}%"></div></div>
+          <span style="font-size:11px;font-weight:700;${over?'color:var(--red)':''}">${pctU}%</span>
+        </div>
+      </td>
+      <td style="${rem<0?'color:var(--red);font-weight:700':'color:var(--green)'}">${rem}h <span style="font-size:10px">(${hToDays(rem)}d)</span></td>
+      <td>${utilLabel}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" onclick="openMemberModal(${m.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="delMember(${m.id})">✕</button>
+      </td>
+    </tr>`;
+  });
+  document.getElementById('cap-cards').innerHTML = cards;
+  document.getElementById('cap-tbody').innerHTML = rows;
+}
+
+// ════════════════════════════════════════
+// WORKLOAD ANALYZER
+// ════════════════════════════════════════
+function renderWorkload() {
+  const mode = document.getElementById('wl-mode')?.value||'effort';
+  if (!S.team.length) {
+    ['wl-bars','wl-priority','wl-tbody'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML='<div class="empty"><div class="empty-icon">👥</div>Add team members first.</div>';
+    });
+    return;
+  }
+
+  const stats = S.team.map(m=>{
+    const myT = S.tasks.filter(t=>t.assignee===m.name);
+    const effort = myT.reduce((s,t)=>s+(parseFloat(t.effort)||0),0);
+    return { name:m.name, role:m.role, avail:daysToH(m.days||20), effort, count:myT.length,
+      critical:myT.filter(t=>t.priority==='Critical').length,
+      high:myT.filter(t=>t.priority==='High').length,
+      medium:myT.filter(t=>t.priority==='Medium').length,
+      low:myT.filter(t=>t.priority==='Low').length };
+  });
+
+  const totEffort = Math.max(stats.reduce((s,m)=>s+m.effort,0),1);
+  const maxVal = Math.max(...stats.map(s=>mode==='effort'?s.effort:s.count),1);
+
+  // Distribution bars
+  document.getElementById('wl-bars').innerHTML = stats.map(s=>{
+    const val = mode==='effort'?s.effort:s.count;
+    const pct = Math.round(val/maxVal*100);
+    const capPct = Math.round(s.effort/s.avail*100);
+    const over = s.effort>s.avail;
+    const col = over?'#dc2626':capPct>85?'#d97706':'#2563eb';
+    return `<div class="wl-row">
+      <div class="wl-name">${esc(s.name)}</div>
+      <div class="wl-bar-wrap"><div class="wl-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="wl-pct" style="color:${col}">${mode==='effort'?s.effort+'h':s.count}</div>
+      <div class="wl-detail">${mode==='effort'?`${capPct}% of ${s.avail}h`:`${s.count} tasks`}</div>
+      ${over?'<span style="font-size:10px;color:var(--red);font-weight:700">🔥</span>':capPct<40&&s.avail>0?'<span style="font-size:10px;color:var(--amber);font-weight:700">⬇</span>':''}
+    </div>`;
+  }).join('');
+
+  // Priority breakdown
+  document.getElementById('wl-priority').innerHTML = stats.map(s=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;margin-bottom:4px">${esc(s.name)}</div>
+      <div style="display:flex;height:13px;border-radius:6px;overflow:hidden;gap:1px">
+        ${s.critical?`<div style="flex:${s.critical};background:#dc2626" title="Critical: ${s.critical}"></div>`:''}
+        ${s.high?`<div style="flex:${s.high};background:#ea580c" title="High: ${s.high}"></div>`:''}
+        ${s.medium?`<div style="flex:${s.medium};background:#d97706" title="Medium: ${s.medium}"></div>`:''}
+        ${s.low?`<div style="flex:${s.low};background:#16a34a" title="Low: ${s.low}"></div>`:''}
+        ${!s.count?`<div style="flex:1;background:#e2e8f0"></div>`:''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:3px;font-size:10px">
+        ${s.critical?`<span style="color:#dc2626">● C:${s.critical}</span>`:''}
+        ${s.high?`<span style="color:#ea580c">● H:${s.high}</span>`:''}
+        ${s.medium?`<span style="color:#d97706">● M:${s.medium}</span>`:''}
+        ${s.low?`<span style="color:#16a34a">● L:${s.low}</span>`:''}
+        ${!s.count?`<span style="color:var(--muted)">No tasks</span>`:''}
+      </div>
+    </div>`).join('');
+
+  // Table
+  document.getElementById('wl-tbody').innerHTML = stats.map(s=>{
+    const capPct = Math.round(s.effort/s.avail*100);
+    const over = s.effort>s.avail;
+    const effortPct = Math.round(s.effort/totEffort*100);
+    const loadLabel = over?'<span style="color:var(--red);font-weight:700">🔥 Overloaded</span>'
+      :capPct>85?'<span style="color:var(--amber);font-weight:700">⚠ High</span>'
+      :capPct<40?'<span style="color:var(--accent)">⬇ Under</span>'
+      :'<span style="color:var(--green)">✓ OK</span>';
+    return `<tr class="${over?'overburn-row':''}">
+      <td style="font-weight:600">${esc(s.name)}</td>
+      <td style="text-align:center">${s.count}</td>
+      <td style="text-align:center;color:#dc2626;font-weight:${s.critical?'700':'400'}">${s.critical||'—'}</td>
+      <td style="text-align:center;color:#ea580c;font-weight:${s.high?'700':'400'}">${s.high||'—'}</td>
+      <td style="text-align:center;color:#d97706">${s.medium||'—'}</td>
+      <td style="text-align:center;color:#16a34a">${s.low||'—'}</td>
+      <td style="text-align:center;font-weight:600">${s.effort}h</td>
+      <td style="text-align:center">${effortPct}%</td>
+      <td style="text-align:center;${over?'color:var(--red);font-weight:700':''}">${capPct}%</td>
+      <td>${loadLabel}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// RISK REGISTER
+// ════════════════════════════════════════
+function openRiskModal(id) {
+  fillAssignees(['r-owner']); fillTaskDropdown();
+  document.getElementById('risk-modal-title').textContent = id ? 'Edit Risk' : 'Add Risk';
+  const r = id ? S.risks.find(x=>x.id===id) : null;
+  document.getElementById('r-id').value = id||'';
+  document.getElementById('r-desc').value = r?.description||'';
+  document.getElementById('r-cat').value = r?.category||'Incremental Refinement Tracking';
+  document.getElementById('r-impact').value = r?.impact||'Medium';
+  document.getElementById('r-likelihood').value = r?.likelihood||'Medium';
+  document.getElementById('r-mitigation').value = r?.mitigation||'';
+  document.getElementById('r-owner').value = r?.owner||'';
+  document.getElementById('r-status').value = r?.status||'Open';
+  document.getElementById('r-eta').value = r?.eta||'';
+  document.getElementById('r-task').value = r?.linkedTaskId||'';
+  openModal('risk-modal');
+}
+
+function saveRisk() {
+  const desc = document.getElementById('r-desc').value.trim();
+  if (!desc) { alert('Description is required.'); return; }
+  const id = document.getElementById('r-id').value;
+  const impact = document.getElementById('r-impact').value;
+  const likelihood = document.getElementById('r-likelihood').value;
+  const risk = {
+    id: id?parseInt(id):rid++, description:desc,
+    category: document.getElementById('r-cat').value,
+    impact, likelihood, score: calcScore(impact,likelihood),
+    mitigation: document.getElementById('r-mitigation').value,
+    owner: document.getElementById('r-owner').value,
+    status: document.getElementById('r-status').value,
+    eta: document.getElementById('r-eta').value,
+    linkedTaskId: parseInt(document.getElementById('r-task').value)||null
+  };
+  if (id) { const idx=S.risks.findIndex(r=>r.id===parseInt(id)); if(idx>=0) S.risks[idx]=risk; }
+  else S.risks.push(risk);
+  persist(); renderRisks(); badges(); closeModal('risk-modal');
+}
+
+function delRisk(id) {
+  if (!confirm('Delete this risk?')) return;
+  S.risks = S.risks.filter(r=>r.id!==id);
+  persist(); renderRisks(); badges();
+}
+
+function renderRisks() {
+  fillAssignees(['r-owner']); fillTaskDropdown();
+  const fC=document.getElementById('fr-cat')?.value||'';
+  const fS=document.getElementById('fr-status')?.value||'';
+  const fSc=document.getElementById('fr-score')?.value||'';
+
+  // KPIs
+  const open=S.risks.filter(r=>r.status==='Open').length;
+  const esc2=S.risks.filter(r=>r.status==='Escalated').length;
+  const mit=S.risks.filter(r=>r.status==='Mitigated').length;
+  const hi=S.risks.filter(r=>r.score==='High').length;
+  document.getElementById('risk-kpis').innerHTML = `
+    <div class="kpi red"><div class="kpi-label">Open</div><div class="kpi-value" style="color:var(--red)">${open}</div></div>
+    <div class="kpi red"><div class="kpi-label">Escalated</div><div class="kpi-value" style="color:var(--red)">${esc2}</div></div>
+    <div class="kpi amber"><div class="kpi-label">High Score</div><div class="kpi-value" style="color:var(--amber)">${hi}</div></div>
+    <div class="kpi green"><div class="kpi-label">Mitigated</div><div class="kpi-value" style="color:var(--green)">${mit}</div></div>
+    <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-value">${S.risks.length}</div></div>`;
+
+  const list = S.risks.filter(r=>{
+    if(fC&&r.category!==fC) return false;
+    if(fS&&r.status!==fS) return false;
+    if(fSc&&r.score!==fSc) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('risk-tbody');
+  if (!list.length) {
+    tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="empty-icon">🛡</div>No risks match filters. Click "+ Add Risk".</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(r=>{
+    const linked = r.linkedTaskId ? S.tasks.find(t=>t.id===r.linkedTaskId) : null;
+    return `<tr>
+      <td style="color:var(--muted);font-size:10px">R${r.id}</td>
+      <td><div class="cell-long">${esc(r.description)}</div></td>
+      <td><span style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 6px;border-radius:4px;white-space:nowrap">${esc(r.category)}</span></td>
+      <td>${scoreBadge(r.impact)}</td>
+      <td>${scoreBadge(r.likelihood)}</td>
+      <td>${scoreBadge(r.score)}</td>
+      <td><div class="cell-long" style="font-size:11px">${esc(r.mitigation||'—')}</div></td>
+      <td style="white-space:nowrap;font-size:12px">${esc(r.owner||'—')}</td>
+      <td>${rsBadge(r.status)}</td>
+      <td style="font-size:11px;white-space:nowrap">${fmtDate(r.eta)}</td>
+      <td style="font-size:11px">${linked?`<span style="color:var(--accent);font-weight:600">#${linked.id}</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" onclick="openRiskModal(${r.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="delRisk(${r.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// WEEKLY REPORT
+// ════════════════════════════════════════
+function slideText(n) {
+  const m = S.meta;
+  const tasks = S.tasks;
+  const risks = S.risks;
+  const team = S.team;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ws = m.wStart ? new Date(m.wStart+'T00:00:00') : null;
+  const we = m.wEnd ? new Date(m.wEnd+'T00:00:00') : null;
+
+  const done=tasks.filter(t=>t.hlStatus==='Done').length;
+  const total=tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  const blocked=tasks.filter(t=>t.hlStatus==='Blocked');
+  const atrisk=tasks.filter(t=>t.hlStatus==='At Risk');
+  const inprog=tasks.filter(t=>t.hlStatus==='In Progress');
+  const openR=risks.filter(r=>r.status==='Open'||r.status==='Escalated');
+  const highR=risks.filter(r=>r.score==='High'&&(r.status==='Open'||r.status==='Escalated'));
+  const overburn=team.filter(mb=>allocatedFor(mb.name)>(daysToH(mb.days||20)));
+  const health = (blocked.length>0||highR.length>0||overburn.length>0)?'🔴 AT RISK':(atrisk.length>0?'🟡 NEEDS ATTENTION':'🟢 ON TRACK');
+  const wkLabel = ws&&we?`${ws.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} – ${we.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`:'Week not set — configure in Settings';
+
+  const overdueTasks = tasks.filter(t=>t.hlStatus!=='Done'&&t.eta&&new Date(t.eta+'T00:00:00')<today);
+  const dueThisWeek = we ? tasks.filter(t=>t.hlStatus!=='Done'&&t.eta&&new Date(t.eta+'T00:00:00')<=we&&(!ws||new Date(t.eta+'T00:00:00')>=ws)) : [];
+  const doneThisWeek = ws&&we ? tasks.filter(t=>t.hlStatus==='Done'&&t.deliveryDate&&new Date(t.deliveryDate+'T00:00:00')>=ws&&new Date(t.deliveryDate+'T00:00:00')<=we) : tasks.filter(t=>t.hlStatus==='Done');
+
+  const L = '─'.repeat(55);
+  const DIV = '═'.repeat(55);
+
+  const slides = {
+    1:`SLIDE 1 — EXECUTIVE SUMMARY
+${L}
+Project         : ${m.projectName||'My Project'}
+Sprint          : ${m.sprint||'—'}
+Reporting Week  : ${wkLabel}
+Overall Health  : ${health}
+Completion      : ${pct}% (${done} of ${total} tasks completed)
+Delivery Conf.  : ${pct>=80?'HIGH ✅':pct>=50?'MEDIUM ⚠':'LOW 🔴'}
+
+KEY HIGHLIGHTS
+• ${done}/${total} tasks completed (${pct}%)
+• ${blocked.length} blocker(s) — ${blocked.length>0?'immediate action required':'none 👍'}
+• ${openR.length} open risk(s), ${highR.length} high-priority
+• ${overburn.length?overburn.map(m=>m.name).join(', ')+' over allocated capacity':'Team capacity within limits ✅'}`,
+
+    2:`SLIDE 2 — TASK PROGRESS THIS WEEK
+${L}
+SUMMARY
+  Total          : ${total}
+  Completed      : ${done} (${pct}%)
+  In Progress    : ${inprog.length}
+  At Risk        : ${atrisk.length}
+  Blocked        : ${blocked.length}
+  Not Started    : ${tasks.filter(t=>t.hlStatus==='Not Started').length}
+
+COMPLETED (delivered this reporting week):
+${doneThisWeek.length?doneThisWeek.map(t=>`  ✅ [${t.priority}] ${t.name} — ${t.assignee||'Unassigned'}${t.deliveryDate?' | Delivered: '+fmtDate(t.deliveryDate):''}`).join('\n'):'  • No tasks delivered during this reporting week'}
+
+IN PROGRESS:
+${inprog.length?inprog.map(t=>`  → [${t.priority}] ${t.name}\n     Assignee: ${t.assignee||'Unassigned'} | ETA: ${fmtDate(t.eta)} | Status: ${t.hlStatus}\n     ${t.detailedStatus?'Update: '+t.detailedStatus:''}`).join('\n'):'  • No tasks currently in progress'}`,
+
+    3:`SLIDE 3 — KEY DELIVERABLES & MILESTONES
+${L}
+DUE THIS WEEK:
+${dueThisWeek.length?dueThisWeek.map(t=>`  📌 [${t.priority}] ${t.name}\n     Assignee : ${t.assignee||'Unassigned'}\n     ETA      : ${fmtDate(t.eta)}\n     Status   : ${t.hlStatus}\n     ${t.detailedStatus?'Update   : '+t.detailedStatus:''}`).join('\n\n'):'  • No deliverables due this reporting week'}
+
+OVERDUE ITEMS:
+${overdueTasks.length?overdueTasks.map(t=>`  ⚠ [${t.priority}] ${t.name}\n     Assignee : ${t.assignee||'Unassigned'}\n     Was Due  : ${fmtDate(t.eta)}\n     Status   : ${t.hlStatus}`).join('\n\n'):'  ✅ No overdue items'}`,
+
+    4:`SLIDE 4 — BLOCKERS & DEPENDENCIES
+${L}
+ACTIVE BLOCKERS (${blocked.length}):
+${blocked.length?blocked.map(t=>`  🚫 ${t.name} [${t.priority}]\n     Assignee  : ${t.assignee||'Unassigned'}\n     Blocker   : ${t.blocker}\n     Comments  : ${t.comments||'—'}`).join('\n\n'):'  ✅ No active blockers'}
+
+KEY DEPENDENCIES:
+${tasks.filter(t=>t.dependency&&t.dependency.trim()).map(t=>`  🔗 [${t.hlStatus}] ${t.name}\n     Depends on: ${t.dependency}`).join('\n\n')||'  • No cross-task dependencies recorded'}`,
+
+    5:`SLIDE 5 — RISK REGISTER SUMMARY
+${L}
+RISK COUNTS
+  Total        : ${risks.length}
+  Open         : ${risks.filter(r=>r.status==='Open').length}
+  Escalated    : ${risks.filter(r=>r.status==='Escalated').length}
+  Mitigated    : ${risks.filter(r=>r.status==='Mitigated').length}
+  Closed       : ${risks.filter(r=>r.status==='Closed').length}
+  High Score   : ${highR.length}
+
+TOP OPEN/ESCALATED RISKS:
+${openR.length?openR.sort((a,b)=>({High:3,Medium:2,Low:1}[b.score]||0)-({High:3,Medium:2,Low:1}[a.score]||0)).slice(0,6).map(r=>
+  `  ⚠ [${r.score} RISK] ${r.description}\n     Category  : ${r.category}\n     Impact    : ${r.impact} | Likelihood: ${r.likelihood}\n     Owner     : ${r.owner||'Unassigned'}\n     Mitigation: ${r.mitigation||'TBD'}\n     Status    : ${r.status}${r.eta?' | Review by: '+fmtDate(r.eta):''}`
+).join('\n\n'):'  ✅ No open risks'}`,
+
+    6:`SLIDE 6 — TEAM CAPACITY & UTILIZATION
+${L}
+${team.length?team.map(mb=>{
+  const alloc=allocatedFor(mb.name), avail=daysToH(mb.days||20);
+  const pctU=Math.round(alloc/avail*100), over=alloc>avail;
+  const status=over?'🔥 OVER-BURN':pctU>85?'⚠ High Load':pctU<40?'⬇ Under-utilized':'✓ Balanced';
+  return `  ${mb.name} (${mb.role||'Team Member'})\n  Available : ${mb.days||20}d (${avail}h @ ${hpd()}h/d) | Allocated: ${alloc}h (≈${hToDays(alloc)}d) | Utilized: ${pctU}% [${status}]${over?'\n  ⚠ Over-allocated by '+Math.abs(avail-alloc)+'h ('+hToDays(Math.abs(avail-alloc))+'d)':''}\n  Tasks: ${S.tasks.filter(t=>t.assignee===mb.name).length} assigned`;
+}).join('\n\n'):'  • No team members configured — add members in Capacity Planner'}
+
+${overburn.length?`\nOVER-BURN ALERT:\n${overburn.map(mb=>`  🔥 ${mb.name} over-allocated by ${allocatedFor(mb.name)-(daysToH(mb.days||20))}h`).join('\n')}`:'✅ No over-burn detected'}`,
+
+    7:`SLIDE 7 — NEXT WEEK PLAN
+${L}
+TASKS DUE IN NEXT 7 DAYS:
+${(()=>{
+  const nxt=new Date(); nxt.setDate(nxt.getDate()+7);
+  const upcoming=tasks.filter(t=>t.hlStatus!=='Done'&&t.eta&&new Date(t.eta+'T00:00:00')>=today&&new Date(t.eta+'T00:00:00')<=nxt);
+  return upcoming.length
+    ?upcoming.sort((a,b)=>new Date(a.eta)-new Date(b.eta)).map(t=>`  📋 [${t.priority}] ${t.name}\n     Assignee: ${t.assignee||'Unassigned'} | ETA: ${fmtDate(t.eta)} | Status: ${t.hlStatus}`).join('\n')
+    :'  • No tasks due within next 7 days';
+})()}
+
+BLOCKER RESOLUTION ACTIONS:
+${blocked.length?blocked.map(t=>`  → Resolve: ${t.name}\n     Action needed: ${t.blocker}`).join('\n'):'  ✅ No blockers to resolve'}
+
+RISKS TO MONITOR NEXT WEEK:
+${openR.filter(r=>r.score==='High'||r.status==='Escalated').slice(0,4).map(r=>`  ⚠ [${r.score}] ${r.description}\n     Owner: ${r.owner||'TBD'} | ${r.eta?'Review by: '+fmtDate(r.eta):''}`).join('\n')||'  • No high-priority risks to monitor next week'}`
+  };
+  return slides[n]||'';
+}
+
+function renderReport() {
+  const titles = ['','Executive Summary','Task Progress This Week','Key Deliverables & Milestones','Blockers & Dependencies','Risk Register Summary','Team Capacity & Utilization','Next Week Plan'];
+  let html = '';
+  for (let i=1;i<=7;i++) {
+    const content = slideText(i);
+    html += `<div class="slide">
+      <div class="slide-hd">
+        <h3>Slide ${i} — ${titles[i]}</h3>
+        <button class="btn btn-ghost btn-sm" onclick="copySlide(${i},this)">⎘ Copy Slide ${i}</button>
+      </div>
+      <div class="slide-body"><pre class="slide-content" id="sc-${i}">${esc(content)}</pre></div>
+    </div>`;
+  }
+  document.getElementById('report-slides').innerHTML = html;
+}
+
+function copySlide(n, btn) {
+  const text = slideText(n);
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn){btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent=`⎘ Copy Slide ${n}`,2000);}
+  }).catch(()=>{
+    const el=document.getElementById('sc-'+n);
+    if(el){const s=window.getSelection();const r=document.createRange();r.selectNodeContents(el);s.removeAllRanges();s.addRange(r);}
+  });
+}
+
+function copyAll() {
+  let all = `WEEKLY PROJECT STATUS REPORT\nGenerated: ${new Date().toLocaleString('en-GB')}\n${'═'.repeat(55)}\n\n`;
+  for(let i=1;i<=7;i++) all += slideText(i)+'\n\n'+'═'.repeat(55)+'\n\n';
+  navigator.clipboard.writeText(all).then(()=>{
+    const btn=document.querySelector('button[onclick="copyAll()"]');
+    if(btn){btn.textContent='✓ All Copied!';setTimeout(()=>btn.textContent='⎘ Copy All',2500);}
+  });
+}
+
+function exportTxt() {
+  const proj = (S.meta.projectName||'project').replace(/\s+/g,'_');
+  const wk = S.meta.wEnd||new Date().toISOString().slice(0,10);
+  let content = `WEEKLY PROJECT STATUS REPORT\nProject: ${S.meta.projectName||'My Project'} | Sprint: ${S.meta.sprint||'—'}\nGenerated: ${new Date().toLocaleString('en-GB')}\n${'═'.repeat(55)}\n\n`;
+  for(let i=1;i<=7;i++) content += slideText(i)+'\n\n'+'═'.repeat(55)+'\n\n';
+  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`Weekly_Report_${proj}_${wk}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ════════════════════════════════════════
+// FULL BACKUP — EXPORT ALL DATA
+// ════════════════════════════════════════
+function exportAllData() {
+  const payload = {
+    tool:        'ProjectTrackerDashboard',
+    version:     '1',
+    exportDate:  new Date().toISOString(),
+    meta:        S.meta,
+    team:        S.team,
+    tasks:       S.tasks,
+    risks:       S.risks,
+    ids:         { tid, mid, rid }
+  };
+  const safeName = (S.meta.projectName || 'project').replace(/[^a-z0-9_\-]/gi, '_');
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = `${safeName}_backup_${date}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  _isDirty = false;
+  const btn = document.querySelector('[onclick="exportAllData()"]');
+  if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = orig, 2000); }
+}
+
+// ════════════════════════════════════════
+// FULL BACKUP — LOAD / RESTORE
+// ════════════════════════════════════════
+let _loadPayload = null;
+
+function triggerLoadBackup() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        if (data.tool !== 'ProjectTrackerDashboard') {
+          // Friendly error distinguishing from Estimation Tool export
+          if (data.source === 'SoftwareEstimationTool') {
+            alert('This is an Estimation Tool export, not a Project Tracker backup.\n\nTo import tasks from the Estimation Tool, go to:\nTask Tracker → 📥 Import from Estimation Tool');
+          } else {
+            alert('This file is not a Project Tracker Dashboard backup.\nPlease select a file saved with the 💾 Save Backup button.');
+          }
+          return;
+        }
+        _loadPayload = data;
+        showLoadPreview(data);
+      } catch {
+        alert('Could not read the file — it may be corrupted or not a valid JSON backup.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+function showLoadPreview(data) {
+  const inc = { tasks: (data.tasks||[]).length, team: (data.team||[]).length, risks: (data.risks||[]).length };
+  const cur = { tasks: S.tasks.length, team: S.team.length, risks: S.risks.length };
+  const done    = (data.tasks||[]).filter(t => t.hlStatus === 'Done').length;
+  const blocked = (data.tasks||[]).filter(t => t.hlStatus === 'Blocked').length;
+  const atrisk  = (data.tasks||[]).filter(t => t.hlStatus === 'At Risk').length;
+  const highR   = (data.risks||[]).filter(r => r.score === 'High').length;
+  const savedOn = data.exportDate ? new Date(data.exportDate).toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Unknown';
+
+  const kpiTile = (val, label, sub) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center">
+      <div style="font-size:22px;font-weight:800;color:var(--accent)">${val}</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">${label}</div>
+      ${sub?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${sub}</div>`:''}
+    </div>`;
+
+  document.getElementById('load-preview').innerHTML = `
+    <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">${esc(data.meta?.projectName || 'Unnamed Project')}</div>
+      <div style="font-size:11px;color:var(--muted)">Sprint: <strong>${esc(data.meta?.sprint||'—')}</strong> &nbsp;·&nbsp; Saved: <strong>${savedOn}</strong></div>
+      ${data.meta?.wStart && data.meta?.wEnd ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">Report week: ${fmtDate(data.meta.wStart)} – ${fmtDate(data.meta.wEnd)}</div>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+      ${kpiTile(inc.tasks, 'Tasks', `${done} done · ${blocked} blocked · ${atrisk} at risk`)}
+      ${kpiTile(inc.team,  'Team Members', '')}
+      ${kpiTile(inc.risks, 'Risks', `${highR} high score`)}
+    </div>
+    ${(cur.tasks > 0 || cur.team > 0 || cur.risks > 0) ? `
+    <div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:7px;padding:9px 12px;font-size:12px;color:#92400e">
+      ⚠ Current session has <strong>${cur.tasks} task${cur.tasks!==1?'s':''}</strong>, <strong>${cur.team} member${cur.team!==1?'s':''}</strong>, <strong>${cur.risks} risk${cur.risks!==1?'s':''}</strong>.
+      <strong>Replace</strong> will overwrite them. <strong>Merge</strong> will keep both.
+    </div>` : ''}`;
+
+  const btn = document.getElementById('load-confirm-btn');
+  if (btn) btn.textContent = `Load ${inc.tasks} Task${inc.tasks!==1?'s':''}`;
+  openModal('load-modal');
+}
+
+function applyLoadBackup() {
+  if (!_loadPayload) return;
+  const mode = document.querySelector('input[name="load-mode"]:checked')?.value || 'replace';
+
+  if (mode === 'replace') {
+    // Full restore — exact state from backup
+    S.meta  = _loadPayload.meta  || { projectName:'My Project', sprint:'Sprint 1', wStart:'', wEnd:'' };
+    S.team  = _loadPayload.team  || [];
+    S.tasks = _loadPayload.tasks || [];
+    S.risks = _loadPayload.risks || [];
+    if (_loadPayload.ids) {
+      tid = _loadPayload.ids.tid || 1;
+      mid = _loadPayload.ids.mid || 1;
+      rid = _loadPayload.ids.rid || 1;
+    } else {
+      // Infer safe counter values from max ID present
+      tid = S.tasks.reduce((m, t) => Math.max(m, t.id||0), 0) + 1;
+      mid = S.team.reduce((m, t)  => Math.max(m, t.id||0), 0) + 1;
+      rid = S.risks.reduce((m, r) => Math.max(m, r.id||0), 0) + 1;
+    }
+  } else {
+    // Merge — add backup data on top of current session, remapping IDs to avoid conflicts
+    const taskIdRemap  = new Map(); // old backup task id → new session task id
+    const memberNames  = new Set(S.team.map(m => (m.name||'').toLowerCase()));
+
+    // Team members: skip duplicates (match by name, case-insensitive)
+    (_loadPayload.team||[]).forEach(m => {
+      if (!memberNames.has((m.name||'').toLowerCase())) {
+        S.team.push({ ...m, id: mid++ });
+        memberNames.add((m.name||'').toLowerCase());
+      }
+    });
+
+    // Tasks: always add, remap IDs
+    (_loadPayload.tasks||[]).forEach(t => {
+      const newId = tid++;
+      taskIdRemap.set(t.id, newId);
+      S.tasks.push({ ...t, id: newId });
+    });
+
+    // Risks: add all, remap IDs + fix linkedTaskId references
+    (_loadPayload.risks||[]).forEach(r => {
+      S.risks.push({
+        ...r,
+        id: rid++,
+        linkedTaskId: r.linkedTaskId != null ? (taskIdRemap.get(r.linkedTaskId) ?? null) : null
+      });
+    });
+  }
+
+  persist();
+  updateHeader();
+  renderOverview();
+  fillAssignees(['f-assignee', 't-assignee', 'r-owner']);
+  badges();
+  closeModal('load-modal');
+
+  const loaded = _loadPayload.tasks?.length || 0;
+  const modeLabel = mode === 'replace' ? 'restored' : 'merged';
+  alert(`✅ Backup ${modeLabel} successfully!\n${loaded} task${loaded!==1?'s':''}, ${_loadPayload.team?.length||0} team member${(_loadPayload.team?.length||0)!==1?'s':''}, ${_loadPayload.risks?.length||0} risk${(_loadPayload.risks?.length||0)!==1?'s':''} loaded.\n\nAll panels have been updated.`);
+}
+
+// ════════════════════════════════════════
+// IMPORT FROM ESTIMATION TOOL
+// ════════════════════════════════════════
+let _importPayload = null;
+
+function triggerImport() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        if (data.source !== 'SoftwareEstimationTool') {
+          alert('This file was not exported from the Software Estimation Tool.\nUse the "📤 Export to Project Tracker" button in the Estimation Tool\'s Feature Task Table.');
+          return;
+        }
+        if (!data.features || !data.features.length) {
+          alert('No features found in this export file. The estimation tool may have no task breakdown yet.');
+          return;
+        }
+        _importPayload = data;
+        showImportModal(data);
+      } catch {
+        alert('Invalid JSON file. Please use a file exported by the Software Estimation Tool.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+function showImportModal(data) {
+  // Meta banner
+  document.getElementById('im-meta').innerHTML = `
+    <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:22px">📊</span>
+        <div>
+          <div style="font-weight:700;font-size:14px">${esc(data.projectName)}${data.client?' <span style="font-weight:400;color:var(--muted)">— '+esc(data.client)+'</span>':''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">
+            Exported: ${data.exportDate} &nbsp;·&nbsp;
+            <strong>${data.totalFeatures}</strong> features &nbsp;·&nbsp;
+            <strong>${data.totalTasks}</strong> tasks &nbsp;·&nbsp;
+            <strong>${data.totalEffortHours}h</strong> total effort
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Feature checkboxes
+  const estStatusMap = {'Not Started':'badge-notstarted','In Progress':'badge-inprogress','Done':'badge-done','Blocked':'badge-blocked'};
+  document.getElementById('im-features').innerHTML = data.features.map((f, i) => `
+    <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden">
+      <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;cursor:pointer;user-select:none">
+        <input type="checkbox" class="im-cb" data-idx="${i}" checked onchange="imUpdateCount()"
+          style="width:15px;height:15px;accent-color:var(--accent);flex-shrink:0">
+        <span style="font-weight:700;font-size:13px;flex:1">${esc(f.module)}</span>
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap">${f.tasks.length} task${f.tasks.length!==1?'s':''} &nbsp;·&nbsp; ${f.totalEffortHours}h</span>
+      </label>
+      <div style="padding:4px 14px 8px 38px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          ${f.tasks.map(t => {
+            const priCol = t.effort>=40?'#c2410c':t.effort>=16?'#d97706':'#16a34a';
+            const priLbl = t.effort>=40?'High':t.effort>=16?'Medium':'Low';
+            return `<tr>
+              <td style="padding:3px 6px 3px 0;color:var(--text);font-weight:500;max-width:280px">${esc(t.name)}</td>
+              <td style="padding:3px 4px;white-space:nowrap;color:var(--muted)">${t.effort}h</td>
+              <td style="padding:3px 4px;white-space:nowrap"><span style="font-size:10px;font-weight:700;color:${priCol}">${priLbl}</span></td>
+              <td style="padding:3px 4px;white-space:nowrap;color:var(--muted)">${esc(t.resourceType||'')}</td>
+              <td style="padding:3px 4px;white-space:nowrap">${t.assignee?`<span style="color:var(--accent);font-size:10px">${esc(t.assignee)}</span>`:'<span style="color:var(--muted);font-size:10px">TBD</span>'}</td>
+              <td style="padding:3px 0 3px 4px"><span class="badge ${estStatusMap[t.estStatus]||'badge-notstarted'}" style="font-size:9px">${esc(t.estStatus)}</span></td>
+            </tr>`;
+          }).join('')}
+        </table>
+      </div>
+    </div>`).join('');
+
+  imUpdateCount();
+  openModal('import-modal');
+}
+
+function imToggleAll(val) {
+  document.querySelectorAll('.im-cb').forEach(cb => { cb.checked = val; });
+  imUpdateCount();
+}
+
+function imUpdateCount() {
+  let tasks = 0, effort = 0;
+  document.querySelectorAll('.im-cb:checked').forEach(cb => {
+    const f = _importPayload?.features[parseInt(cb.dataset.idx)];
+    if (f) { tasks += f.tasks.length; effort += f.totalEffortHours; }
+  });
+  const btn = document.getElementById('im-confirm-btn');
+  if (btn) btn.textContent = tasks ? `Import ${tasks} Task${tasks!==1?'s':''} (${effort}h)` : 'Select at least one feature';
+}
+
+function confirmImport() {
+  if (!_importPayload) return;
+  const statusMode   = document.getElementById('im-status')?.value || 'Not Started';
+  const priorityMode = document.getElementById('im-priority')?.value || 'auto';
+  const dupMode      = document.getElementById('im-dup')?.value || 'add';
+  const existingNames = new Set(S.tasks.map(t => t.name.toLowerCase()));
+  const teamNames     = new Set(S.team.map(m => m.name));
+  const estToHl = {'Not Started':'Not Started','In Progress':'In Progress','Done':'Done','Blocked':'Blocked'};
+
+  let imported = 0, skipped = 0;
+
+  document.querySelectorAll('.im-cb:checked').forEach(cb => {
+    const feature = _importPayload.features[parseInt(cb.dataset.idx)];
+    if (!feature) return;
+
+    feature.tasks.forEach(t => {
+      if (!t.name) return;
+
+      if (dupMode === 'skip' && existingNames.has(t.name.toLowerCase())) {
+        skipped++;
+        return;
+      }
+
+      // Priority: auto-map by effort, or use override
+      let priority;
+      if (priorityMode === 'auto') {
+        priority = t.effort >= 40 ? 'High' : t.effort >= 16 ? 'Medium' : 'Low';
+      } else {
+        priority = priorityMode;
+      }
+
+      // Status
+      const hlStatus = statusMode === 'keep'
+        ? (estToHl[t.estStatus] || 'Not Started')
+        : 'Not Started';
+
+      // Assignee: use only if name matches team roster
+      const assignee = teamNames.has(t.assignee) ? t.assignee : '';
+
+      S.tasks.push({
+        id: tid++,
+        name: t.name,
+        feature: feature.module,
+        assignee,
+        priority,
+        startDate: '', eta: '', deliveryDate: '',
+        effort: t.effort || 0,
+        hlStatus,
+        detailedStatus: '',
+        blocker: '',
+        dependency: (t.dependency && t.dependency !== 'None') ? t.dependency : '',
+        comments: [
+          `Imported from Estimation Tool`,
+          `Resource: ${t.resourceType}${t.skill ? ' ('+t.skill+')' : ''}`,
+          t.estStatus && t.estStatus !== 'Not Started' ? `Est. status: ${t.estStatus}` : ''
+        ].filter(Boolean).join(' | '),
+        riskFlag: false
+      });
+      existingNames.add(t.name.toLowerCase());
+      imported++;
+    });
+  });
+
+  if (!imported) {
+    alert(skipped ? `All ${skipped} tasks were skipped (already exist). Change "On Duplicate" to "Add anyway" to import them.` : 'No tasks selected.');
+    return;
+  }
+
+  // If project name is still default, adopt it from the estimation export
+  if (!S.meta.projectName || S.meta.projectName === 'My Project') {
+    S.meta.projectName = _importPayload.projectName;
+    updateHeader();
+  }
+
+  persist();
+  renderTasks();
+  badges();
+  closeModal('import-modal');
+
+  const msg = [`✅ Imported ${imported} task${imported!==1?'s':''} across ${document.querySelectorAll('.im-cb:checked').length} feature(s).`];
+  if (skipped) msg.push(`${skipped} task(s) skipped (duplicates).`);
+  msg.push(`\nOpen each task in the tracker to set Start Date, ETA, Delivery Date, and Assignee to complete your sprint plan.`);
+  alert(msg.join('\n'));
+}
+
+// ════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
+
+// ════════════════════════════════════════
+// SAMPLE DATA
+// ════════════════════════════════════════
+function loadSampleData() {
+  S.meta = {
+    projectName: 'Digital Banking Platform Relaunch',
+    sprint: 'Sprint 4',
+    wStart: '2026-06-02',
+    wEnd: '2026-06-06'
+  };
+
+  S.meta.hoursPerDay = 8;  // 8h/day — change in ⚙ Settings if different
+
+  S.team = [
+    // days = working days available this month (converted to hours via hoursPerDay)
+    { id:1, name:'Sarah Chen',      role:'Tech Lead',                        days:20 },  // 20d × 8h = 160h
+    { id:2, name:'Raj Patel',       role:'Backend Engineer',                 days:21 },  // 21d × 8h = 168h
+    { id:3, name:'Priya Kumar',     role:'Frontend Developer',               days:17 },  // 17d × 8h = 136h (3d leave)
+    { id:4, name:'Marcus Williams', role:'QA Engineer',                      days:20 },  // 20d × 8h = 160h
+    { id:5, name:'Aisha Johnson',   role:'Product Owner',                    days:15 },  // 15d × 8h = 120h (part-time)
+    { id:6, name:'Tom O\'Brien',    role:'DevOps Engineer (Shared Resource)', days:10 }  // 10d × 8h = 80h  (shared)
+  ];
+  mid = 7;
+
+  S.tasks = [
+    // ── DONE ──────────────────────────────────────────────────────────────
+    {
+      id:1, name:'CI/CD Pipeline Setup', assignee:"Tom O'Brien",
+      priority:'High', startDate:'2026-05-12', eta:'2026-05-23', deliveryDate:'2026-05-22',
+      hlStatus:'Done', effort:20, riskFlag:false, dependency:'',
+      detailedStatus:'Jenkins pipeline configured with automated build, test, and deployment stages. Blue/green deployment enabled for zero-downtime releases.',
+      blocker:'',
+      comments:'Completed 1 day ahead of schedule. Automated rollback tested and verified successfully.'
+    },
+    {
+      id:2, name:'User Authentication Module (OAuth 2.0 + MFA)', assignee:'Raj Patel',
+      priority:'Critical', startDate:'2026-05-12', eta:'2026-05-30', deliveryDate:'2026-05-29',
+      hlStatus:'Done', effort:30, riskFlag:false, dependency:'',
+      detailedStatus:'OAuth 2.0 + JWT implemented. MFA via OTP validated across iOS, Android, and desktop. Session token expiry and refresh logic verified. Security review passed.',
+      blocker:'',
+      comments:'Pen test for auth module scheduled for week of June 9. Minor hardening items logged as tech debt.'
+    },
+    {
+      id:3, name:'Database Schema Design & Architecture Review', assignee:'Sarah Chen',
+      priority:'High', startDate:'2026-05-12', eta:'2026-05-28', deliveryDate:'2026-05-30',
+      hlStatus:'Done', effort:24, riskFlag:false, dependency:'',
+      detailedStatus:'Final schema approved by architecture board after 2 rounds of review. Versioned migration scripts created for all 17 table changes. ERD updated and published.',
+      blocker:'',
+      comments:'Delivered 2 days late — incremental scope changes from Product during the review cycle caused two rework cycles. See Risk R6.'
+    },
+    // ── IN PROGRESS ───────────────────────────────────────────────────────
+    {
+      id:4, name:'API Gateway Configuration & Route Mapping', assignee:'Sarah Chen',
+      priority:'Critical', startDate:'2026-05-26', eta:'2026-06-09', deliveryDate:'',
+      hlStatus:'In Progress', effort:40, riskFlag:false,
+      dependency:'Database Schema Design & Architecture Review',
+      detailedStatus:'Route mappings 70% complete. Rate limiting and throttling applied to 8 of 14 endpoints. Outstanding: /payments and /reports routes require specific SLA configuration and custom auth headers. Response schema normalisation middleware added to handle legacy Core Banking API inconsistencies.',
+      blocker:'',
+      comments:'On track for June 9. Need 1 day buffer for QA smoke test before marking complete. See Risk R5 re: legacy API schema issues.'
+    },
+    {
+      id:5, name:'Error Handling & Centralised Logging Framework', assignee:'Raj Patel',
+      priority:'Medium', startDate:'2026-06-01', eta:'2026-06-10', deliveryDate:'',
+      hlStatus:'In Progress', effort:25, riskFlag:false,
+      dependency:'API Gateway Configuration & Route Mapping',
+      detailedStatus:'Centralised error handler implemented in Express middleware layer. Structured JSON logging via Winston. ELK stack integration 50% complete — index templates created, Kibana dashboards in progress. Alarm thresholds agreed with DevOps: P1 errors page within 2 minutes.',
+      blocker:'',
+      comments:'Will complete ELK dashboards once API Gateway routes are finalised so log schemas can be aligned with actual payloads.'
+    },
+    {
+      id:6, name:'Dashboard UI Redesign (Analytics & Charts)', assignee:'Priya Kumar',
+      priority:'High', startDate:'2026-05-19', eta:'2026-06-07', deliveryDate:'',
+      hlStatus:'In Progress', effort:50, riskFlag:true,
+      dependency:'API Gateway Configuration & Route Mapping',
+      detailedStatus:'Account overview and transaction list components complete. Spending analytics charts 60% done — bar chart and pie chart rendered, trend line pending. Navigation redesign pending UX sign-off. Chart data feed depends on /reports API endpoint not yet exposed by API Gateway.',
+      blocker:'',
+      comments:'ETA is tight. If API Gateway /reports endpoint not ready by June 7, charts slip to Sprint 5. Scope has grown ~30% since Sprint 2 planning — see Risk R6.'
+    },
+    {
+      id:7, name:'UAT Test Case Authoring & Execution', assignee:'Marcus Williams',
+      priority:'High', startDate:'2026-06-01', eta:'2026-06-16', deliveryDate:'',
+      hlStatus:'In Progress', effort:35, riskFlag:false,
+      dependency:'User Authentication Module, API Gateway Configuration & Route Mapping',
+      detailedStatus:'43 of 120 test cases authored. Execution not yet started — awaiting stable integration build. Regression suite covers Auth, Payments, Dashboard, and Notifications. Test data sets prepared for all modules.',
+      blocker:'',
+      comments:'Targeting execution start June 10 once API Gateway complete. Minimum 3 business days needed for full run. Blocking go/no-go decision for June 17 go-live.'
+    },
+    {
+      id:8, name:'Mobile Responsive UI Fixes (iOS/Android)', assignee:'Priya Kumar',
+      priority:'Medium', startDate:'2026-06-02', eta:'2026-06-11', deliveryDate:'',
+      hlStatus:'In Progress', effort:20, riskFlag:false,
+      dependency:'Dashboard UI Redesign (Analytics & Charts)',
+      detailedStatus:'iOS Safari rendering bugs fixed on Login and Dashboard screens. Android Chrome viewport issues on Statements page outstanding. 4 of 9 Jira tickets closed this week. Remaining 5 focused on transaction detail and settings screens.',
+      blocker:'',
+      comments:'Running parallel to Dashboard work. Not on critical path for go-live but needed before public release.'
+    },
+    // ── AT RISK ───────────────────────────────────────────────────────────
+    {
+      id:9, name:'Session Management & Concurrent Session Enforcement', assignee:'Sarah Chen',
+      priority:'High', startDate:'2026-05-26', eta:'2026-06-05', deliveryDate:'',
+      hlStatus:'At Risk', effort:30, riskFlag:true,
+      dependency:'User Authentication Module (OAuth 2.0 + MFA)',
+      detailedStatus:'Idle timeout (15 min) implemented and tested. Concurrent session limit logic partially done — edge cases around tab switching and background token refresh unresolved. Needs architecture decision: server-side session registry vs client-side enforcement. Two options documented with trade-offs, awaiting Tech Lead decision.',
+      blocker:'',
+      comments:'ETA was today (June 5) — will miss by 3 days. Requesting extension to June 8. Architecture decision needed by June 6 morning. See Risk R1.'
+    },
+    {
+      id:10, name:'Stakeholder C-Suite Demo Preparation', assignee:'Aisha Johnson',
+      priority:'Critical', startDate:'2026-06-02', eta:'2026-06-06', deliveryDate:'',
+      hlStatus:'At Risk', effort:25, riskFlag:true,
+      dependency:'API Gateway Configuration & Route Mapping, Dashboard UI Redesign (Analytics & Charts)',
+      detailedStatus:'Demo script 70% complete. Live demo environment unstable — 2 API endpoints (/accounts/summary and /transactions/recent) returning 500 errors intermittently since June 3. Root cause under investigation by Sarah. Fallback plan: screen recording of last stable build from June 2.',
+      blocker:'',
+      comments:'C-Suite demo is June 6 at 10am. If environment not stable by 8am June 6, will proceed with screen recording. Brief stakeholders on contingency by 9am. See Risk R8.'
+    },
+    {
+      id:11, name:'Load Testing Infrastructure & Execution', assignee:"Tom O'Brien",
+      priority:'High', startDate:'2026-06-01', eta:'2026-06-09', deliveryDate:'',
+      hlStatus:'At Risk', effort:35, riskFlag:true,
+      dependency:'CI/CD Pipeline Setup',
+      detailedStatus:'k6 load testing scripts created for 5 critical user journeys (login, dashboard load, transaction list, payment submit, statement download). Environment provisioning blocked — waiting for cloud budget approval to spin up additional test instances needed for 500 concurrent users. Cannot run at scale until environment is ready.',
+      blocker:'',
+      comments:'Tom is at 119% capacity this month (shared resource across 3 projects). Cloud budget approval needed by June 7 to meet ETA. Escalated to Engineering Manager June 4.'
+    },
+    // ── BLOCKED ───────────────────────────────────────────────────────────
+    {
+      id:12, name:'Database Migration Script — Production Execution', assignee:'Raj Patel',
+      priority:'Critical', startDate:'2026-05-26', eta:'2026-06-06', deliveryDate:'',
+      hlStatus:'Blocked', effort:45, riskFlag:true,
+      dependency:'Database Schema Design & Architecture Review',
+      detailedStatus:'Migration scripts written and tested across 3 dry runs on staging — all successful. Production migration requires DBA Change Advisory Board (CAB) sign-off per change control policy. DBA reviewed once, raised 2 queries on index partitioning strategy. Written responses submitted May 31. Awaiting 2nd review confirmation.',
+      blocker:'DBA Change Advisory Board approval pending. Two queries on index partitioning strategy submitted May 31 with responses. Second CAB review scheduled June 9. Cannot execute production migration without formal sign-off.',
+      comments:'If DBA sign-off arrives June 9, migration can run June 10 during 4-hour maintenance window (00:00–04:00). June 17 go-live still achievable on this path. See Risk R7 re: staging vs production schema drift.'
+    },
+    {
+      id:13, name:'Third-party Analytics Integration (Mixpanel)', assignee:'Priya Kumar',
+      priority:'Medium', startDate:'2026-06-02', eta:'2026-06-13', deliveryDate:'',
+      hlStatus:'Blocked', effort:25, riskFlag:false,
+      dependency:'Dashboard UI Redesign (Analytics & Charts)',
+      detailedStatus:'Integration code complete and ready for final wiring. SDK installed, event schema designed and documented (42 events across 8 user journeys). Staging API key works fine. Only blocker is Production API key from Mixpanel account team.',
+      blocker:'Mixpanel Production API key not received. Vendor account team first contacted May 28, follow-up June 2. No response to either email. Escalation sent to Mixpanel CSM June 4 with SLA breach notice.',
+      comments:'Non-critical for MVP go-live. Will ship without Mixpanel analytics and add in patch release if key not received by June 13. Not blocking release.'
+    },
+    {
+      id:14, name:'GDPR & Data Privacy Legal Compliance Sign-off', assignee:'Aisha Johnson',
+      priority:'Critical', startDate:'2026-05-19', eta:'2026-06-06', deliveryDate:'',
+      hlStatus:'Blocked', effort:30, riskFlag:true,
+      dependency:'',
+      detailedStatus:'Full GDPR compliance checklist completed by Product & Engineering (38 items, all addressed). Data flow diagrams, data retention policy, third-party processor agreements, and right-to-erasure implementation docs submitted to Legal on May 22. Legal flagged 3 items on data retention policy — written responses submitted May 30. No further communication from Legal since.',
+      blocker:'Legal team review overdue by 14 days. Formal GDPR Article 25 sign-off not received. Cannot proceed to production deployment without legal clearance. Production go-live is legally blocked.',
+      comments:'Escalated to CPO June 3. Legal confirmed review completion by June 6 EOD. If sign-off not received by June 6, go-live must be pushed to June 24. See Risk R3 (Escalated).'
+    },
+    // ── NOT STARTED ───────────────────────────────────────────────────────
+    {
+      id:15, name:'Payment Gateway Integration (Stripe)', assignee:'Raj Patel',
+      priority:'Critical', startDate:'2026-06-09', eta:'2026-06-18', deliveryDate:'',
+      hlStatus:'Not Started', effort:60, riskFlag:true,
+      dependency:'API Gateway Configuration & Route Mapping, Database Migration Script — Production Execution',
+      detailedStatus:'Technical spec reviewed. Stripe Elements + Payment Intents API selected for PCI-DSS SAQ-A compliance. Will cover: card payments, refunds, partial refunds, webhook handling, and idempotency keys. Dispute flow and failure retry logic specs incomplete from Stripe — see Risk R2.',
+      blocker:'',
+      comments:'Cannot start until API Gateway complete (June 9). 7-day estimate is aggressive given scope. If DB migration blocker not cleared by June 9, start date shifts and go-live is at risk. See Risk R2 re: incomplete vendor specs.'
+    },
+    {
+      id:16, name:'Security & Performance Regression Testing', assignee:'Marcus Williams',
+      priority:'High', startDate:'2026-06-10', eta:'2026-06-17', deliveryDate:'',
+      hlStatus:'Not Started', effort:40, riskFlag:false,
+      dependency:'Load Testing Infrastructure & Execution, UAT Test Case Authoring & Execution',
+      detailedStatus:'Scope: OWASP Top 10 security checks, SQL injection and XSS tests, API response time benchmarking (SLA: <200ms p95), memory leak detection under 500-user load. Tools: OWASP ZAP, k6, Artillery. Test environment: dedicated performance cluster.',
+      blocker:'',
+      comments:'Marcus has available capacity from June 10 onwards. Depends on Load Testing infrastructure being ready. Results needed before go/no-go decision June 17.'
+    },
+    {
+      id:17, name:'Production Go-Live Runbook & Deployment', assignee:"Tom O'Brien",
+      priority:'High', startDate:'2026-06-12', eta:'2026-06-17', deliveryDate:'',
+      hlStatus:'Not Started', effort:40, riskFlag:true,
+      dependency:'Database Migration Script — Production Execution, Load Testing Infrastructure & Execution, GDPR & Data Privacy Legal Compliance Sign-off',
+      detailedStatus:'Runbook to cover: pre-deployment checklist (22 items), DB migration execution sequence, blue/green traffic switch procedure, post-deployment health checks, rollback decision tree and execution steps, on-call escalation matrix, and stakeholder communication plan for downtime window.',
+      blocker:'',
+      comments:'Tom at 119% capacity. THREE hard dependencies must clear before this can start. If any slip, runbook authoring and dry run cannot happen. Strongly recommend engaging second DevOps resource for this task.'
+    },
+    {
+      id:18, name:'Release Notes, Changelog & User Documentation', assignee:'Aisha Johnson',
+      priority:'Low', startDate:'2026-06-09', eta:'2026-06-16', deliveryDate:'',
+      hlStatus:'Not Started', effort:15, riskFlag:false,
+      dependency:'All feature tasks',
+      detailedStatus:'Deliverables: customer-facing release notes (banking app), internal admin guide for ops team, API changelog for downstream system teams, and known limitations doc for support team.',
+      blocker:'',
+      comments:'Low priority — can complete post-go-live if needed, but prefer to ship simultaneously. Aisha has capacity once GDPR blocker resolved.'
+    }
+  ];
+  tid = 19;
+
+  S.risks = [
+    {
+      id:1,
+      description:'Authentication flow requirements keep expanding scope mid-sprint. Session management, concurrent session rules, and device fingerprinting were all added after sprint planning — none were in the original estimate. Each addition triggers rework of already-coded components.',
+      category:'Incremental Refinement Tracking',
+      impact:'High', likelihood:'High', score:'High',
+      mitigation:'Enforce feature freeze on auth scope for Sprint 4. All new requirements go to Sprint 5 backlog with no exceptions. PO to enforce in daily standup from June 5. Post-sprint: improve Definition of Ready to include locked acceptance criteria before sprint start.',
+      owner:'Aisha Johnson', status:'Open', eta:'2026-06-06', linkedTaskId:9
+    },
+    {
+      id:2,
+      description:'Payment gateway integration spec from Stripe is incomplete. Webhook failure handling, dispute initiation flow, and partial refund edge cases are not documented. Team must make assumptions that may conflict with production Stripe behaviour.',
+      category:'Lack of Information vs Expected Deliverables',
+      impact:'High', likelihood:'High', score:'High',
+      mitigation:'Schedule technical call with Stripe Solutions Engineer by June 8. Document all assumptions and get written confirmation before coding begins. Add 2-day buffer to Raj\'s estimate. Define acceptance criteria based on confirmed spec only.',
+      owner:'Raj Patel', status:'Open', eta:'2026-06-08', linkedTaskId:15
+    },
+    {
+      id:3,
+      description:'GDPR Legal review is overdue by 14 days. Production deployment is legally blocked — cannot go live under GDPR Article 25 without formal sign-off. If not received by June 6 EOD, the June 17 go-live date must be pushed to June 24.',
+      category:'Schedule Risk',
+      impact:'High', likelihood:'High', score:'High',
+      mitigation:'Escalated to CPO June 3. Legal confirmed review by June 6 EOD. If not received: (1) push go-live to June 24, (2) formalise Legal review SLA as part of Definition of Done for all future compliance work, (3) raise in Risk Review with steering committee.',
+      owner:'Aisha Johnson', status:'Escalated', eta:'2026-06-06', linkedTaskId:14
+    },
+    {
+      id:4,
+      description:'Tom O\'Brien (DevOps) is allocated at 119% of monthly capacity and is a shared resource across 3 active projects simultaneously. Both Load Testing and the Go-Live Runbook depend on him. If one task slips, it cascades to the other.',
+      category:'Resource Risk',
+      impact:'High', likelihood:'Medium', score:'High',
+      mitigation:'Request 20h of DevOps resource from Platform team under the pre-agreed cross-team SLA (approved in Q1). Defer Tom\'s non-critical tasks to Sprint 5. If Platform team unavailable, escalate to Engineering Manager by June 7 for budget approval for contractor resource.',
+      owner:'Sarah Chen', status:'Open', eta:'2026-06-07', linkedTaskId:17
+    },
+    {
+      id:5,
+      description:'Legacy Core Banking API returns inconsistent response schemas — 3 endpoints switch between snake_case and camelCase fields unpredictably across API versions. Discovered during API Gateway mapping. Affects downstream data contracts.',
+      category:'Technical Risk',
+      impact:'High', likelihood:'Medium', score:'High',
+      mitigation:'Introduce response normalisation middleware in API Gateway to enforce consistent casing. Add schema contract tests to CI pipeline. Formally raise defect with Core Banking team with SLA for fix. Document all known inconsistencies in API Gateway config.',
+      owner:'Sarah Chen', status:'Open', eta:'2026-06-10', linkedTaskId:4
+    },
+    {
+      id:6,
+      description:'Dashboard UI scope has grown approximately 30% since Sprint 2 due to UX team adding new analytics charts, a notification centre component, and revised navigation patterns — none were re-estimated or formally accepted into the sprint.',
+      category:'Incremental Refinement Tracking',
+      impact:'Medium', likelihood:'High', score:'High',
+      mitigation:'Immediate scope review with UX and Product by June 6. Move all non-MVP chart components to Sprint 5 backlog. Re-baseline remaining Dashboard estimates using updated scope. Implement change request process: any scope addition requires formal effort estimate and sprint capacity check before acceptance.',
+      owner:'Aisha Johnson', status:'Open', eta:'2026-06-06', linkedTaskId:6
+    },
+    {
+      id:7,
+      description:'Staging environment database schema diverges from production in 4 areas discovered during migration dry run (different index names, 2 missing constraints, 1 column type mismatch). Migration test results may not accurately reflect production behaviour.',
+      category:'Lack of Information vs Expected Deliverables',
+      impact:'Medium', likelihood:'Medium', score:'Medium',
+      mitigation:'DBA to restore staging from production snapshot by June 7. All 3 migration dry runs to be re-executed after sync. Add automated schema drift detection check to CI pipeline to prevent recurrence. Document schema sync as mandatory pre-release activity.',
+      owner:'Raj Patel', status:'Open', eta:'2026-06-07', linkedTaskId:12
+    },
+    {
+      id:8,
+      description:'C-Suite stakeholder demo on June 6 is at risk due to intermittent 500 errors on 2 critical API endpoints (/accounts/summary and /transactions/recent). Root cause under investigation for 2 days with no resolution.',
+      category:'Schedule Risk',
+      impact:'Medium', likelihood:'High', score:'High',
+      mitigation:'Prepare fallback screen recording of last stable build (June 2). Sarah Chen to investigate 500 errors as highest priority June 5 morning. Brief stakeholders on contingency plan by 9am June 6. Isolate faulty endpoints to prevent cascade to other demo flows.',
+      owner:'Aisha Johnson', status:'Open', eta:'2026-06-06', linkedTaskId:10
+    }
+  ];
+  rid = 9;
+
+  persist();
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+hydrate();
+if (!S.tasks.length && !S.team.length) loadSampleData();
+updateHeader();
+renderOverview();
+fillAssignees(['f-assignee','t-assignee','r-owner']);
+setTimeout(() => { _ptInit = true; }, 0);
+</script>
+</body>
+</html>
