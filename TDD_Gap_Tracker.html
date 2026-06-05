@@ -197,8 +197,9 @@ tr:hover td{background:#fafcff;}
       <span>Week: <strong id="hdrWeek">—</strong></span>
     </div>
     <span id="hdr-save-ind">✓ Saved</span>
-    <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download full backup">💾 Save</button>
-    <button class="btn btn-ghost btn-sm" onclick="triggerLoad()" title="Load backup">📂 Load</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportFullReport()" title="Export human-readable report with full TDD register, gap log, pattern summary, AND embedded data — re-importable">📄 Export Report</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportAllData()" title="Download compact JSON backup">💾 JSON</button>
+    <button class="btn btn-ghost btn-sm" onclick="triggerLoad()" title="Load from .json backup OR .txt report file">📂 Load</button>
     <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Settings</button>
     <a href="index.html" class="btn btn-ghost btn-sm">← Hub</a>
   </div>
@@ -371,7 +372,7 @@ tr:hover td{background:#fafcff;}
         <div><h2>Weekly Report</h2><p>Auto-generated from live data — copy slide by slide or export as TXT</p></div>
         <div class="ph-actions">
           <button class="btn btn-secondary btn-sm" onclick="renderReport()">↻ Refresh</button>
-          <button class="btn btn-success btn-sm" onclick="exportReportTxt()">⬇ Export TXT</button>
+          <button class="btn btn-success btn-sm" onclick="exportFullReport()" title="Export human-readable report + full data snapshot — re-importable via Load">📄 Export Full Report</button>
           <button class="btn btn-primary btn-sm" onclick="copyAllSlides()">⎘ Copy All</button>
         </div>
       </div>
@@ -474,7 +475,7 @@ tr:hover td{background:#fafcff;}
 <!-- ══ LOAD MODAL ══ -->
 <div class="modal-overlay" id="load-modal">
   <div class="modal" style="max-width:520px">
-    <div class="modal-hd"><h3>📂 Load Backup</h3><button class="modal-close" onclick="closeModal('load-modal')">×</button></div>
+    <div class="modal-hd"><h3>📂 Load Backup or Report File</h3><button class="modal-close" onclick="closeModal('load-modal')">×</button></div>
     <div class="modal-body">
       <div id="load-preview"></div>
       <div style="margin-top:14px">
@@ -507,9 +508,11 @@ tr:hover td{background:#fafcff;}
         <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">Backup &amp; Restore</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="justify-content:center">💾 Save Backup</button>
-            <button class="btn btn-secondary btn-sm" onclick="triggerLoad()" style="justify-content:center">📂 Load Backup</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportFullReport()" style="justify-content:center">📄 Export Full Report</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="justify-content:center">💾 JSON Backup</button>
+            <button class="btn btn-secondary btn-sm" onclick="triggerLoad()" style="justify-content:center;grid-column:span 2">📂 Load (.json or .txt report)</button>
           </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px">📄 Export Full Report = human-readable TXT with embedded data. Load it back with 📂 Load to resume.</div>
         </div>
       </div>
     </div>
@@ -1201,18 +1204,135 @@ function copyAllSlides() {
     if(btn){btn.textContent='✓ All Copied!';setTimeout(()=>btn.textContent='⎘ Copy All',2500);}
   });
 }
-function exportReportTxt() {
-  let content=`TDD GAP TRACKER — WEEKLY REPORT\nProject: ${S.meta.projectName||'—'}\nGenerated: ${new Date().toLocaleString('en-GB')}\n${'═'.repeat(55)}\n\n`;
-  for(let i=1;i<=6;i++) content+=slideText(i)+'\n\n'+'═'.repeat(55)+'\n\n';
-  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+// ════════════════════════════════════════
+// TEXT SECTION HELPERS (used by Full Report)
+// ════════════════════════════════════════
+function _pad(s, n) { return String(s||'').slice(0,n).padEnd(n); }
+
+function tddRegisterSection() {
+  const W=115, DIV='─'.repeat(W);
+  let t = `TDD REGISTER — ${S.tdds.length} TDD${S.tdds.length!==1?'s':''}\n${DIV}\n`;
+  t += _pad('#',4)+_pad('Title',44)+_pad('Author',22)+_pad('Status',24)+_pad('Gaps',7)+_pad('Lost(h)',10)+'Azure Services\n'+DIV+'\n';
+  if(!S.tdds.length) return t+'  (No TDDs registered yet)\n';
+  S.tdds.forEach(tdd=>{
+    const gc=gapsForTDD(tdd.id).length, tl=timeLostForTDD(tdd.id);
+    t+=_pad(tdd.id,4)+_pad((tdd.title||'').slice(0,42),44)+_pad(tdd.author||'—',22)+_pad(tdd.status,24)+_pad(gc,7)+_pad(tl?tl+'h':'0h',10)+(tdd.azureServices||[]).join(', ')+'\n';
+    if(tdd.flow) t+='    Flow      : '+tdd.flow+'\n';
+    const critO=S.gaps.filter(g=>g.tddId===tdd.id&&sevClean(g.severity)==='Critical'&&(g.status==='Open'||g.status==='In Progress')).length;
+    if(critO>0) t+=`    ⚠ ${critO} Critical open gap${critO!==1?'s':''}\n`;
+    if(tdd.notes) t+='    Notes     : '+tdd.notes.slice(0,100)+'\n';
+    t+='\n';
+  });
+  return t;
+}
+
+function gapLogSection() {
+  const DIV='─'.repeat(80);
+  const sorted=[...S.gaps].sort((a,b)=>(SEV_ORDER[sevClean(b.severity)]||0)-(SEV_ORDER[sevClean(a.severity)]||0));
+  let t=`GAP LOG — ${S.gaps.length} gap${S.gaps.length!==1?'s':''} (sorted by severity)\n${DIV}\n\n`;
+  if(!S.gaps.length) return t+'  (No gaps logged yet)\n';
+  sorted.forEach(g=>{
+    const tdd=S.tdds.find(t=>t.id===g.tddId);
+    t+=`G${String(g.id).padEnd(4)} [${sevClean(g.severity).toUpperCase().padEnd(8)}]  TDD #${tdd?.id||'?'}: ${(tdd?.title||'Unknown TDD').slice(0,50)}\n`;
+    t+=`   Category    : ${g.category||'—'}\n`;
+    t+=`   Sub-type    : ${g.subType||'—'}\n`;
+    t+=`   Description : ${g.description||''}\n`;
+    t+=`   Impact      : ${g.impact||'—'} | Time Lost: ${g.timeLostH||0}h | Status: ${g.status}\n`;
+    t+=`   Found By    : ${g.foundBy||'—'} | Assigned To: ${g.assignedTo||'—'}\n`;
+    t+=`   Date Found  : ${fmtDate(g.dateFound)}`;
+    if(g.dateResolved) t+=` | Resolved: ${fmtDate(g.dateResolved)}`;
+    t+='\n';
+    if(g.resolutionNotes) t+=`   Resolution  : ${g.resolutionNotes}\n`;
+    t+=`\n${DIV}\n\n`;
+  });
+  return t;
+}
+
+function patternSection() {
+  const gaps=S.gaps;
+  let t=`PATTERN SUMMARY\n${'─'.repeat(55)}\n\n`;
+  if(!gaps.length) return t+'  (No gaps logged — pattern analysis not available)\n';
+  const catTime=new Map(), catCount=new Map();
+  gaps.forEach(g=>{catTime.set(g.category,(catTime.get(g.category)||0)+(parseFloat(g.timeLostH)||0));catCount.set(g.category,(catCount.get(g.category)||0)+1);});
+  const sortedCats=[...catTime.entries()].sort((a,b)=>b[1]-a[1]);
+  const totalTime=gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  t+=`Total Time Lost          : ${totalTime}h\n`;
+  t+=`Resolution Rate          : ${Math.round(gaps.filter(g=>g.status==='Resolved').length/gaps.length*100)}%\n`;
+  t+=`Most Costly Gap Category : ${sortedCats[0]?sortedCats[0][0]+' ('+sortedCats[0][1]+'h)':'—'}\n\n`;
+  t+='Gap Categories by Time Lost:\n';
+  sortedCats.forEach(([cat,h],i)=>{
+    const cnt=catCount.get(cat)||0, dots='.'.repeat(Math.max(2,50-cat.length));
+    t+=`  ${i+1}. ${cat} ${dots} ${h}h (${cnt} gap${cnt!==1?'s':''})\n`;
+  });
+  t+='\nAuthor Summary:\n';
+  const aMap=new Map();
+  S.tdds.forEach(tdd=>{
+    const auth=tdd.author||'Unknown';
+    if(!aMap.has(auth)) aMap.set(auth,{tdds:0,gaps:0,time:0});
+    const a=aMap.get(auth); a.tdds++; a.gaps+=gapsForTDD(tdd.id).length; a.time+=timeLostForTDD(tdd.id);
+  });
+  [...aMap.entries()].sort((a,b)=>b[1].time-a[1].time).forEach(([auth,a])=>{
+    t+=`  ${auth.padEnd(28)} ${a.tdds} TDD${a.tdds!==1?'s':''} · ${a.gaps} gaps · ${a.time}h lost\n`;
+  });
+  return t;
+}
+
+// ════════════════════════════════════════
+// FULL REPORT EXPORT (human-readable + embedded data — re-importable)
+// ════════════════════════════════════════
+const DATA_MARKER = 'DATA SNAPSHOT (JSON) — LOAD THIS FILE TO RESTORE ALL DATA';
+
+function exportFullReport() {
+  const DIV='═'.repeat(65);
+  const now=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const total=S.gaps.length, open=S.gaps.filter(g=>g.status==='Open'||g.status==='In Progress').length;
+  const totalTime=S.gaps.reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+
+  let c='';
+  c+=`╔${'═'.repeat(63)}╗\n`;
+  c+=`║   TDD GAP TRACKER — FULL EXPORT REPORT${' '.repeat(25)}║\n`;
+  c+=`╚${'═'.repeat(63)}╝\n`;
+  c+=`Project   : ${S.meta.projectName||'—'}\n`;
+  c+=`Week      : ${S.meta.reportWeek||'—'}\n`;
+  c+=`Generated : ${now}\n\n`;
+  c+=`QUICK STATS\n`;
+  c+=`  TDDs Registered   : ${S.tdds.length}\n`;
+  c+=`  Total Gaps Logged : ${total}\n`;
+  c+=`  Open / In Progress: ${open}\n`;
+  c+=`  Total Time Lost   : ${totalTime}h\n`;
+  c+=`  Resolution Rate   : ${total?Math.round(S.gaps.filter(g=>g.status==='Resolved').length/total*100):0}%\n`;
+  c+='\nHOW TO RESUME: Load this file via the 📂 Load button — all data restores automatically.\n';
+  c+='\n'+DIV+'\n';
+
+  c+='\nWEEKLY REPORT SLIDES\n'+'─'.repeat(65)+'\n\n';
+  for(let i=1;i<=6;i++) c+=slideText(i)+'\n\n'+DIV+'\n\n';
+
+  c+=tddRegisterSection()+'\n'+DIV+'\n\n';
+  c+=gapLogSection()+'\n'+DIV+'\n\n';
+  c+=patternSection()+'\n'+DIV+'\n\n';
+
+  // Embedded JSON snapshot — parseable by triggerLoad()
+  c+=`${DATA_MARKER}\n`;
+  c+=`${'─'.repeat(65)}\n`;
+  c+=`TIP: Click "📂 Load" in the header, select this .txt file, then confirm import.\n`;
+  c+=`     All TDDs, gaps, settings, and IDs will be restored exactly as they were.\n`;
+  c+=`${'─'.repeat(65)}\n`;
+  const snapshot={tool:'TDDGapTracker',version:'1',exportDate:new Date().toISOString(),meta:S.meta,tdds:S.tdds,gaps:S.gaps,ids:{tid,gid}};
+  c+=JSON.stringify(snapshot)+'\n';
+  c+=DIV+'\n';
+  c+=`Generated by TDD Gap Tracker · QuickTools\n`;
+
+  const blob=new Blob([c],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`TDD_Gap_Report_${(S.meta.projectName||'project').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.txt`;
   a.click(); URL.revokeObjectURL(a.href);
+  const btn=document.querySelector('[onclick="exportFullReport()"]');
+  if(btn){const t=btn.textContent;btn.textContent='✓ Exported!';setTimeout(()=>btn.textContent=t,2000);}
 }
 
 // ════════════════════════════════════════
-// BACKUP / RESTORE
+// JSON BACKUP (compact machine-readable)
 // ════════════════════════════════════════
 function exportAllData() {
   const payload={tool:'TDDGapTracker',version:'1',exportDate:new Date().toISOString(),meta:S.meta,tdds:S.tdds,gaps:S.gaps,ids:{tid,gid}};
@@ -1225,32 +1345,63 @@ function exportAllData() {
   if(btn){const t=btn.textContent;btn.textContent='✓ Saved!';setTimeout(()=>btn.textContent=t,2000);}
 }
 
+// ════════════════════════════════════════
+// LOAD — accepts .json backup OR .txt full report
+// ════════════════════════════════════════
 let _loadData=null;
+
 function triggerLoad() {
-  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='.json,.txt';
   inp.onchange=e=>{
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=evt=>{
+      const text=evt.target.result;
+      if(file.name.toLowerCase().endsWith('.json')) {
+        // Pure JSON backup
+        try {
+          const d=JSON.parse(text);
+          if(d.tool!=='TDDGapTracker'){alert('This JSON file was not saved by TDD Gap Tracker.\n\nUse a file exported by this tool.');return;}
+          _loadData=d; showLoadPreview(d,'json');
+        } catch(err){alert('Could not parse JSON file: '+err.message);}
+        return;
+      }
+      // TXT report file — extract embedded JSON snapshot
+      const idx=text.indexOf(DATA_MARKER);
+      if(idx===-1){
+        alert('No data snapshot found in this file.\n\nMake sure you exported using the "📄 Export Full Report" button, not "Copy All".');
+        return;
+      }
+      const after=text.slice(idx+DATA_MARKER.length);
+      const jStart=after.indexOf('{'), jEnd=after.lastIndexOf('}');
+      if(jStart===-1||jEnd===-1||jEnd<=jStart){alert('Data snapshot found but could not be extracted. The file may be truncated or corrupted.');return;}
       try {
-        const d=JSON.parse(evt.target.result);
-        if(d.tool!=='TDDGapTracker'){alert('This file is not a TDD Gap Tracker backup.');return;}
-        _loadData=d; showLoadPreview(d);
-      } catch{alert('Invalid JSON file.');}
+        const d=JSON.parse(after.slice(jStart,jEnd+1));
+        if(d.tool!=='TDDGapTracker'){alert('Data snapshot does not match TDD Gap Tracker format.');return;}
+        _loadData=d; showLoadPreview(d,'txt');
+      } catch(err){alert('Error parsing embedded data snapshot: '+err.message);}
     };
     reader.readAsText(file);
   };
   inp.click();
 }
-function showLoadPreview(d) {
+
+function showLoadPreview(d, sourceType='json') {
   const inc={tdds:(d.tdds||[]).length,gaps:(d.gaps||[]).length};
-  const savedOn=d.exportDate?new Date(d.exportDate).toLocaleString('en-GB'):'Unknown';
+  const totalTime=(d.gaps||[]).reduce((s,g)=>s+(parseFloat(g.timeLostH)||0),0);
+  const savedOn=d.exportDate?new Date(d.exportDate).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Unknown';
   const cur={tdds:S.tdds.length,gaps:S.gaps.length};
+  const srcBadge=sourceType==='txt'
+    ?'<span style="background:#15803d;color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700">📄 Extracted from TXT Report</span>'
+    :'<span style="background:var(--accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700">📦 JSON Backup</span>';
   document.getElementById('load-preview').innerHTML=`
     <div style="background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="margin-bottom:8px">${srcBadge}</div>
       <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(d.meta?.projectName||'Unknown Project')}</div>
-      <div style="font-size:11px;color:var(--muted)">Saved: ${savedOn}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <div style="font-size:11px;color:var(--muted)">Saved: ${savedOn} &nbsp;·&nbsp; Week: ${esc(d.meta?.reportWeek||'—')}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
           <div style="font-size:22px;font-weight:800;color:var(--accent)">${inc.tdds}</div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">TDDs</div>
@@ -1259,12 +1410,17 @@ function showLoadPreview(d) {
           <div style="font-size:22px;font-weight:800;color:var(--red)">${inc.gaps}</div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">Gaps</div>
         </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--orange)">${totalTime}h</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">Time Lost</div>
+        </div>
       </div>
     </div>
-    ${cur.tdds>0?`<div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:7px;padding:9px 12px;font-size:12px;color:#92400e">⚠ Current session has ${cur.tdds} TDD(s) and ${cur.gaps} gap(s). "Replace" will overwrite them.</div>`:''}`;
+    ${cur.tdds>0?`<div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:7px;padding:9px 12px;font-size:12px;color:#92400e">⚠ Current session has ${cur.tdds} TDD(s) and ${cur.gaps} gap(s). "Replace" will overwrite them. "Merge" will add on top.</div>`:''}`;
   document.getElementById('load-confirm-btn').textContent=`Load ${inc.tdds} TDD${inc.tdds!==1?'s':''}, ${inc.gaps} Gap${inc.gaps!==1?'s':''}`;
   openModal('load-modal');
 }
+
 function applyLoad() {
   if(!_loadData) return;
   const mode=document.querySelector('input[name="load-mode"]:checked')?.value||'replace';
@@ -1278,7 +1434,8 @@ function applyLoad() {
     (_loadData.gaps||[]).forEach(g=>S.gaps.push({...g,id:gid++,tddId:tddIdRemap.get(g.tddId)??g.tddId}));
   }
   persist(); updateHeader(); renderTDDs(); updateSidebarBadges(); closeModal('load-modal');
-  alert(`✅ Backup loaded successfully!`);
+  const loaded=_loadData.tdds?.length||0;
+  alert(`✅ ${mode==='replace'?'Restored':'Merged'} successfully!\n${loaded} TDD${loaded!==1?'s':''} and ${_loadData.gaps?.length||0} gaps loaded.`);
 }
 
 // ════════════════════════════════════════

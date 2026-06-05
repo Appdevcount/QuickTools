@@ -5460,11 +5460,6 @@ function moveToMarkedZone(qId){
   const zone = _getOrCreateMarkedZone(sId);
   zone.appendChild(card);
   _refreshMarkedZoneHeader(zone);
-  // Scroll to top so the marked zone header is instantly visible
-  if(sId === activeSection){
-    const main = document.getElementById('main-content');
-    if(main) main.scrollTop = 0;
-  }
 }
 function removeFromMarkedZone(qId){
   const sId = qToSection[qId];
