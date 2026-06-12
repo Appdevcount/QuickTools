@@ -276,7 +276,8 @@ tr:hover td{background:#fafcff;}
       <div class="card" style="padding:13px">
         <div class="filter-row">
           <input type="search" id="gf-search" placeholder="Search gaps…" oninput="renderGaps()" style="flex:1;min-width:140px">
-          <select id="gf-tdd" onchange="renderGaps()"><option value="">All TDDs</option></select>
+          <select id="gf-tdd" onchange="renderGaps();updateGapReportBtn()"><option value="">All TDDs</option></select>
+          <button class="btn btn-amber btn-sm" id="gf-report-btn" onclick="reportSelectedTDD()" style="display:none">📋 TDD Report</button>
           <select id="gf-cat" onchange="renderGaps()"><option value="">All Categories</option></select>
           <select id="gf-sev" onchange="renderGaps()">
             <option value="">All Severities</option>
@@ -525,6 +526,23 @@ tr:hover td{background:#fafcff;}
   </div>
 </div>
 
+<!-- ══ TDD REPORT MODAL ══ -->
+<div class="modal-overlay" id="tdd-report-modal">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-hd">
+      <h3 id="tdd-report-modal-title">TDD Gap Report</h3>
+      <button class="modal-close" onclick="closeModal('tdd-report-modal')">×</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <pre id="tdd-report-content" style="padding:18px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;max-height:65vh;overflow-y:auto;color:var(--text);margin:0"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('tdd-report-modal')">Close</button>
+      <button class="btn btn-success btn-sm" id="tdd-report-copy-btn" onclick="copyTDDReport()">⎘ Copy for Email</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════
 // CONSTANTS
@@ -764,6 +782,7 @@ function renderTDDs() {
       <td style="text-align:center"><span style="font-size:14px;font-weight:800;${gcColor}">${gc}</span>${critG?`<div style="font-size:9px;color:var(--red);font-weight:700">${critG} crit</div>`:''}</td>
       <td style="text-align:center;font-weight:700;font-size:13px;${tl>0?'color:var(--orange)':''}">${tl?tl+'h':'—'}</td>
       <td style="white-space:nowrap">
+        <button class="btn btn-amber btn-xs" onclick="viewTDDReport(${t.id})">Report</button>
         <button class="btn btn-secondary btn-xs" onclick="openTDDModal(${t.id})">Edit</button>
         <button class="btn btn-danger btn-xs" onclick="deleteTDD(${t.id})">Del</button>
       </td>
@@ -924,6 +943,7 @@ function renderGaps() {
 function clearGapFilters() {
   ['gf-search','gf-tdd','gf-cat','gf-sev','gf-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderGaps();
+  updateGapReportBtn();
 }
 
 // ════════════════════════════════════════
@@ -1482,6 +1502,129 @@ function resetSample() {
   if(!confirm('Replace all data with sample Azure Integration project data?')) return;
   S={meta:{},tdds:[],gaps:[]}; tid=1; gid=1;
   loadSampleData(); updateHeader(); renderTDDs(); updateSidebarBadges(); closeModal('settings-modal');
+}
+
+// ════════════════════════════════════════
+// TDD DETAILED REPORT (per-TDD, email-ready)
+// ════════════════════════════════════════
+let _currentTDDReportId = null;
+
+function generateTDDReportText(id) {
+  const tdd = S.tdds.find(t => t.id === id);
+  if (!tdd) return '';
+  const gaps = gapsForTDD(id);
+  const totalTime = timeLostForTDD(id);
+  const critOpen = gaps.filter(g => sevClean(g.severity) === 'Critical' && (g.status === 'Open' || g.status === 'In Progress'));
+  const L = '─'.repeat(60);
+  const EQ = '═'.repeat(60);
+  const now = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const dateShort = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+
+  let t = '';
+  t += `Subject: TDD Gap Report — ${tdd.title} — ${dateShort}\n\n`;
+  t += `${EQ}\n`;
+  t += `TDD GAP REPORT\n`;
+  t += `${EQ}\n`;
+  t += `TDD Title        : ${tdd.title}\n`;
+  if (tdd.flow)     t += `Integration Flow : ${tdd.flow}\n`;
+  t +=               `Author           : ${tdd.author || '—'}\n`;
+  if (tdd.reviewer) t += `Reviewer         : ${tdd.reviewer}\n`;
+  t +=               `Status           : ${tdd.status}\n`;
+  if (tdd.priority) t += `Priority         : ${tdd.priority}\n`;
+  if (tdd.dateReceived) t += `Date Received    : ${fmtDate(tdd.dateReceived)}\n`;
+  if (tdd.dateApproved) t += `Date Approved    : ${fmtDate(tdd.dateApproved)}\n`;
+  if (tdd.azureServices && tdd.azureServices.length) t += `Azure Services   : ${tdd.azureServices.join(', ')}\n`;
+  t +=               `Project          : ${S.meta.projectName || '—'}\n`;
+  t +=               `Generated        : ${now}\n`;
+
+  t += `\n${L}\nGAP SUMMARY\n${L}\n`;
+  t += `  Total Gaps     : ${gaps.length}\n`;
+  t += `  Open           : ${gaps.filter(g => g.status === 'Open').length}\n`;
+  t += `  In Progress    : ${gaps.filter(g => g.status === 'In Progress').length}\n`;
+  t += `  Resolved       : ${gaps.filter(g => g.status === 'Resolved').length}\n`;
+  t += `  Waived         : ${gaps.filter(g => g.status === 'Waived').length}\n`;
+  t += `  Critical Open  : ${critOpen.length}${critOpen.length > 0 ? ' ⚠ ACTION REQUIRED' : ' ✓ None'}\n`;
+  t += `  Total Time Lost: ${totalTime}h\n`;
+
+  if (tdd.notes) {
+    t += `\n${L}\nNOTES\n${L}\n  ${tdd.notes}\n`;
+  }
+
+  const sorted = [...gaps].sort((a, b) => (SEV_ORDER[sevClean(b.severity)] || 0) - (SEV_ORDER[sevClean(a.severity)] || 0));
+
+  const openGaps = sorted.filter(g => g.status === 'Open' || g.status === 'In Progress');
+  if (openGaps.length) {
+    t += `\n${L}\nOPEN GAPS (${openGaps.length}) — ACTION REQUIRED\n${L}\n`;
+    openGaps.forEach(g => {
+      t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category}\n`;
+      t += `  Category         : ${g.category}\n`;
+      if (g.subType) t += `  Sub-type         : ${g.subType}\n`;
+      t += `  Status           : ${g.status}\n`;
+      t += `  Description      : ${g.description}\n`;
+      t += `  Impact           : ${g.impact} | Time Lost: ${g.timeLostH || 0}h\n`;
+      if (g.assignedTo) t += `  Assigned To      : ${g.assignedTo}\n`;
+      if (g.foundBy)    t += `  Found By         : ${g.foundBy}\n`;
+      t +=               `  Date Found       : ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)\n`;
+      t +=               `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+    });
+  }
+
+  const resolvedGaps = sorted.filter(g => g.status === 'Resolved');
+  if (resolvedGaps.length) {
+    t += `\n${L}\nRESOLVED GAPS (${resolvedGaps.length})\n${L}\n`;
+    resolvedGaps.forEach(g => {
+      t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category} ✓ Resolved\n`;
+      t += `  Category         : ${g.category}\n`;
+      if (g.subType) t += `  Sub-type         : ${g.subType}\n`;
+      t += `  Description      : ${g.description}\n`;
+      t += `  Time Lost        : ${g.timeLostH || 0}h | Resolved: ${fmtDate(g.dateResolved)}\n`;
+      t +=  `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+    });
+  }
+
+  const waivedGaps = sorted.filter(g => g.status === 'Waived');
+  if (waivedGaps.length) {
+    t += `\n${L}\nWAIVED GAPS (${waivedGaps.length})\n${L}\n`;
+    waivedGaps.forEach(g => {
+      t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category} (Waived)\n`;
+      t += `  Description      : ${g.description}\n`;
+      t += `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+    });
+  }
+
+  if (!gaps.length) t += `\n${L}\n  ✓ No gaps logged for this TDD.\n${L}\n`;
+
+  t += `\n${EQ}\nGenerated by TDD Gap Tracker · ${S.meta.projectName || 'Azure Integration Project'}\n${EQ}\n`;
+  return t;
+}
+
+function viewTDDReport(id) {
+  _currentTDDReportId = id;
+  const tdd = S.tdds.find(t => t.id === id);
+  if (!tdd) return;
+  document.getElementById('tdd-report-modal-title').textContent = `Gap Report — ${tdd.title}`;
+  document.getElementById('tdd-report-content').textContent = generateTDDReportText(id);
+  document.getElementById('tdd-report-copy-btn').textContent = '⎘ Copy for Email';
+  openModal('tdd-report-modal');
+}
+
+function copyTDDReport() {
+  if (!_currentTDDReportId) return;
+  navigator.clipboard.writeText(generateTDDReportText(_currentTDDReportId)).then(() => {
+    const btn = document.getElementById('tdd-report-copy-btn');
+    if (btn) { btn.textContent = '✓ Copied! Paste in email'; setTimeout(() => btn.textContent = '⎘ Copy for Email', 2500); }
+  });
+}
+
+function updateGapReportBtn() {
+  const val = document.getElementById('gf-tdd')?.value;
+  const btn = document.getElementById('gf-report-btn');
+  if (btn) btn.style.display = val ? '' : 'none';
+}
+
+function reportSelectedTDD() {
+  const val = document.getElementById('gf-tdd')?.value;
+  if (val) viewTDDReport(parseInt(val));
 }
 
 // ════════════════════════════════════════

@@ -240,6 +240,91 @@ tr.done-row td{opacity:.65;}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
 
 @media(max-width:900px){.ov-grid{grid-template-columns:1fr;}}
+
+/* ── DAILY STANDUP ── */
+.standup-date-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.standup-date-bar input[type=date]{border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);}
+.standup-date-bar input[type=date]:focus{outline:none;border-color:var(--accent);}
+.standup-date-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.standup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:18px;}
+.standup-member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .2s;}
+.standup-member-card:hover{box-shadow:0 3px 12px rgba(37,99,235,.13);}
+.standup-member-card.has-entry{border-top:3px solid var(--green);}
+.standup-member-card.has-blockers{border-top:3px solid var(--red);}
+.standup-member-card.no-entry{border-top:3px solid #e2e8f0;opacity:.75;}
+.smc-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);background:#f8fafc;}
+.smc-name{font-size:13px;font-weight:700;}
+.smc-role{font-size:10px;color:var(--muted);margin-top:1px;}
+.smc-body{padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
+.smc-field{display:flex;flex-direction:column;gap:2px;}
+.smc-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+.smc-val{font-size:12px;color:var(--text);line-height:1.5;}
+.smc-val.blocker{color:var(--red);background:var(--red-bg);padding:4px 8px;border-radius:5px;border:1px solid #fecaca;}
+.smc-val.help{color:#7c3aed;background:#f5f3ff;padding:4px 8px;border-radius:5px;border:1px solid #ddd6fe;}
+.smc-empty{text-align:center;padding:20px 14px;color:var(--muted);font-size:12px;}
+.mood-pip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.mood-1{background:#fef2f2;color:#991b1b;}
+.mood-2{background:#fff7ed;color:#c2410c;}
+.mood-3{background:#fffbeb;color:#92400e;}
+.mood-4{background:#f0fdf4;color:#166534;}
+.mood-5{background:#eff6ff;color:#1d4ed8;}
+.standup-history-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.standup-day-group{margin-bottom:18px;}
+.standup-day-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding:6px 10px;background:var(--accent-light);border-radius:6px;margin-bottom:8px;display:inline-block;}
+.standup-week-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow);}
+.standup-week-hd{background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;}
+.standup-week-hd h3{color:#fff;font-size:12px;font-weight:700;}
+.standup-week-body{padding:14px;}
+.standup-tab-bar{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px;}
+.standup-tab{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.standup-tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.standup-tab:hover{color:var(--text);}
+.standup-sub-panel{display:none;}
+.standup-sub-panel.on{display:block;}
+.blocker-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;cursor:default;}
+.blocker-tag.active{background:var(--red-bg);color:var(--red);border:1px solid #fecaca;}
+.blocker-tag.resolved{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0;text-decoration:line-through;}
+.help-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;}
+.help-tag.pending{background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;}
+.help-tag.addressed{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0;}
+.smc-action-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.sd-task-row{border-bottom:1px solid var(--border);}
+.sd-task-row:last-child{border-bottom:none;}
+.today-task-item{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;}
+.today-task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--accent);}
+.today-task-dot.done{background:var(--green);}
+.today-task-dot.blocked{background:var(--red);}
+.today-task-dot.atrisk{background:var(--amber);}
+
+/* ── RETROSPECTIVE ── */
+.retro-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:18px;}
+.retro-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+.retro-col-hd{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.retro-col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.retro-col-count{font-size:10px;font-weight:700;background:rgba(0,0,0,.07);border-radius:10px;padding:1px 7px;}
+.retro-col-body{flex:1;padding:10px;display:flex;flex-direction:column;gap:7px;min-height:120px;}
+.retro-item{background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;display:flex;align-items:flex-start;gap:7px;transition:box-shadow .15s;}
+.retro-item:hover{box-shadow:0 2px 8px rgba(37,99,235,.1);}
+.retro-item-text{flex:1;line-height:1.5;word-break:break-word;}
+.retro-vote-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;opacity:.6;transition:opacity .15s;}
+.retro-vote-btn:hover{opacity:1;}
+.retro-del-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0;opacity:.4;transition:opacity .15s;color:var(--red);flex-shrink:0;}
+.retro-del-btn:hover{opacity:1;}
+.retro-add-row{padding:8px 10px;border-top:1px solid var(--border);}
+.retro-add-inp{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;background:var(--surface);}
+.retro-add-inp:focus{outline:none;border-color:var(--accent);}
+.retro-picker-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.retro-tab-bar{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px;}
+.retro-tab{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.retro-tab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.retro-tab:hover{color:var(--text);}
+.retro-sub-panel{display:none;}
+.retro-sub-panel.on{display:block;}
+.retro-action-item{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;}
+.retro-action-item:last-child{border-bottom:none;}
+.retro-hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);}
+.retro-hist-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:#f8fafc;}
+.retro-hist-body{padding:12px 16px;font-size:12px;}
 </style>
 </head>
 <body>
@@ -275,9 +360,11 @@ tr.done-row td{opacity:.65;}
     <button class="sb-btn" data-panel="tasks" onclick="nav('tasks',this)">📋 Task Tracker <span class="sb-badge" id="sb-tasks">0</span></button>
     <button class="sb-btn" data-panel="capacity" onclick="nav('capacity',this)">👥 Capacity Planner <span class="sb-badge amber" id="sb-overburn" style="display:none">!</span></button>
     <button class="sb-btn" data-panel="workload" onclick="nav('workload',this)">⚖ Workload Analyzer</button>
+    <button class="sb-btn" data-panel="standup" onclick="nav('standup',this)">🗣 Daily Standup <span class="sb-badge" id="sb-standup" style="display:none">0</span></button>
     <div class="sb-lbl">Risk &amp; Report</div>
     <button class="sb-btn" data-panel="risks" onclick="nav('risks',this)">⚠ Risk Register <span class="sb-badge red" id="sb-risks" style="display:none">0</span></button>
     <button class="sb-btn" data-panel="report" onclick="nav('report',this)">📑 Weekly Report</button>
+    <button class="sb-btn" data-panel="retro" onclick="nav('retro',this)">🔁 Sprint Retro</button>
   </nav>
 
   <!-- MAIN -->
@@ -329,7 +416,7 @@ tr.done-row td{opacity:.65;}
           <button class="btn btn-secondary btn-sm" onclick="clearTaskFilters()">✕ Clear</button>
         </div>
         <div class="tbl-wrap">
-          <table>
+          <table style="min-width:1206px">
             <thead><tr>
               <th style="width:38px">#</th>
               <th style="min-width:220px">Task Name</th>
@@ -440,6 +527,86 @@ tr.done-row td{opacity:.65;}
       </div>
     </div>
 
+    <!-- ── DAILY STANDUP ── -->
+    <div class="content panel" id="panel-standup">
+      <div class="ph">
+        <div><h2>Daily Standup Summarizer</h2><p>Track daily progress, blockers &amp; help-needed for every team member — Agile standup log</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="exportStandups()">⬇ Export Standups</button>
+          <button class="btn btn-secondary btn-sm" onclick="triggerImportStandups()">📥 Import Standups</button>
+          <button class="btn btn-primary btn-sm" onclick="openStandupModal()">+ Log Standup</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="standup-tab-bar">
+        <button class="standup-tab on" onclick="switchStandupTab('today',this)">Today's Standup</button>
+        <button class="standup-tab" onclick="switchStandupTab('history',this)">History</button>
+        <button class="standup-tab" onclick="switchStandupTab('weekly',this)">Weekly Report</button>
+      </div>
+
+      <!-- TODAY TAB -->
+      <div class="standup-sub-panel on" id="standup-tab-today">
+        <div class="standup-date-bar">
+          <span class="standup-date-label">Standup Date</span>
+          <input type="date" id="standup-today-date" onchange="renderStandupToday()">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('standup-today-date').value=todayISO();renderStandupToday()">Today</button>
+          <span style="font-size:11px;color:var(--muted);margin-left:4px" id="standup-today-summary"></span>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <button class="btn btn-secondary btn-sm" onclick="copyStandupSummary()">⎘ Copy Summary</button>
+          </div>
+        </div>
+        <div id="standup-kpis" class="kpi-strip"></div>
+        <div id="standup-today-grid" class="standup-grid"></div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="standup-sub-panel" id="standup-tab-history">
+        <div class="standup-history-hd">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="sh-member" onchange="renderStandupHistory()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit">
+              <option value="">All Members</option>
+            </select>
+            <input type="date" id="sh-from" onchange="renderStandupHistory()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit">
+            <span style="font-size:12px;color:var(--muted)">to</span>
+            <input type="date" id="sh-to" onchange="renderStandupHistory()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit">
+            <button class="btn btn-secondary btn-sm" onclick="clearHistoryFilters()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="card" style="padding:13px">
+          <div class="tbl-wrap">
+            <table class="standup-history-tbl">
+              <thead><tr>
+                <th style="width:100px">Date</th>
+                <th style="width:120px">Member</th>
+                <th>Yesterday</th>
+                <th>Today / Tasks</th>
+                <th style="min-width:120px">Blockers</th>
+                <th style="min-width:120px">Help Needed</th>
+                <th style="width:70px">Mood</th>
+                <th style="width:80px">Actions</th>
+              </tr></thead>
+              <tbody id="standup-history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEEKLY REPORT TAB -->
+      <div class="standup-sub-panel" id="standup-tab-weekly">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+          <span class="standup-date-label">Week of</span>
+          <input type="date" id="sw-week-start" onchange="renderStandupWeekly()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit">
+          <button class="btn btn-secondary btn-sm" onclick="setCurrentWeek()">This Week</button>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <button class="btn btn-secondary btn-sm" onclick="exportWeeklyTxt()">⬇ Export TXT</button>
+            <button class="btn btn-success btn-sm" onclick="copyWeeklyReport()">⎘ Copy Report</button>
+          </div>
+        </div>
+        <div id="standup-weekly-content"></div>
+      </div>
+    </div>
+
     <!-- ── WEEKLY REPORT ── -->
     <div class="content panel" id="panel-report">
       <div class="ph">
@@ -451,6 +618,65 @@ tr.done-row td{opacity:.65;}
         </div>
       </div>
       <div id="report-slides"></div>
+    </div>
+
+    <!-- ── SPRINT RETROSPECTIVE ── -->
+    <div class="content panel" id="panel-retro">
+      <div class="ph">
+        <div><h2>Sprint Retrospective</h2><p>Team reflection — What went well, what to improve &amp; action items per sprint</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" id="retro-export-btn" onclick="exportRetro()" style="display:none">⬇ Export TXT</button>
+          <button class="btn btn-primary btn-sm" onclick="openRetroNewModal()">+ New Retro</button>
+        </div>
+      </div>
+
+      <!-- Retro Picker -->
+      <div class="retro-picker-bar">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sprint</span>
+        <select id="retro-select" onchange="loadRetro(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;min-width:200px">
+          <option value="">— Create a new retro to get started —</option>
+        </select>
+        <span id="retro-format-badge" style="display:none;font-size:11px;font-weight:600;background:var(--accent-light);color:var(--accent);padding:3px 9px;border-radius:5px;border:1px solid var(--border)"></span>
+        <span id="retro-date-badge" style="font-size:11px;color:var(--muted)"></span>
+        <div style="margin-left:auto;display:flex;gap:7px">
+          <button class="btn btn-secondary btn-sm" id="retro-edit-btn" onclick="openRetroEditModal()" style="display:none">✏ Edit</button>
+          <button class="btn btn-danger btn-sm" id="retro-del-btn" onclick="deleteCurrentRetro()" style="display:none">✕ Delete</button>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="retro-tab-bar">
+        <button class="retro-tab on" onclick="switchRetroTab('board',this)">Board</button>
+        <button class="retro-tab" onclick="switchRetroTab('actions',this)">Action Items <span id="retro-action-count" style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;margin-left:3px;display:none"></span></button>
+        <button class="retro-tab" onclick="switchRetroTab('history',this)">History</button>
+      </div>
+
+      <!-- Board Tab -->
+      <div class="retro-sub-panel on" id="retro-tab-board">
+        <div id="retro-board-content">
+          <div class="empty" style="padding:48px"><div class="empty-icon">🔁</div>No retro selected — click "+ New Retro" to create your first sprint retrospective.</div>
+        </div>
+      </div>
+
+      <!-- Action Items Tab -->
+      <div class="retro-sub-panel" id="retro-tab-actions">
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:11px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:#f8fafc">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--accent);letter-spacing:.05em">Action Items</span>
+            <button class="btn btn-primary btn-xs" onclick="openRetroActionModal()">+ Add Action</button>
+          </div>
+          <div id="retro-actions-list">
+            <div class="empty" style="padding:28px"><div class="empty-icon">🎯</div>No action items yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div class="retro-sub-panel" id="retro-tab-history">
+        <div id="retro-history-list">
+          <div class="empty" style="padding:48px"><div class="empty-icon">📋</div>No retrospectives yet.</div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -642,6 +868,133 @@ tr.done-row td{opacity:.65;}
   </div>
 </div>
 
+<!-- ══ STANDUP MODAL ══ -->
+<div class="modal-overlay" id="standup-modal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3 id="standup-modal-title">Log Daily Standup</h3><button class="modal-close" onclick="closeModal('standup-modal')">×</button></div>
+    <div class="modal-body" style="max-height:78vh;overflow-y:auto;padding:16px 18px">
+      <input type="hidden" id="sd-id">
+      <div class="modal-grid">
+        <div class="fg"><label>Date *</label><input type="date" id="sd-date" onchange="loadMemberTasksInModal()"></div>
+        <div class="fg"><label>Team Member *</label>
+          <select id="sd-member" onchange="loadMemberTasksInModal()"><option value="">Select member…</option></select>
+        </div>
+
+        <!-- Active tasks checklist — auto-populated when member is selected -->
+        <div class="fg span2" id="sd-tasks-section" style="display:none">
+          <label>Today's Tasks <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">— tick tasks you'll work on today; optionally update their status</span></label>
+          <div id="sd-task-list" style="border:1px solid var(--border);border-radius:7px;overflow:hidden;max-height:240px;overflow-y:auto;background:var(--surface)"></div>
+          <div id="sd-no-tasks-msg" style="display:none;font-size:11px;color:var(--muted);padding:8px 0">No active tasks assigned to this member.</div>
+        </div>
+
+        <div class="fg span2"><label>What did you complete yesterday?</label>
+          <textarea id="sd-yesterday" placeholder="Summarise completed work, merged PRs, resolved items…" style="min-height:65px"></textarea>
+        </div>
+        <div class="fg span2"><label>What will you work on today? <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">(free text — supplements task selection above)</span></label>
+          <textarea id="sd-today" placeholder="Goals, focus areas, meetings, other non-tracked work…" style="min-height:55px"></textarea>
+        </div>
+
+        <div class="fg span2">
+          <label>Blockers <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">(leave blank if none)</span></label>
+          <textarea id="sd-blockers" placeholder="Describe anything blocking progress — dependencies, access issues, unclear requirements…" style="min-height:55px"></textarea>
+          <label style="display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;font-weight:500;text-transform:none;cursor:pointer;letter-spacing:0;color:var(--text)">
+            <input type="checkbox" id="sd-blockers-resolved" style="width:14px;height:14px;accent-color:var(--green)">
+            <span>Mark blocker as <strong style="color:var(--green)">Resolved</strong></span>
+          </label>
+        </div>
+
+        <div class="fg span2">
+          <label>Help Needed <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">(leave blank if none)</span></label>
+          <textarea id="sd-help" placeholder="What assistance do you need from the team or manager?" style="min-height:55px"></textarea>
+          <label style="display:flex;align-items:center;gap:7px;margin-top:6px;font-size:12px;font-weight:500;text-transform:none;cursor:pointer;letter-spacing:0;color:var(--text)">
+            <input type="checkbox" id="sd-help-addressed" style="width:14px;height:14px;accent-color:var(--green)">
+            <span>Mark help request as <strong style="color:var(--green)">Addressed</strong></span>
+          </label>
+        </div>
+
+        <div class="fg"><label>Mood / Energy</label>
+          <select id="sd-mood">
+            <option value="3" selected>3 — Neutral</option>
+            <option value="1">1 — Struggling</option>
+            <option value="2">2 — Below average</option>
+            <option value="4">4 — Good</option>
+            <option value="5">5 — Energised</option>
+          </select>
+        </div>
+        <div class="fg"><label>Sprint / Iteration</label>
+          <input type="text" id="sd-sprint" placeholder="e.g. Sprint 4">
+        </div>
+        <div class="fg span2"><label>Notes / Context</label>
+          <textarea id="sd-notes" placeholder="Any extra context, decisions made, risk flags, or follow-ups…" style="min-height:50px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('standup-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveStandup()">Save Standup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RETRO MODAL ══ -->
+<div class="modal-overlay" id="retro-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h3 id="retro-modal-title">New Sprint Retrospective</h3><button class="modal-close" onclick="closeModal('retro-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="rm-id">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg"><label>Sprint / Iteration Name *</label><input type="text" id="rm-sprint" placeholder="e.g. Sprint 12, Q3 Week 1"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Start Date</label><input type="date" id="rm-start"></div>
+          <div class="fg"><label>End Date</label><input type="date" id="rm-end"></div>
+        </div>
+        <div class="fg">
+          <label>Retrospective Format</label>
+          <select id="rm-format">
+            <option value="classic">Classic — Went Well / Could Improve / Focus</option>
+            <option value="ssc">Start / Stop / Continue</option>
+            <option value="4ls">4Ls — Liked / Learned / Lacked / Longed For</option>
+            <option value="mss">Mad / Sad / Glad</option>
+          </select>
+        </div>
+        <div class="fg"><label>Notes / Context</label><textarea id="rm-notes" placeholder="Sprint goals, team composition, any context…" style="min-height:55px"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('retro-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRetroMeta()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RETRO ACTION ITEM MODAL ══ -->
+<div class="modal-overlay" id="retro-action-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h3 id="retro-action-modal-title">Add Action Item</h3><button class="modal-close" onclick="closeModal('retro-action-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ra-id">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="fg"><label>Action Item *</label><textarea id="ra-text" placeholder="What needs to be done?" style="min-height:65px"></textarea></div>
+        <div class="fg"><label>Owner</label><select id="ra-owner"><option value="">Unassigned</option></select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Due Date</label><input type="date" id="ra-due"></div>
+          <div class="fg"><label>Status</label>
+            <select id="ra-status">
+              <option value="open">Open</option>
+              <option value="inprogress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('retro-action-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRetroAction()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SETTINGS MODAL ══ -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal" style="max-width:460px">
@@ -695,14 +1048,16 @@ let S = {
   meta: { projectName: 'My Project', sprint: 'Sprint 1', wStart: '', wEnd: '', hoursPerDay: 8 },
   team: [],   // {id,name,role,days}  — days = working days available this month
   tasks: [],  // {id,name,assignee,priority,startDate,eta,deliveryDate,hlStatus,detailedStatus,blocker,dependency,riskFlag,comments,effort}
-  risks: []   // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
+  risks: [],  // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
+  standups: [],// {id,date,member,yesterday,today,blockers,helpNeeded,mood,sprint,linkedTaskIds,notes}
+  retros: []  // {id,sprint,startDate,endDate,format,items:[{id,category,text,votes}],actionItems:[{id,text,owner,dueDate,status}],notes}
 };
-let tid = 1, mid = 1, rid = 1;
+let tid = 1, mid = 1, rid = 1, sid = 1, retId = 1;
 let _isDirty = false, _ptInit = false;
 
 function persist() {
   localStorage.setItem('pt2_s', JSON.stringify(S));
-  localStorage.setItem('pt2_ids', JSON.stringify({t:tid,m:mid,r:rid}));
+  localStorage.setItem('pt2_ids', JSON.stringify({t:tid,m:mid,r:rid,s:sid,retId}));
   if (_ptInit) _isDirty = true;
   const ind = document.getElementById('hdr-save-ind');
   if (ind) {
@@ -730,8 +1085,11 @@ function hydrate() {
       });
       if (!S.meta.hoursPerDay) S.meta.hoursPerDay = 8;
     }
+    if (!S.standups) S.standups = [];
+    S.standups = S.standups.map(migrateStandupEntry);
+    if (!S.retros) S.retros = [];
     const ids = localStorage.getItem('pt2_ids');
-    if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; }
+    if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; sid=p.s||1; retId=p.retId||1; }
   } catch(e) {}
 }
 
@@ -743,7 +1101,7 @@ function nav(id, btn) {
   document.getElementById('panel-' + id).classList.add('on');
   document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
-  const renders = { overview: renderOverview, tasks: renderTasks, capacity: renderCapacity, workload: renderWorkload, risks: renderRisks, report: renderReport };
+  const renders = { overview: renderOverview, tasks: renderTasks, capacity: renderCapacity, workload: renderWorkload, risks: renderRisks, report: renderReport, standup: renderStandup, retro: renderRetro };
   if (renders[id]) renders[id]();
 }
 
@@ -823,6 +1181,7 @@ function badges() {
   const sbh = document.getElementById('sb-health');
   if (blocked>0||hRisks>0||overburnExists) { sbh.textContent='!'; sbh.className='sb-badge red'; }
   else { sbh.textContent='OK'; sbh.className='sb-badge green'; }
+  updateStandupSidebarBadge();
 }
 
 function updateHeader() {
@@ -856,8 +1215,8 @@ function saveSettings() {
 }
 function clearAll() {
   if (!confirm('Delete ALL tasks, team members, and risks? This cannot be undone.')) return;
-  S = { meta: S.meta, team: [], tasks: [], risks: [] };
-  tid=1; mid=1; rid=1;
+  S = { meta: S.meta, team: [], tasks: [], risks: [], standups: [], retros: [] };
+  tid=1; mid=1; rid=1; sid=1; retId=1;
   persist(); _isDirty = false; renderOverview(); badges(); closeModal('settings-modal');
 }
 function resetSample() {
@@ -1696,13 +2055,15 @@ function exportTxt() {
 function exportAllData() {
   const payload = {
     tool:        'ProjectTrackerDashboard',
-    version:     '1',
+    version:     '2',
     exportDate:  new Date().toISOString(),
     meta:        S.meta,
     team:        S.team,
     tasks:       S.tasks,
     risks:       S.risks,
-    ids:         { tid, mid, rid }
+    standups:    S.standups,
+    retros:      S.retros,
+    ids:         { tid, mid, rid, sid, retId }
   };
   const safeName = (S.meta.projectName || 'project').replace(/[^a-z0-9_\-]/gi, '_');
   const date = new Date().toISOString().slice(0, 10);
@@ -1798,19 +2159,24 @@ function applyLoadBackup() {
 
   if (mode === 'replace') {
     // Full restore — exact state from backup
-    S.meta  = _loadPayload.meta  || { projectName:'My Project', sprint:'Sprint 1', wStart:'', wEnd:'' };
-    S.team  = _loadPayload.team  || [];
-    S.tasks = _loadPayload.tasks || [];
-    S.risks = _loadPayload.risks || [];
+    S.meta     = _loadPayload.meta  || { projectName:'My Project', sprint:'Sprint 1', wStart:'', wEnd:'' };
+    S.team     = _loadPayload.team  || [];
+    S.tasks    = _loadPayload.tasks || [];
+    S.risks    = _loadPayload.risks || [];
+    S.standups = _loadPayload.standups || [];
+    S.retros   = _loadPayload.retros   || [];
     if (_loadPayload.ids) {
-      tid = _loadPayload.ids.tid || 1;
-      mid = _loadPayload.ids.mid || 1;
-      rid = _loadPayload.ids.rid || 1;
+      tid   = _loadPayload.ids.tid   || 1;
+      mid   = _loadPayload.ids.mid   || 1;
+      rid   = _loadPayload.ids.rid   || 1;
+      sid   = _loadPayload.ids.sid   || 1;
+      retId = _loadPayload.ids.retId || 1;
     } else {
-      // Infer safe counter values from max ID present
-      tid = S.tasks.reduce((m, t) => Math.max(m, t.id||0), 0) + 1;
-      mid = S.team.reduce((m, t)  => Math.max(m, t.id||0), 0) + 1;
-      rid = S.risks.reduce((m, r) => Math.max(m, r.id||0), 0) + 1;
+      tid   = S.tasks.reduce((m, t)    => Math.max(m, t.id||0), 0) + 1;
+      mid   = S.team.reduce((m, t)     => Math.max(m, t.id||0), 0) + 1;
+      rid   = S.risks.reduce((m, r)    => Math.max(m, r.id||0), 0) + 1;
+      sid   = S.standups.reduce((m,sd) => Math.max(m, sd.id||0), 0) + 1;
+      retId = S.retros.reduce((m,r)    => Math.max(m, r.id||0), 0) + 1;
     }
   } else {
     // Merge — add backup data on top of current session, remapping IDs to avoid conflicts
@@ -1840,18 +2206,34 @@ function applyLoadBackup() {
         linkedTaskId: r.linkedTaskId != null ? (taskIdRemap.get(r.linkedTaskId) ?? null) : null
       });
     });
+
+    // Standups: add all, remap IDs + fix linkedTaskIds references
+    (_loadPayload.standups||[]).forEach(sd => {
+      S.standups.push({
+        ...sd,
+        id: sid++,
+        linkedTaskIds: (sd.linkedTaskIds||[]).map(ti => taskIdRemap.get(ti) ?? ti)
+      });
+    });
+
+    // Retros: add all, remap IDs
+    (_loadPayload.retros||[]).forEach(r => {
+      S.retros.push({ ...r, id: retId++ });
+    });
   }
 
   persist();
   updateHeader();
   renderOverview();
   fillAssignees(['f-assignee', 't-assignee', 'r-owner']);
+  fillStandupMemberDropdowns();
   badges();
   closeModal('load-modal');
 
   const loaded = _loadPayload.tasks?.length || 0;
   const modeLabel = mode === 'replace' ? 'restored' : 'merged';
-  alert(`✅ Backup ${modeLabel} successfully!\n${loaded} task${loaded!==1?'s':''}, ${_loadPayload.team?.length||0} team member${(_loadPayload.team?.length||0)!==1?'s':''}, ${_loadPayload.risks?.length||0} risk${(_loadPayload.risks?.length||0)!==1?'s':''} loaded.\n\nAll panels have been updated.`);
+  const sdLoaded = _loadPayload.standups?.length || 0;
+  alert(`✅ Backup ${modeLabel} successfully!\n${loaded} task${loaded!==1?'s':''}, ${_loadPayload.team?.length||0} team member${(_loadPayload.team?.length||0)!==1?'s':''}, ${_loadPayload.risks?.length||0} risk${(_loadPayload.risks?.length||0)!==1?'s':''}, ${sdLoaded} standup${sdLoaded!==1?'s':''} loaded.\n\nAll panels have been updated.`);
 }
 
 // ════════════════════════════════════════
@@ -2313,6 +2695,1276 @@ function loadSampleData() {
   rid = 9;
 
   persist();
+}
+
+// ════════════════════════════════════════
+// DAILY STANDUP — HELPERS
+// ════════════════════════════════════════
+const MOOD_LABELS = { '1':'1 — Struggling','2':'2 — Below avg','3':'3 — Neutral','4':'4 — Good','5':'5 — Energised' };
+const MOOD_EMOJI  = { '1':'😞','2':'😕','3':'😐','4':'😊','5':'🚀' };
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function weekStart(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diff = (day === 0) ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function weekEnd(startStr) {
+  const d = new Date(startStr + 'T00:00:00');
+  d.setDate(d.getDate() + 6);
+  return d.toISOString().slice(0, 10);
+}
+
+function moodPip(mood) {
+  const m = String(mood || 3);
+  return `<span class="mood-pip mood-${m}">${MOOD_EMOJI[m]||''} ${MOOD_LABELS[m]||m}</span>`;
+}
+
+function standupForMember(date, member) {
+  return S.standups.find(sd => sd.date === date && sd.member === member) || null;
+}
+
+function migrateStandupEntry(sd) {
+  if (sd.blockersResolved    === undefined) sd.blockersResolved    = false;
+  if (sd.helpAddressed       === undefined) sd.helpAddressed       = false;
+  if (!sd.todayTaskIds)                     sd.todayTaskIds        = sd.linkedTaskIds || [];
+  if (!sd.taskStatusUpdates)                sd.taskStatusUpdates   = [];
+  return sd;
+}
+
+function taskStatusDotClass(status) {
+  const m = {'Done':'done','Blocked':'blocked','At Risk':'atrisk'};
+  return m[status] || '';
+}
+
+// ════════════════════════════════════════
+// DAILY STANDUP — RENDER
+// ════════════════════════════════════════
+function renderStandup() {
+  const dateEl = document.getElementById('standup-today-date');
+  if (!dateEl.value) dateEl.value = todayISO();
+  fillStandupMemberDropdowns();
+  renderStandupToday();
+  renderStandupHistory();
+  renderStandupWeekly();
+  updateStandupSidebarBadge();
+}
+
+function updateStandupSidebarBadge() {
+  const badge = document.getElementById('sb-standup');
+  if (!badge) return;
+  const count = S.standups.filter(sd => sd.date === todayISO()).length;
+  badge.textContent = count;
+  badge.style.display = count ? '' : 'none';
+}
+
+function switchStandupTab(tab, btn) {
+  document.querySelectorAll('.standup-tab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.standup-sub-panel').forEach(p => p.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  document.getElementById('standup-tab-' + tab).classList.add('on');
+  if (tab === 'history') renderStandupHistory();
+  if (tab === 'weekly')  renderStandupWeekly();
+}
+
+function renderStandupToday() {
+  const date = document.getElementById('standup-today-date').value || todayISO();
+  const dayEntries = S.standups.filter(sd => sd.date === date);
+  const activeBlockers = dayEntries.filter(sd => sd.blockers && sd.blockers.trim() && !sd.blockersResolved).length;
+  const resolvedBlockers = dayEntries.filter(sd => sd.blockers && sd.blockers.trim() && sd.blockersResolved).length;
+  const pendingHelp    = dayEntries.filter(sd => sd.helpNeeded && sd.helpNeeded.trim() && !sd.helpAddressed).length;
+  const addressedHelp  = dayEntries.filter(sd => sd.helpNeeded && sd.helpNeeded.trim() && sd.helpAddressed).length;
+  const total = S.team.length;
+
+  document.getElementById('standup-today-summary').textContent =
+    `${fmtDate(date)} — ${dayEntries.length}/${total} logged`;
+
+  document.getElementById('standup-kpis').innerHTML = `
+    <div class="kpi green"><div class="kpi-label">Logged</div><div class="kpi-value">${dayEntries.length}</div><div class="kpi-sub">of ${total} members</div></div>
+    <div class="kpi${activeBlockers?' red':''}"><div class="kpi-label">Active Blockers</div><div class="kpi-value">${activeBlockers}</div><div class="kpi-sub">${resolvedBlockers} resolved</div></div>
+    <div class="kpi${pendingHelp?' amber':''}"><div class="kpi-label">Help Pending</div><div class="kpi-value">${pendingHelp}</div><div class="kpi-sub">${addressedHelp} addressed</div></div>
+    <div class="kpi"><div class="kpi-label">Participation</div><div class="kpi-value">${total?Math.round(dayEntries.length/total*100):0}%</div><div class="kpi-sub">standup rate</div></div>
+  `;
+
+  if (!S.team.length) {
+    document.getElementById('standup-today-grid').innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Add team members in Capacity Planner first.</div>';
+    return;
+  }
+
+  document.getElementById('standup-today-grid').innerHTML = S.team.map(m => {
+    const entry = standupForMember(date, m.name);
+    const hasActiveBlocker = entry && entry.blockers && entry.blockers.trim() && !entry.blockersResolved;
+    const cls = entry ? (hasActiveBlocker ? 'has-blockers' : 'has-entry') : 'no-entry';
+
+    // Active tasks for this member (not done)
+    const activeTasks = S.tasks.filter(t => t.assignee === m.name && t.hlStatus !== 'Done');
+    const todayTasks  = entry ? S.tasks.filter(t => (entry.todayTaskIds||[]).includes(t.id)) : [];
+
+    if (!entry) {
+      const taskPreview = activeTasks.slice(0, 3).map(t =>
+        `<div class="today-task-item"><div class="today-task-dot ${taskStatusDotClass(t.hlStatus)}"></div><span>${esc(t.name)}</span></div>`
+      ).join('');
+      return `
+        <div class="standup-member-card ${cls}">
+          <div class="smc-hd">
+            <div><div class="smc-name">${esc(m.name)}</div><div class="smc-role">${esc(m.role||'')}</div></div>
+            <button class="btn btn-primary btn-xs" onclick="openStandupModal('${esc(m.name)}','${date}')">+ Log</button>
+          </div>
+          ${activeTasks.length ? `<div class="smc-body" style="padding-top:8px;padding-bottom:10px">
+            <div class="smc-lbl" style="margin-bottom:4px">Active Tasks (${activeTasks.length})</div>
+            ${taskPreview}
+            ${activeTasks.length>3?`<div style="font-size:10px;color:var(--muted);margin-top:3px">+${activeTasks.length-3} more</div>`:''}
+          </div>` : '<div class="smc-empty">No standup logged for this date</div>'}
+        </div>`;
+    }
+
+    // Blocker section
+    let blockerHtml = '';
+    if (entry.blockers && entry.blockers.trim()) {
+      const resolved = entry.blockersResolved;
+      blockerHtml = `
+        <div class="smc-field">
+          <div class="smc-lbl">Blocker</div>
+          <div class="smc-val ${resolved?'':'blocker'}" style="${resolved?'text-decoration:line-through;opacity:.65':''}">
+            ${esc(entry.blockers)}
+          </div>
+          <div class="smc-action-row">
+            <span class="blocker-tag ${resolved?'resolved':'active'}">${resolved?'✅ Resolved':'⛔ Active'}</span>
+            <button class="btn btn-xs ${resolved?'btn-danger':'btn-success'}"
+              onclick="toggleBlockerResolved(${entry.id})">${resolved?'↩ Reopen':'✓ Resolve'}</button>
+          </div>
+        </div>`;
+    }
+
+    // Help section
+    let helpHtml = '';
+    if (entry.helpNeeded && entry.helpNeeded.trim()) {
+      const addressed = entry.helpAddressed;
+      helpHtml = `
+        <div class="smc-field">
+          <div class="smc-lbl">Help Needed</div>
+          <div class="smc-val ${addressed?'':'help'}" style="${addressed?'text-decoration:line-through;opacity:.65':''}">
+            ${esc(entry.helpNeeded)}
+          </div>
+          <div class="smc-action-row">
+            <span class="help-tag ${addressed?'addressed':'pending'}">${addressed?'✅ Addressed':'🙋 Pending'}</span>
+            <button class="btn btn-xs ${addressed?'btn-danger':'btn-success'}"
+              onclick="toggleHelpAddressed(${entry.id})">${addressed?'↩ Reopen':'✓ Address'}</button>
+          </div>
+        </div>`;
+    }
+
+    // Today's tasks with live status
+    let todayTasksHtml = '';
+    if (todayTasks.length) {
+      todayTasksHtml = `<div class="smc-field">
+        <div class="smc-lbl">Working On Today</div>
+        ${todayTasks.map(t => `
+          <div class="today-task-item">
+            <div class="today-task-dot ${taskStatusDotClass(t.hlStatus)}"></div>
+            <span style="flex:1">${esc(t.name)}</span>
+            <select onchange="quickUpdateTaskStatus(${t.id},this.value,${entry.id})"
+              style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;font-family:inherit;background:var(--surface);color:var(--text)">
+              <option value="Not Started" ${t.hlStatus==='Not Started'?'selected':''}>Not Started</option>
+              <option value="In Progress" ${t.hlStatus==='In Progress'?'selected':''}>In Progress</option>
+              <option value="At Risk"     ${t.hlStatus==='At Risk'?'selected':''}>At Risk</option>
+              <option value="Blocked"     ${t.hlStatus==='Blocked'?'selected':''}>Blocked</option>
+              <option value="Done"        ${t.hlStatus==='Done'?'selected':''}>Done</option>
+            </select>
+          </div>`).join('')}
+      </div>`;
+    }
+
+    return `
+      <div class="standup-member-card ${cls}">
+        <div class="smc-hd">
+          <div><div class="smc-name">${esc(m.name)}</div><div class="smc-role">${esc(m.role||'')}</div></div>
+          <div style="display:flex;gap:5px;align-items:center">
+            ${moodPip(entry.mood)}
+            <button class="btn btn-secondary btn-xs" onclick="openStandupModal('${esc(m.name)}','${date}',${entry.id})">Edit</button>
+          </div>
+        </div>
+        <div class="smc-body">
+          ${entry.yesterday ? `<div class="smc-field"><div class="smc-lbl">Yesterday</div><div class="smc-val">${esc(entry.yesterday)}</div></div>` : ''}
+          ${entry.today     ? `<div class="smc-field"><div class="smc-lbl">Today (notes)</div><div class="smc-val">${esc(entry.today)}</div></div>` : ''}
+          ${todayTasksHtml}
+          ${blockerHtml}
+          ${helpHtml}
+          ${entry.notes     ? `<div class="smc-field"><div class="smc-lbl">Notes</div><div class="smc-val">${esc(entry.notes)}</div></div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderStandupHistory() {
+  const memberFilter = document.getElementById('sh-member')?.value || '';
+  const fromFilter   = document.getElementById('sh-from')?.value   || '';
+  const toFilter     = document.getElementById('sh-to')?.value     || '';
+
+  let rows = [...S.standups].sort((a,b) => b.date.localeCompare(a.date));
+  if (memberFilter) rows = rows.filter(sd => sd.member === memberFilter);
+  if (fromFilter)   rows = rows.filter(sd => sd.date >= fromFilter);
+  if (toFilter)     rows = rows.filter(sd => sd.date <= toFilter);
+
+  const tbody = document.getElementById('standup-history-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><div class="empty-icon">📋</div>No standup entries found.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(sd => {
+    const blockerCell = sd.blockers
+      ? `<div>${esc(sd.blockers)}</div><span class="blocker-tag ${sd.blockersResolved?'resolved':'active'}" style="margin-top:3px">${sd.blockersResolved?'✅ Resolved':'⛔ Active'}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    const helpCell = sd.helpNeeded
+      ? `<div>${esc(sd.helpNeeded)}</div><span class="help-tag ${sd.helpAddressed?'addressed':'pending'}" style="margin-top:3px">${sd.helpAddressed?'✅ Addressed':'🙋 Pending'}</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    const taskUpdates = (sd.taskStatusUpdates||[]).length
+      ? `<div style="margin-top:3px;font-size:10px;color:var(--muted)">${sd.taskStatusUpdates.length} task update${sd.taskStatusUpdates.length!==1?'s':''}</div>`
+      : '';
+    return `
+    <tr>
+      <td style="white-space:nowrap;font-weight:600">${fmtDate(sd.date)}</td>
+      <td style="font-weight:600">${esc(sd.member)}</td>
+      <td class="cell-long">${esc(sd.yesterday||'—')}</td>
+      <td class="cell-long">${esc(sd.today||'—')}${taskUpdates}</td>
+      <td style="min-width:120px">${blockerCell}</td>
+      <td style="min-width:120px">${helpCell}</td>
+      <td>${moodPip(sd.mood)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-secondary btn-xs" onclick="openStandupModal('${esc(sd.member)}','${sd.date}',${sd.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteStandup(${sd.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStandupWeekly() {
+  const el = document.getElementById('sw-week-start');
+  if (!el.value) setCurrentWeek();
+  const ws  = el.value || weekStart(todayISO());
+  const we  = weekEnd(ws);
+
+  const rows = S.standups.filter(sd => sd.date >= ws && sd.date <= we);
+  const container = document.getElementById('standup-weekly-content');
+  if (!container) return;
+
+  if (!rows.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>No standup entries for this week.</div>';
+    return;
+  }
+
+  const byMember     = {};
+  rows.forEach(sd => {
+    if (!byMember[sd.member]) byMember[sd.member] = [];
+    byMember[sd.member].push(sd);
+  });
+
+  const allWithBlockers    = rows.filter(sd => sd.blockers && sd.blockers.trim());
+  const activeBlockers     = allWithBlockers.filter(sd => !sd.blockersResolved);
+  const resolvedBlockers   = allWithBlockers.filter(sd => sd.blockersResolved);
+  const allWithHelp        = rows.filter(sd => sd.helpNeeded && sd.helpNeeded.trim());
+  const pendingHelp        = allWithHelp.filter(sd => !sd.helpAddressed);
+  const addressedHelp      = allWithHelp.filter(sd => sd.helpAddressed);
+  const uniqueDays         = [...new Set(rows.map(sd => sd.date))].length;
+  const allTaskUpdates     = rows.flatMap(sd => (sd.taskStatusUpdates||[]).map(u => ({ ...u, member: sd.member, date: sd.date })));
+  const blockerResolvRate  = allWithBlockers.length ? Math.round(resolvedBlockers.length/allWithBlockers.length*100) : null;
+  const helpAddrRate       = allWithHelp.length ? Math.round(addressedHelp.length/allWithHelp.length*100) : null;
+
+  let html = `
+    <div class="kpi-strip" style="margin-bottom:16px">
+      <div class="kpi green"><div class="kpi-label">Members</div><div class="kpi-value">${Object.keys(byMember).length}</div><div class="kpi-sub">participated</div></div>
+      <div class="kpi"><div class="kpi-label">Standup Logs</div><div class="kpi-value">${rows.length}</div><div class="kpi-sub">${uniqueDays} active days</div></div>
+      <div class="kpi${activeBlockers.length?' red':''}"><div class="kpi-label">Active Blockers</div><div class="kpi-value">${activeBlockers.length}</div><div class="kpi-sub">${resolvedBlockers.length} resolved${blockerResolvRate!==null?' ('+blockerResolvRate+'%)':''}</div></div>
+      <div class="kpi${pendingHelp.length?' amber':''}"><div class="kpi-label">Help Pending</div><div class="kpi-value">${pendingHelp.length}</div><div class="kpi-sub">${addressedHelp.length} addressed${helpAddrRate!==null?' ('+helpAddrRate+'%)':''}</div></div>
+      <div class="kpi purple"><div class="kpi-label">Task Updates</div><div class="kpi-value">${allTaskUpdates.length}</div><div class="kpi-sub">status changes</div></div>
+    </div>`;
+
+  Object.entries(byMember).forEach(([member, entries]) => {
+    entries.sort((a,b) => a.date.localeCompare(b.date));
+    const mBlockers  = entries.filter(e => e.blockers && e.blockers.trim());
+    const mActive    = mBlockers.filter(e => !e.blockersResolved);
+    const mResolved  = mBlockers.filter(e => e.blockersResolved);
+    const mHelp      = entries.filter(e => e.helpNeeded && e.helpNeeded.trim());
+    const mPending   = mHelp.filter(e => !e.helpAddressed);
+    const mAddressed = mHelp.filter(e => e.helpAddressed);
+    const avgMood    = entries.length ? (entries.reduce((s,e)=>s+(parseInt(e.mood)||3),0)/entries.length).toFixed(1) : '—';
+    const memberTaskUpd = entries.flatMap(e => (e.taskStatusUpdates||[]).map(u => ({ ...u, date: e.date })));
+
+    html += `
+      <div class="standup-week-card">
+        <div class="standup-week-hd">
+          <h3>${esc(member)} — ${entries.length} standup${entries.length!==1?'s':''} &nbsp;·&nbsp; Avg mood: ${avgMood}</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${mActive.length    ? `<span style="background:rgba(220,38,38,.25);color:#fca5a5;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${mActive.length} active blocker${mActive.length!==1?'s':''}</span>` : ''}
+            ${mResolved.length  ? `<span style="background:rgba(22,163,74,.25);color:#86efac;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${mResolved.length} resolved</span>` : ''}
+            ${mPending.length   ? `<span style="background:rgba(124,58,237,.25);color:#c4b5fd;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${mPending.length} help pending</span>` : ''}
+            ${mAddressed.length ? `<span style="background:rgba(22,163,74,.25);color:#86efac;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${mAddressed.length} addressed</span>` : ''}
+          </div>
+        </div>
+        <div class="standup-week-body">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th style="width:85px">Date</th>
+                <th>Yesterday</th>
+                <th>Today / Tasks</th>
+                <th style="min-width:130px">Blockers</th>
+                <th style="min-width:130px">Help Needed</th>
+                <th style="width:65px">Mood</th>
+              </tr></thead>
+              <tbody>
+                ${entries.map(e => {
+                  const todayTasks = S.tasks.filter(t => (e.todayTaskIds||[]).includes(t.id));
+                  const tasksList  = todayTasks.length
+                    ? `<div style="margin-top:4px">${todayTasks.map(t=>`<div class="today-task-item"><div class="today-task-dot ${taskStatusDotClass(t.hlStatus)}"></div><span>${esc(t.name)} <em style="color:var(--muted)">(${t.hlStatus})</em></span></div>`).join('')}</div>`
+                    : '';
+                  const bCell = e.blockers
+                    ? `<span class="blocker-tag ${e.blockersResolved?'resolved':'active'}">${e.blockersResolved?'✅':'⛔'} ${esc(e.blockers)}</span>`
+                    : '—';
+                  const hCell = e.helpNeeded
+                    ? `<span class="help-tag ${e.helpAddressed?'addressed':'pending'}">${e.helpAddressed?'✅':'🙋'} ${esc(e.helpNeeded)}</span>`
+                    : '—';
+                  return `
+                  <tr>
+                    <td style="font-weight:600;white-space:nowrap">${fmtDateShort(e.date)}</td>
+                    <td class="cell-long">${esc(e.yesterday||'—')}</td>
+                    <td class="cell-long">${esc(e.today||'')}${tasksList}</td>
+                    <td>${bCell}</td>
+                    <td>${hCell}</td>
+                    <td>${moodPip(e.mood)}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${memberTaskUpd.length ? `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--accent);letter-spacing:.05em;margin-bottom:6px">Task Status Updates (${memberTaskUpd.length})</div>
+            ${memberTaskUpd.map(u => {
+              const task = S.tasks.find(t => t.id === u.taskId);
+              return `<div style="font-size:11px;padding:2px 0;color:var(--text)">
+                <strong>${fmtDateShort(u.date)}</strong> — #${u.taskId} ${task?esc(task.name):'(deleted)'} → ${sBadge(u.newStatus)}
+              </div>`;
+            }).join('')}
+          </div>` : ''}
+        </div>
+      </div>`;
+  });
+
+  // Active blockers summary
+  if (activeBlockers.length) {
+    html += `
+      <div class="card">
+        <div class="card-hd" style="color:var(--red)">⛔ Active Blockers — Need Resolution</div>
+        ${activeBlockers.map(e => `
+          <div class="alert-item err" style="margin-bottom:6px;justify-content:space-between">
+            <div><strong>${esc(e.member)}</strong> (${fmtDateShort(e.date)}): ${esc(e.blockers)}</div>
+            <button class="btn btn-success btn-xs" onclick="toggleBlockerResolved(${e.id})">✓ Resolve</button>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Resolved blockers
+  if (resolvedBlockers.length) {
+    html += `
+      <div class="card">
+        <div class="card-hd" style="color:var(--green)">✅ Resolved Blockers</div>
+        ${resolvedBlockers.map(e => `
+          <div class="alert-item" style="background:var(--green-bg);border-color:#bbf7d0;color:#166534;margin-bottom:6px">
+            <span>✅</span>
+            <div style="text-decoration:line-through"><strong>${esc(e.member)}</strong> (${fmtDateShort(e.date)}): ${esc(e.blockers)}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Pending help
+  if (pendingHelp.length) {
+    html += `
+      <div class="card">
+        <div class="card-hd" style="color:#7c3aed">🙋 Help Requests — Pending</div>
+        ${pendingHelp.map(e => `
+          <div class="alert-item info" style="margin-bottom:6px;border-color:#ddd6fe;background:#f5f3ff;color:#5b21b6;justify-content:space-between">
+            <div><strong>${esc(e.member)}</strong> (${fmtDateShort(e.date)}): ${esc(e.helpNeeded)}</div>
+            <button class="btn btn-success btn-xs" onclick="toggleHelpAddressed(${e.id})">✓ Address</button>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Addressed help
+  if (addressedHelp.length) {
+    html += `
+      <div class="card">
+        <div class="card-hd" style="color:var(--green)">✅ Help Requests — Addressed</div>
+        ${addressedHelp.map(e => `
+          <div class="alert-item" style="background:var(--green-bg);border-color:#bbf7d0;color:#166534;margin-bottom:6px">
+            <span>✅</span>
+            <div style="text-decoration:line-through"><strong>${esc(e.member)}</strong> (${fmtDateShort(e.date)}): ${esc(e.helpNeeded)}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function setCurrentWeek() {
+  const el = document.getElementById('sw-week-start');
+  if (el) { el.value = weekStart(todayISO()); renderStandupWeekly(); }
+}
+
+// ════════════════════════════════════════
+// DAILY STANDUP — MODAL
+// ════════════════════════════════════════
+function fillStandupMemberDropdowns() {
+  ['sd-member','sh-member'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    while (el.options.length > 1) el.remove(1);
+    S.team.forEach(m => { const o = document.createElement('option'); o.value = m.name; o.text = m.name; el.appendChild(o); });
+    if (cur) el.value = cur;
+  });
+}
+
+function loadMemberTasksInModal() {
+  const member  = document.getElementById('sd-member').value;
+  const section = document.getElementById('sd-tasks-section');
+  const list    = document.getElementById('sd-task-list');
+  const noMsg   = document.getElementById('sd-no-tasks-msg');
+  const editId  = parseInt(document.getElementById('sd-id').value) || null;
+  const existing = editId ? S.standups.find(sd => sd.id === editId) : null;
+
+  if (!member) { section.style.display = 'none'; return; }
+
+  const activeTasks = S.tasks.filter(t => t.assignee === member && t.hlStatus !== 'Done');
+  section.style.display = '';
+
+  if (!activeTasks.length) {
+    list.style.display = 'none';
+    noMsg.style.display = '';
+    return;
+  }
+  list.style.display = '';
+  noMsg.style.display = 'none';
+
+  list.innerHTML = activeTasks.map(t => {
+    const checked = existing && (existing.todayTaskIds||[]).includes(t.id);
+    const existingUpd = existing && (existing.taskStatusUpdates||[]).find(u => u.taskId === t.id);
+    const selVal = existingUpd ? existingUpd.newStatus : '';
+    return `
+      <div class="sd-task-row">
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;background:${checked?'var(--accent-light)':'var(--surface)'}">
+          <input type="checkbox" class="sd-task-cb" data-id="${t.id}" ${checked?'checked':''}
+            style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0"
+            onchange="toggleTaskRowStatus(${t.id})">
+          <span style="flex:1;font-size:12px;font-weight:${checked?700:500}">${esc(t.name)}</span>
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap">${esc(t.feature||'')}</span>
+          ${pBadge(t.priority)}
+          ${sBadge(t.hlStatus)}
+        </label>
+        <div id="sd-status-row-${t.id}" style="display:${checked?'flex':'none'};align-items:center;gap:8px;padding:5px 12px 7px 34px;background:#f0f6ff;border-bottom:1px solid var(--border)">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);white-space:nowrap">Update status:</span>
+          <select class="sd-task-status-sel" data-id="${t.id}"
+            style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;flex:1">
+            <option value="">Keep — ${t.hlStatus}</option>
+            <option value="In Progress" ${selVal==='In Progress'?'selected':''}>In Progress</option>
+            <option value="At Risk"     ${selVal==='At Risk'    ?'selected':''}>At Risk</option>
+            <option value="Blocked"     ${selVal==='Blocked'    ?'selected':''}>Blocked</option>
+            <option value="Done"        ${selVal==='Done'       ?'selected':''}>Done</option>
+          </select>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleTaskRowStatus(taskId) {
+  const cb  = document.querySelector(`.sd-task-cb[data-id="${taskId}"]`);
+  const row = document.getElementById(`sd-status-row-${taskId}`);
+  const lbl = cb?.closest('label');
+  if (cb && row) row.style.display = cb.checked ? 'flex' : 'none';
+  if (lbl) lbl.style.background = cb.checked ? 'var(--accent-light)' : 'var(--surface)';
+}
+
+function openStandupModal(memberName, date, editId) {
+  document.getElementById('sd-id').value     = editId || '';
+  document.getElementById('sd-date').value   = date   || document.getElementById('standup-today-date')?.value || todayISO();
+  document.getElementById('sd-sprint').value = S.meta.sprint || '';
+  fillStandupMemberDropdowns();
+
+  if (editId) {
+    const entry = S.standups.find(sd => sd.id === editId);
+    if (entry) {
+      document.getElementById('sd-member').value              = entry.member;
+      document.getElementById('sd-yesterday').value           = entry.yesterday  || '';
+      document.getElementById('sd-today').value               = entry.today      || '';
+      document.getElementById('sd-blockers').value            = entry.blockers   || '';
+      document.getElementById('sd-blockers-resolved').checked = !!entry.blockersResolved;
+      document.getElementById('sd-help').value                = entry.helpNeeded || '';
+      document.getElementById('sd-help-addressed').checked    = !!entry.helpAddressed;
+      document.getElementById('sd-mood').value                = String(entry.mood || 3);
+      document.getElementById('sd-sprint').value              = entry.sprint     || S.meta.sprint || '';
+      document.getElementById('sd-notes').value               = entry.notes      || '';
+      document.getElementById('standup-modal-title').textContent = 'Edit Standup';
+    }
+  } else {
+    document.getElementById('sd-member').value              = memberName || '';
+    document.getElementById('sd-yesterday').value           = '';
+    document.getElementById('sd-today').value               = '';
+    document.getElementById('sd-blockers').value            = '';
+    document.getElementById('sd-blockers-resolved').checked = false;
+    document.getElementById('sd-help').value                = '';
+    document.getElementById('sd-help-addressed').checked    = false;
+    document.getElementById('sd-mood').value                = '3';
+    document.getElementById('sd-notes').value               = '';
+    document.getElementById('standup-modal-title').textContent = 'Log Daily Standup';
+  }
+  loadMemberTasksInModal();
+  openModal('standup-modal');
+}
+
+function saveStandup() {
+  const member = document.getElementById('sd-member').value.trim();
+  const date   = document.getElementById('sd-date').value;
+  if (!member) { alert('Please select a team member.'); return; }
+  if (!date)   { alert('Please select a date.'); return; }
+
+  // Collect today's task selections and status updates
+  const todayTaskIds      = [];
+  const taskStatusUpdates = [];
+  document.querySelectorAll('.sd-task-cb:checked').forEach(cb => {
+    const taskId = parseInt(cb.dataset.id);
+    todayTaskIds.push(taskId);
+    const sel = document.querySelector(`.sd-task-status-sel[data-id="${taskId}"]`);
+    if (sel && sel.value) taskStatusUpdates.push({ taskId, newStatus: sel.value });
+  });
+
+  // Apply status updates to task tracker
+  taskStatusUpdates.forEach(upd => {
+    const task = S.tasks.find(t => t.id === upd.taskId);
+    if (task) task.hlStatus = upd.newStatus;
+  });
+
+  const existingId = parseInt(document.getElementById('sd-id').value) || null;
+  const existing   = existingId ? S.standups.find(sd => sd.id === existingId) : null;
+
+  const entry = {
+    id:                  existingId,
+    date,
+    member,
+    yesterday:           document.getElementById('sd-yesterday').value.trim(),
+    today:               document.getElementById('sd-today').value.trim(),
+    blockers:            document.getElementById('sd-blockers').value.trim(),
+    blockersResolved:    document.getElementById('sd-blockers-resolved').checked,
+    helpNeeded:          document.getElementById('sd-help').value.trim(),
+    helpAddressed:       document.getElementById('sd-help-addressed').checked,
+    mood:                parseInt(document.getElementById('sd-mood').value) || 3,
+    sprint:              document.getElementById('sd-sprint').value.trim(),
+    todayTaskIds,
+    linkedTaskIds:       todayTaskIds,
+    taskStatusUpdates:   existing
+                           ? [...(existing.taskStatusUpdates||[]).filter(u => !taskStatusUpdates.find(n => n.taskId === u.taskId)), ...taskStatusUpdates]
+                           : taskStatusUpdates,
+    notes:               document.getElementById('sd-notes').value.trim()
+  };
+
+  if (entry.id) {
+    const idx = S.standups.findIndex(sd => sd.id === entry.id);
+    if (idx >= 0) S.standups[idx] = entry;
+  } else {
+    entry.id = sid++;
+    S.standups.push(entry);
+  }
+
+  persist();
+  closeModal('standup-modal');
+  renderStandupToday();
+  renderStandupHistory();
+  updateStandupSidebarBadge();
+  if (taskStatusUpdates.length) { badges(); renderOverview(); }
+}
+
+function deleteStandup(id) {
+  if (!confirm('Delete this standup entry?')) return;
+  S.standups = S.standups.filter(sd => sd.id !== id);
+  persist();
+  renderStandupHistory();
+  renderStandupToday();
+  updateStandupSidebarBadge();
+}
+
+function toggleBlockerResolved(sdId) {
+  const sd = S.standups.find(s => s.id === sdId);
+  if (!sd) return;
+  sd.blockersResolved = !sd.blockersResolved;
+  persist();
+  renderStandupToday();
+  if (document.getElementById('standup-tab-weekly').classList.contains('on'))  renderStandupWeekly();
+  if (document.getElementById('standup-tab-history').classList.contains('on')) renderStandupHistory();
+}
+
+function toggleHelpAddressed(sdId) {
+  const sd = S.standups.find(s => s.id === sdId);
+  if (!sd) return;
+  sd.helpAddressed = !sd.helpAddressed;
+  persist();
+  renderStandupToday();
+  if (document.getElementById('standup-tab-weekly').classList.contains('on'))  renderStandupWeekly();
+  if (document.getElementById('standup-tab-history').classList.contains('on')) renderStandupHistory();
+}
+
+function quickUpdateTaskStatus(taskId, newStatus, sdId) {
+  const task = S.tasks.find(t => t.id === taskId);
+  if (!task || !newStatus) return;
+  task.hlStatus = newStatus;
+  const sd = S.standups.find(s => s.id === sdId);
+  if (sd) {
+    const updates = sd.taskStatusUpdates || [];
+    const idx = updates.findIndex(u => u.taskId === taskId);
+    if (idx >= 0) updates[idx].newStatus = newStatus;
+    else updates.push({ taskId, newStatus });
+    sd.taskStatusUpdates = updates;
+  }
+  persist();
+  renderStandupToday();
+  badges();
+  renderOverview();
+}
+
+// ════════════════════════════════════════
+// DAILY STANDUP — COPY / EXPORT
+// ════════════════════════════════════════
+function copyStandupSummary() {
+  const date = document.getElementById('standup-today-date').value || todayISO();
+  const entries = S.standups.filter(sd => sd.date === date);
+  if (!entries.length) { alert('No standup entries for this date.'); return; }
+  const lines = [`DAILY STANDUP — ${fmtDate(date)}`, '='.repeat(40), ''];
+  entries.forEach(e => {
+    const todayTasks = S.tasks.filter(t => (e.todayTaskIds||[]).includes(t.id));
+    lines.push(`👤 ${e.member}`);
+    if (e.yesterday)    lines.push(`  Yesterday : ${e.yesterday}`);
+    if (e.today)        lines.push(`  Today     : ${e.today}`);
+    if (todayTasks.length) todayTasks.forEach(t => lines.push(`  Task      : #${t.id} ${t.name} [${t.hlStatus}]`));
+    if (e.blockers)     lines.push(`  ${e.blockersResolved?'✅ Resolved Blocker':'⛔ Blocker'} : ${e.blockers}`);
+    if (e.helpNeeded)   lines.push(`  ${e.helpAddressed?'✅ Help Addressed':'🙋 Help'} : ${e.helpNeeded}`);
+    if (e.notes)        lines.push(`  Notes     : ${e.notes}`);
+    lines.push('');
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Standup summary copied to clipboard!'));
+}
+
+function _buildWeeklyLines(ws, we, rows) {
+  const byMember = {};
+  rows.sort((a,b)=>a.date.localeCompare(b.date)).forEach(sd => {
+    if (!byMember[sd.member]) byMember[sd.member] = [];
+    byMember[sd.member].push(sd);
+  });
+
+  const activeBlockers   = rows.filter(e => e.blockers   && e.blockers.trim()   && !e.blockersResolved);
+  const resolvedBlockers = rows.filter(e => e.blockers   && e.blockers.trim()   && e.blockersResolved);
+  const pendingHelp      = rows.filter(e => e.helpNeeded && e.helpNeeded.trim() && !e.helpAddressed);
+  const addressedHelp    = rows.filter(e => e.helpNeeded && e.helpNeeded.trim() && e.helpAddressed);
+
+  const lines = [
+    `WEEKLY STANDUP REPORT`,
+    `Week: ${fmtDate(ws)} – ${fmtDate(we)}`,
+    `Project: ${S.meta.projectName || 'My Project'} | Sprint: ${S.meta.sprint || '—'}`,
+    `Generated: ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`,
+    '='.repeat(52), ''
+  ];
+
+  Object.entries(byMember).forEach(([member, entries]) => {
+    lines.push(`▸ ${member} (${entries.length} standup${entries.length!==1?'s':''})`);
+    entries.forEach(e => {
+      const todayTasks = S.tasks.filter(t => (e.todayTaskIds||[]).includes(t.id));
+      lines.push(`  ${fmtDateShort(e.date)}`);
+      if (e.yesterday)    lines.push(`    Yesterday    : ${e.yesterday}`);
+      if (e.today)        lines.push(`    Today (notes): ${e.today}`);
+      todayTasks.forEach(t => lines.push(`    Task         : #${t.id} ${t.name} [${t.hlStatus}]`));
+      if ((e.taskStatusUpdates||[]).length) {
+        e.taskStatusUpdates.forEach(u => {
+          const t = S.tasks.find(tk=>tk.id===u.taskId);
+          lines.push(`    Status update: #${u.taskId} ${t?t.name:''} → ${u.newStatus}`);
+        });
+      }
+      if (e.blockers)     lines.push(`    ${e.blockersResolved?'✅ Blocker (resolved)':'⛔ BLOCKER (active)'}: ${e.blockers}`);
+      if (e.helpNeeded)   lines.push(`    ${e.helpAddressed?'✅ Help (addressed)':'🙋 HELP NEEDED (pending)'}: ${e.helpNeeded}`);
+      if (e.notes)        lines.push(`    Notes        : ${e.notes}`);
+      lines.push('');
+    });
+  });
+
+  if (activeBlockers.length) {
+    lines.push('─'.repeat(40));
+    lines.push('⛔ ACTIVE BLOCKERS (unresolved)');
+    activeBlockers.forEach(e => lines.push(`  • ${e.member} (${fmtDateShort(e.date)}): ${e.blockers}`));
+    lines.push('');
+  }
+  if (resolvedBlockers.length) {
+    lines.push('─'.repeat(40));
+    lines.push('✅ RESOLVED BLOCKERS');
+    resolvedBlockers.forEach(e => lines.push(`  ✓ ${e.member} (${fmtDateShort(e.date)}): ${e.blockers}`));
+    lines.push('');
+  }
+  if (pendingHelp.length) {
+    lines.push('─'.repeat(40));
+    lines.push('🙋 HELP REQUESTS — PENDING');
+    pendingHelp.forEach(e => lines.push(`  • ${e.member} (${fmtDateShort(e.date)}): ${e.helpNeeded}`));
+    lines.push('');
+  }
+  if (addressedHelp.length) {
+    lines.push('─'.repeat(40));
+    lines.push('✅ HELP REQUESTS — ADDRESSED');
+    addressedHelp.forEach(e => lines.push(`  ✓ ${e.member} (${fmtDateShort(e.date)}): ${e.helpNeeded}`));
+    lines.push('');
+  }
+  return lines;
+}
+
+function copyWeeklyReport() {
+  const el = document.getElementById('sw-week-start');
+  const ws = el?.value || weekStart(todayISO());
+  const we = weekEnd(ws);
+  const rows = S.standups.filter(sd => sd.date >= ws && sd.date <= we);
+  if (!rows.length) { alert('No standup data for this week.'); return; }
+  const lines = _buildWeeklyLines(ws, we, rows);
+  navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Weekly report copied to clipboard!'));
+}
+
+function exportWeeklyTxt() {
+  const el = document.getElementById('sw-week-start');
+  const ws = el?.value || weekStart(todayISO());
+  const we = weekEnd(ws);
+  const rows = S.standups.filter(sd => sd.date >= ws && sd.date <= we);
+  if (!rows.length) { alert('No standup data for this week.'); return; }
+  const lines = _buildWeeklyLines(ws, we, rows);
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `standup_week_${ws}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ════════════════════════════════════════
+// DAILY STANDUP — EXPORT / IMPORT JSON
+// ════════════════════════════════════════
+function exportStandups() {
+  if (!S.standups.length) { alert('No standup entries to export.'); return; }
+  const payload = {
+    tool: 'StandupSummarizer',
+    version: '1',
+    exportDate: new Date().toISOString(),
+    projectName: S.meta.projectName,
+    standups: S.standups
+  };
+  const safeName = (S.meta.projectName || 'project').replace(/[^a-z0-9_\-]/gi, '_');
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${safeName}_standups_${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function triggerImportStandups() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const data = JSON.parse(evt.target.result);
+        const items = data.standups || (Array.isArray(data) ? data : null);
+        if (!items || !items.length) { alert('No standup entries found in this file.'); return; }
+        const existingIds = new Set(S.standups.map(sd => `${sd.date}|${sd.member}`));
+        let added = 0, skipped = 0;
+        items.forEach(sd => {
+          const key = `${sd.date}|${sd.member}`;
+          if (existingIds.has(key)) { skipped++; return; }
+          S.standups.push({ ...sd, id: sid++ });
+          existingIds.add(key);
+          added++;
+        });
+        persist();
+        renderStandup();
+        alert(`✅ Imported ${added} standup entry${added!==1?'ies':'y'}.${skipped ? ` ${skipped} duplicate${skipped!==1?'s':''} skipped.` : ''}`);
+      } catch {
+        alert('Could not read the file — please use a file exported from the Standup Summarizer.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+function clearHistoryFilters() {
+  document.getElementById('sh-member').value = '';
+  document.getElementById('sh-from').value   = '';
+  document.getElementById('sh-to').value     = '';
+  renderStandupHistory();
+}
+
+// ════════════════════════════════════════
+// RETROSPECTIVE
+// ════════════════════════════════════════
+let _curRetroId = null;
+
+const RETRO_FORMATS = {
+  classic: { name: 'Classic', cols: [
+    { key: 'col1', label: 'Went Well',     color: 'var(--green)',   bg: 'var(--green-bg)',    icon: '✅' },
+    { key: 'col2', label: 'Could Improve', color: 'var(--amber)',   bg: 'var(--amber-bg)',    icon: '⚠' },
+    { key: 'col3', label: 'Action Focus',  color: 'var(--accent)',  bg: 'var(--accent-light)', icon: '🎯' }
+  ]},
+  ssc: { name: 'Start / Stop / Continue', cols: [
+    { key: 'col1', label: 'Start Doing',    color: 'var(--green)',  bg: 'var(--green-bg)',    icon: '▶' },
+    { key: 'col2', label: 'Stop Doing',     color: 'var(--red)',    bg: 'var(--red-bg)',      icon: '⛔' },
+    { key: 'col3', label: 'Continue Doing', color: 'var(--accent)', bg: 'var(--accent-light)', icon: '🔄' }
+  ]},
+  '4ls': { name: '4Ls', cols: [
+    { key: 'col1', label: 'Liked',      color: 'var(--green)',  bg: 'var(--green-bg)',    icon: '👍' },
+    { key: 'col2', label: 'Learned',    color: 'var(--accent)', bg: 'var(--accent-light)', icon: '📚' },
+    { key: 'col3', label: 'Lacked',     color: 'var(--amber)',  bg: 'var(--amber-bg)',    icon: '⬇' },
+    { key: 'col4', label: 'Longed For', color: 'var(--purple)', bg: '#f5f3ff',            icon: '💡' }
+  ]},
+  mss: { name: 'Mad / Sad / Glad', cols: [
+    { key: 'col1', label: 'Mad',  color: 'var(--red)',   bg: 'var(--red-bg)',   icon: '😠' },
+    { key: 'col2', label: 'Sad',  color: 'var(--amber)', bg: 'var(--amber-bg)', icon: '😢' },
+    { key: 'col3', label: 'Glad', color: 'var(--green)', bg: 'var(--green-bg)', icon: '😊' }
+  ]}
+};
+
+function renderRetro() {
+  if (!S.retros) S.retros = [];
+  populateRetroSelect();
+  const target = _curRetroId || (S.retros.length ? S.retros[S.retros.length - 1].id : null);
+  if (target) loadRetro(target);
+  else { loadRetro(null); renderRetroHistory(); }
+}
+
+function populateRetroSelect() {
+  const sel = document.getElementById('retro-select');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select a retrospective —</option>';
+  S.retros.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.id;
+    o.textContent = r.sprint + (r.endDate ? ` (${fmtDate(r.endDate)})` : r.startDate ? ` (${fmtDate(r.startDate)})` : '');
+    sel.appendChild(o);
+  });
+  if (_curRetroId) sel.value = _curRetroId;
+  else if (cur) sel.value = cur;
+}
+
+function loadRetro(id) {
+  id = id ? parseInt(id) : null;
+  _curRetroId = id;
+  const sel = document.getElementById('retro-select');
+  if (sel) sel.value = id || '';
+
+  const retro = id ? S.retros.find(r => r.id === id) : null;
+  const fmtBadge  = document.getElementById('retro-format-badge');
+  const dateBadge = document.getElementById('retro-date-badge');
+  const editBtn   = document.getElementById('retro-edit-btn');
+  const delBtn    = document.getElementById('retro-del-btn');
+  const exportBtn = document.getElementById('retro-export-btn');
+
+  if (retro) {
+    const fmt = RETRO_FORMATS[retro.format] || RETRO_FORMATS.classic;
+    if (fmtBadge)  { fmtBadge.textContent = fmt.name; fmtBadge.style.display = ''; }
+    const dateStr = retro.startDate && retro.endDate
+      ? `${fmtDate(retro.startDate)} – ${fmtDate(retro.endDate)}`
+      : retro.startDate ? fmtDate(retro.startDate) : '';
+    if (dateBadge) dateBadge.textContent = dateStr;
+    if (editBtn)   editBtn.style.display = '';
+    if (delBtn)    delBtn.style.display = '';
+    if (exportBtn) exportBtn.style.display = '';
+  } else {
+    if (fmtBadge)  { fmtBadge.textContent = ''; fmtBadge.style.display = 'none'; }
+    if (dateBadge) dateBadge.textContent = '';
+    if (editBtn)   editBtn.style.display = 'none';
+    if (delBtn)    delBtn.style.display = 'none';
+    if (exportBtn) exportBtn.style.display = 'none';
+  }
+
+  renderRetroBoard(retro);
+  renderRetroActions(retro);
+  updateRetroActionCount(retro);
+  renderRetroHistory();
+}
+
+function renderRetroBoard(retro) {
+  const container = document.getElementById('retro-board-content');
+  if (!container) return;
+
+  if (!retro) {
+    container.innerHTML = '<div class="empty" style="padding:48px"><div class="empty-icon">🔁</div>No retro selected — click "+ New Retro" to create your first sprint retrospective.</div>';
+    return;
+  }
+
+  const fmt = RETRO_FORMATS[retro.format] || RETRO_FORMATS.classic;
+  if (!retro.items) retro.items = [];
+
+  let html = '<div class="retro-board">';
+  fmt.cols.forEach(col => {
+    const colItems = retro.items.filter(i => i.category === col.key).sort((a, b) => (b.votes||0) - (a.votes||0));
+    html += `<div class="retro-col">
+      <div class="retro-col-hd" style="border-left:3px solid ${col.color};background:${col.bg}">
+        <div class="retro-col-title" style="color:${col.color}">${col.icon} ${col.label}</div>
+        <span class="retro-col-count">${colItems.length}</span>
+      </div>
+      <div class="retro-col-body">`;
+    colItems.forEach(item => {
+      html += `<div class="retro-item">
+        <div class="retro-item-text">${esc(item.text)}</div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <button class="retro-vote-btn" onclick="voteRetroItem(${retro.id},${item.id},1)" title="Upvote">👍</button>
+          <span style="min-width:18px;text-align:center;font-size:11px;font-weight:700">${item.votes||0}</span>
+          <button class="retro-del-btn" onclick="delRetroItem(${retro.id},${item.id})" title="Delete">✕</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>
+      <div class="retro-add-row">
+        <input type="text" class="retro-add-inp" placeholder="Add item… (press Enter)"
+          onkeydown="if(event.key==='Enter'&&this.value.trim()){addRetroItem(${retro.id},'${col.key}',this.value.trim());this.value='';event.preventDefault()}">
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += `<div class="card" style="margin-top:0">
+    <div class="card-hd">Sprint Notes</div>
+    <textarea class="expand-ta" style="min-height:70px" placeholder="Sprint goals, team observations, general notes…"
+      onblur="saveRetroNotes(${retro.id},this.value)">${esc(retro.notes||'')}</textarea>
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function addRetroItem(retroId, category, text) {
+  const retro = S.retros.find(r => r.id === retroId);
+  if (!retro) return;
+  if (!retro.items) retro.items = [];
+  const newId = retro.items.reduce((mx, i) => Math.max(mx, i.id||0), 0) + 1;
+  retro.items.push({ id: newId, category, text, votes: 0 });
+  persist();
+  renderRetroBoard(retro);
+}
+
+function delRetroItem(retroId, itemId) {
+  const retro = S.retros.find(r => r.id === retroId);
+  if (!retro) return;
+  retro.items = (retro.items||[]).filter(i => i.id !== itemId);
+  persist();
+  renderRetroBoard(retro);
+}
+
+function voteRetroItem(retroId, itemId, delta) {
+  const retro = S.retros.find(r => r.id === retroId);
+  if (!retro) return;
+  const item = (retro.items||[]).find(i => i.id === itemId);
+  if (!item) return;
+  item.votes = Math.max(0, (item.votes||0) + delta);
+  persist();
+  renderRetroBoard(retro);
+}
+
+function saveRetroNotes(retroId, notes) {
+  const retro = S.retros.find(r => r.id === retroId);
+  if (!retro) return;
+  retro.notes = notes;
+  persist();
+}
+
+function renderRetroActions(retro) {
+  const container = document.getElementById('retro-actions-list');
+  if (!container) return;
+
+  const actions = retro ? (retro.actionItems||[]) : [];
+  if (!actions.length) {
+    container.innerHTML = '<div class="empty" style="padding:28px"><div class="empty-icon">🎯</div>No action items yet. Add one above.</div>';
+    return;
+  }
+
+  const statusLabel = {
+    open:       '<span class="badge badge-notstarted">Open</span>',
+    inprogress: '<span class="badge badge-inprogress">In Progress</span>',
+    done:       '<span class="badge badge-done">Done</span>'
+  };
+
+  container.innerHTML = actions.map(a => `
+    <div class="retro-action-item">
+      <div style="flex:1">
+        <div style="font-weight:600;margin-bottom:3px${a.status==='done'?';text-decoration:line-through;opacity:.65':''}">${esc(a.text)}</div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-top:4px">
+          ${a.owner ? `<span>👤 ${esc(a.owner)}</span>` : ''}
+          ${a.dueDate ? `<span>📅 ${fmtDate(a.dueDate)}</span>` : ''}
+          ${statusLabel[a.status]||''}
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0;margin-top:2px">
+        <button class="btn btn-secondary btn-xs" onclick="openRetroActionModal(${a.id})">Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="delRetroAction(${a.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function updateRetroActionCount(retro) {
+  const el = document.getElementById('retro-action-count');
+  if (!el) return;
+  const count = retro ? (retro.actionItems||[]).filter(a => a.status !== 'done').length : 0;
+  el.textContent = count || '';
+  el.style.display = count ? '' : 'none';
+}
+
+function renderRetroHistory() {
+  const container = document.getElementById('retro-history-list');
+  if (!container) return;
+
+  if (!S.retros.length) {
+    container.innerHTML = '<div class="empty" style="padding:48px"><div class="empty-icon">📋</div>No retrospectives yet. Click "+ New Retro" to get started.</div>';
+    return;
+  }
+
+  const sorted = [...S.retros].reverse();
+  container.innerHTML = sorted.map(r => {
+    const fmt = RETRO_FORMATS[r.format] || RETRO_FORMATS.classic;
+    const dateStr = r.startDate && r.endDate
+      ? `${fmtDate(r.startDate)} – ${fmtDate(r.endDate)}`
+      : r.startDate ? fmtDate(r.startDate) : '—';
+    const itemCount   = (r.items||[]).length;
+    const actionCount = (r.actionItems||[]).length;
+    const openActions = (r.actionItems||[]).filter(a => a.status !== 'done').length;
+    const isActive    = r.id === _curRetroId;
+
+    const colSummary = fmt.cols.map(col => {
+      const count = (r.items||[]).filter(i => i.category === col.key).length;
+      return `<span style="font-size:11px;display:inline-flex;align-items:center;gap:3px">${col.icon} ${col.label}: <strong style="margin-left:2px">${count}</strong></span>`;
+    }).join('<span style="color:var(--border);margin:0 4px">|</span>');
+
+    return `<div class="retro-hist-card" style="${isActive?'border-color:var(--accent);border-width:2px':''}">
+      <div class="retro-hist-hd">
+        <div>
+          <div style="font-size:13px;font-weight:700">${esc(r.sprint)} ${isActive?'<span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 7px;border-radius:10px;vertical-align:middle;margin-left:5px">Active</span>':''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${dateStr} · <strong>${fmt.name}</strong></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-xs" onclick="loadRetroFromHistory(${r.id})">Open</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteRetro(${r.id})">✕ Delete</button>
+        </div>
+      </div>
+      <div class="retro-hist-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:7px">${colSummary}</div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--muted);flex-wrap:wrap">
+          <span>📝 ${itemCount} total items</span>
+          ${actionCount ? `<span>🎯 ${actionCount} action${actionCount!==1?'s':''} <strong style="${openActions?'color:var(--red)':'color:var(--green)'};">(${openActions} open)</strong></span>` : ''}
+          ${r.notes ? `<span style="font-style:italic">"${esc(r.notes.substring(0,70))}${r.notes.length>70?'…':''}"</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadRetroFromHistory(id) {
+  loadRetro(id);
+  switchRetroTab('board', document.querySelector('.retro-tab'));
+}
+
+function switchRetroTab(tab, btn) {
+  document.querySelectorAll('.retro-sub-panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('retro-tab-' + tab).classList.add('on');
+  document.querySelectorAll('.retro-tab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  else document.querySelector(`.retro-tab[onclick*="'${tab}'"]`)?.classList.add('on');
+}
+
+function openRetroNewModal() {
+  document.getElementById('retro-modal-title').textContent = 'New Sprint Retrospective';
+  document.getElementById('rm-id').value      = '';
+  document.getElementById('rm-sprint').value  = S.meta.sprint || '';
+  document.getElementById('rm-start').value   = S.meta.wStart || '';
+  document.getElementById('rm-end').value     = S.meta.wEnd   || '';
+  document.getElementById('rm-format').value  = 'classic';
+  document.getElementById('rm-notes').value   = '';
+  openModal('retro-modal');
+}
+
+function openRetroEditModal() {
+  const retro = _curRetroId ? S.retros.find(r => r.id === _curRetroId) : null;
+  if (!retro) return;
+  document.getElementById('retro-modal-title').textContent = 'Edit Retrospective';
+  document.getElementById('rm-id').value      = retro.id;
+  document.getElementById('rm-sprint').value  = retro.sprint    || '';
+  document.getElementById('rm-start').value   = retro.startDate || '';
+  document.getElementById('rm-end').value     = retro.endDate   || '';
+  document.getElementById('rm-format').value  = retro.format    || 'classic';
+  document.getElementById('rm-notes').value   = retro.notes     || '';
+  openModal('retro-modal');
+}
+
+function saveRetroMeta() {
+  const sprint = document.getElementById('rm-sprint').value.trim();
+  if (!sprint) { alert('Sprint name is required.'); return; }
+  const id = document.getElementById('rm-id').value;
+
+  if (id) {
+    const retro = S.retros.find(r => r.id === parseInt(id));
+    if (!retro) return;
+    retro.sprint    = sprint;
+    retro.startDate = document.getElementById('rm-start').value;
+    retro.endDate   = document.getElementById('rm-end').value;
+    retro.format    = document.getElementById('rm-format').value;
+    retro.notes     = document.getElementById('rm-notes').value;
+    persist();
+    loadRetro(_curRetroId);
+  } else {
+    const newRetro = {
+      id:          retId++,
+      sprint,
+      startDate:   document.getElementById('rm-start').value,
+      endDate:     document.getElementById('rm-end').value,
+      format:      document.getElementById('rm-format').value,
+      notes:       document.getElementById('rm-notes').value,
+      items:       [],
+      actionItems: []
+    };
+    if (!S.retros) S.retros = [];
+    S.retros.push(newRetro);
+    _curRetroId = newRetro.id;
+    persist();
+    populateRetroSelect();
+    loadRetro(_curRetroId);
+  }
+  closeModal('retro-modal');
+}
+
+function deleteCurrentRetro() {
+  if (!_curRetroId) return;
+  if (!confirm('Delete this retrospective and all its data?')) return;
+  deleteRetro(_curRetroId);
+}
+
+function deleteRetro(id) {
+  id = parseInt(id);
+  S.retros = S.retros.filter(r => r.id !== id);
+  if (_curRetroId === id) {
+    _curRetroId = S.retros.length ? S.retros[S.retros.length - 1].id : null;
+  }
+  persist();
+  populateRetroSelect();
+  loadRetro(_curRetroId);
+}
+
+function openRetroActionModal(actionId) {
+  const retro = _curRetroId ? S.retros.find(r => r.id === _curRetroId) : null;
+  if (!retro) { alert('Please select a retrospective first.'); return; }
+  fillAssignees(['ra-owner']);
+  const action = actionId ? (retro.actionItems||[]).find(a => a.id === actionId) : null;
+  document.getElementById('retro-action-modal-title').textContent = action ? 'Edit Action Item' : 'Add Action Item';
+  document.getElementById('ra-id').value     = actionId || '';
+  document.getElementById('ra-text').value   = action?.text    || '';
+  document.getElementById('ra-owner').value  = action?.owner   || '';
+  document.getElementById('ra-due').value    = action?.dueDate || '';
+  document.getElementById('ra-status').value = action?.status  || 'open';
+  openModal('retro-action-modal');
+}
+
+function saveRetroAction() {
+  const retro = _curRetroId ? S.retros.find(r => r.id === _curRetroId) : null;
+  if (!retro) return;
+  const text = document.getElementById('ra-text').value.trim();
+  if (!text) { alert('Action item text is required.'); return; }
+  if (!retro.actionItems) retro.actionItems = [];
+
+  const id = document.getElementById('ra-id').value;
+  const actionData = {
+    id:      id ? parseInt(id) : (retro.actionItems.reduce((mx, a) => Math.max(mx, a.id||0), 0) + 1),
+    text,
+    owner:   document.getElementById('ra-owner').value,
+    dueDate: document.getElementById('ra-due').value,
+    status:  document.getElementById('ra-status').value
+  };
+
+  if (id) {
+    const idx = retro.actionItems.findIndex(a => a.id === parseInt(id));
+    if (idx >= 0) retro.actionItems[idx] = actionData;
+  } else {
+    retro.actionItems.push(actionData);
+  }
+
+  persist();
+  renderRetroActions(retro);
+  updateRetroActionCount(retro);
+  renderRetroHistory();
+  closeModal('retro-action-modal');
+}
+
+function delRetroAction(actionId) {
+  const retro = _curRetroId ? S.retros.find(r => r.id === _curRetroId) : null;
+  if (!retro) return;
+  if (!confirm('Delete this action item?')) return;
+  retro.actionItems = (retro.actionItems||[]).filter(a => a.id !== actionId);
+  persist();
+  renderRetroActions(retro);
+  updateRetroActionCount(retro);
+  renderRetroHistory();
+}
+
+function exportRetro() {
+  const retro = _curRetroId ? S.retros.find(r => r.id === _curRetroId) : null;
+  if (!retro) { alert('Please select a retrospective first.'); return; }
+
+  const fmt = RETRO_FORMATS[retro.format] || RETRO_FORMATS.classic;
+  const dateStr = retro.startDate && retro.endDate
+    ? `${fmtDate(retro.startDate)} – ${fmtDate(retro.endDate)}`
+    : retro.startDate ? fmtDate(retro.startDate) : '';
+  const L = '─'.repeat(50);
+
+  let txt = `SPRINT RETROSPECTIVE — ${retro.sprint}\n`;
+  if (dateStr) txt += `${dateStr}\n`;
+  txt += `Format : ${fmt.name}\n${L}\n\n`;
+
+  fmt.cols.forEach(col => {
+    const items = (retro.items||[]).filter(i => i.category === col.key).sort((a,b) => (b.votes||0)-(a.votes||0));
+    txt += `${col.icon} ${col.label.toUpperCase()}\n${'─'.repeat(30)}\n`;
+    if (items.length) items.forEach(i => { txt += `• ${i.text}${i.votes ? ` (👍 ${i.votes})` : ''}\n`; });
+    else txt += '(no items)\n';
+    txt += '\n';
+  });
+
+  if ((retro.actionItems||[]).length) {
+    txt += `🎯 ACTION ITEMS\n${'─'.repeat(30)}\n`;
+    const statusMap = { open: 'Open', inprogress: 'In Progress', done: 'Done' };
+    retro.actionItems.forEach(a => {
+      txt += `• [${statusMap[a.status]||'Open'}] ${a.text}`;
+      if (a.owner)   txt += ` — Owner: ${a.owner}`;
+      if (a.dueDate) txt += ` — Due: ${fmtDate(a.dueDate)}`;
+      txt += '\n';
+    });
+    txt += '\n';
+  }
+
+  if (retro.notes) {
+    txt += `📝 NOTES\n${'─'.repeat(30)}\n${retro.notes}\n\n`;
+  }
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `retro_${(retro.sprint||'sprint').replace(/[^a-z0-9_\-]/gi,'_')}_${todayISO()}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ════════════════════════════════════════
