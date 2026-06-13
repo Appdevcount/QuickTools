@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRD & TDD Generator — QuickTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sb:#0f172a;--sb2:#1e293b;--sb3:#334155;
+  --accent:#6366f1;--accent-h:#4f46e5;--accent-light:#eef2ff;
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;
+  --text:#0f172a;--muted:#64748b;--danger:#ef4444;
+  --green:#16a34a;--amber:#d97706;--purple:#7c3aed;--teal:#0d9488;
+  --r:8px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden}
+
+/* ── Sidebar ── */
+#sb{width:260px;flex-shrink:0;background:var(--sb);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-head{padding:14px 14px 12px;border-bottom:1px solid var(--sb2);flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:8px;color:#f1f5f9;font-size:15px;font-weight:800}
+.sb-logo-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sb-sub{font-size:10px;color:#475569;margin-top:3px;padding-left:2px}
+
+/* doc type toggle */
+.dt-toggle{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--sb2);flex-shrink:0}
+.dt-btn{flex:1;padding:5px 4px;border:1px solid var(--sb3);background:transparent;color:#64748b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+.dt-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* section nav */
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.sb-group{padding:8px 12px 4px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#475569}
+.sb-item{display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;color:#94a3b8;font-size:12px}
+.sb-item:hover{background:var(--sb2);color:#e2e8f0}
+.sb-item.active{background:#1e293b;border-left-color:var(--accent);color:#c7d2fe}
+.sb-item-num{font-size:10px;color:#334155;font-family:monospace;width:18px;flex-shrink:0;text-align:right}
+.sb-item.active .sb-item-num{color:#818cf8}
+.sb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#334155}
+.sb-dot.done{background:var(--green)}
+.sb-dot.partial{background:var(--amber)}
+
+/* sidebar footer */
+.sb-footer{padding:10px 10px;border-top:1px solid var(--sb2);flex-shrink:0;display:flex;flex-wrap:wrap;gap:5px}
+.sb-btn{flex:1;min-width:56px;background:transparent;color:#64748b;border:1px solid #1e293b;border-radius:6px;padding:6px 4px;font-size:10.5px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.sb-btn:hover{background:var(--sb2);color:#94a3b8}
+.sb-btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.sb-btn.accent:hover{background:var(--accent-h)}
+.sb-btn.danger{border-color:#450a0a;color:#f87171}
+.sb-btn.danger:hover{background:#450a0a}
+
+/* ── Main ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;flex-wrap:wrap}
+.topbar-title{font-size:15px;font-weight:800;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:100px}
+.topbar-title input{border:none;outline:none;font-size:15px;font-weight:800;color:var(--text);width:100%;background:transparent;font-family:inherit}
+.topbar-title input::placeholder{color:#94a3b8;font-weight:400}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent}
+.s-draft{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+.s-review{background:#fffbeb;color:#92400e;border-color:#fde68a}
+.s-approved{background:#f0fdf4;color:#14532d;border-color:#bbf7d0}
+.s-rejected{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+.topbar-actions{display:flex;gap:6px;flex-shrink:0}
+.btn{padding:6px 13px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all .18s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-h)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:#f8fafc;border-color:#94a3b8}
+.btn-green{background:#15803d;color:#fff}
+.btn-green:hover{background:#166534}
+.btn-amber{background:#92400e;color:#fef3c7;border:1px solid #fde68a}
+.btn-danger{background:transparent;border:1px solid #fecaca;color:var(--danger)}
+.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
+
+/* ── Form ── */
+#form{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg)}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.sec-head{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;background:#fafafa}
+.sec-head:hover{background:#f1f5f9}
+.sec-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sec-brd .sec-icon{background:#eef2ff;color:var(--accent)}
+.sec-tdd .sec-icon{background:#f0fdf4;color:var(--teal)}
+.sec-title{font-size:12.5px;font-weight:800;color:var(--text);flex:1}
+.sec-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.badge-brd{background:#eef2ff;color:#4f46e5}
+.badge-tdd{background:#f0fdf4;color:#0d9488}
+.sec-chevron{font-size:11px;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.sec-chevron.open{transform:rotate(90deg)}
+.sec-body{padding:14px 16px;display:none}
+.sec-body.open{display:block}
+.sec-progress{height:2px;background:#e2e8f0;flex-shrink:0;width:60px;border-radius:2px;overflow:hidden}
+.sec-progress-bar{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+
+/* form fields */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-grid.g3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.g1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.span2{grid-column:span 2}
+.field.span3{grid-column:span 3}
+label{font-size:11.5px;font-weight:700;color:#334155;display:flex;align-items:center;gap:5px}
+label .req{color:var(--danger)}
+label .hint{font-size:10px;font-weight:400;color:var(--muted)}
+input[type=text],input[type=date],input[type=email],input[type=url],select,textarea{
+  border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;
+  font-family:inherit;background:#fff;color:var(--text);transition:border .15s,box-shadow .15s;outline:none;width:100%
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+select option{font-size:13px}
+.hint-text{font-size:11px;color:var(--muted);margin-top:2px}
+.field-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}
+
+/* chip multi-select */
+.chip-group{display:flex;flex-wrap:wrap;gap:5px;padding:8px;border:1px solid var(--border);border-radius:6px;background:#fff;min-height:38px}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#f8fafc;color:var(--muted);transition:all .12s;user-select:none}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.on.green{background:#15803d;border-color:#15803d}
+.chip.on.amber{background:#d97706;border-color:#d97706}
+.chip.on.red{background:#dc2626;border-color:#dc2626}
+.chip.on.teal{background:var(--teal);border-color:var(--teal)}
+
+/* dynamic tables */
+.dyn-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+.dyn-table th{background:#f8fafc;padding:7px 8px;text-align:left;font-size:10.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);white-space:nowrap}
+.dyn-table td{padding:4px 4px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.dyn-table tr:last-child td{border-bottom:none}
+.dyn-table input,.dyn-table select,.dyn-table textarea{border:1px solid transparent;border-radius:4px;padding:4px 6px;font-size:12px;background:transparent;width:100%;font-family:inherit;color:var(--text);transition:border .12s;resize:none}
+.dyn-table input:hover,.dyn-table select:hover,.dyn-table textarea:hover,.dyn-table input:focus,.dyn-table select:focus,.dyn-table textarea:focus{border-color:var(--border);background:#fff;outline:none}
+.dyn-table input:focus,.dyn-table select:focus,.dyn-table textarea:focus{border-color:var(--accent)}
+.dyn-table .del-btn{background:transparent;border:none;cursor:pointer;color:#fca5a5;font-size:13px;padding:3px;border-radius:4px;transition:all .12s;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.dyn-table .del-btn:hover{background:#fef2f2;color:var(--danger)}
+.add-row-btn{display:flex;align-items:center;gap:5px;margin-top:6px;padding:5px 10px;border:1px dashed var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;width:100%;justify-content:center}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* priority chips in table */
+.p-critical{background:#fef2f2!important;color:#991b1b!important}
+.p-high{background:#fff7ed!important;color:#9a3412!important}
+.p-medium{background:#fffbeb!important;color:#92400e!important}
+.p-low{background:#f0fdf4!important;color:#166534!important}
+.p-info{background:#eff6ff!important;color:#1e40af!important}
+
+/* section dividers */
+.sec-divider{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+
+/* NFR cards */
+.nfr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nfr-card{background:#fafafa;border:1px solid var(--border);border-radius:7px;padding:12px}
+.nfr-card-title{font-size:11px;font-weight:800;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+
+/* toast */
+#toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#f1f5f9;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;max-width:280px}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* preview modal */
+#preview-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+#preview-overlay.open{display:flex}
+#preview-box{background:var(--surface);border-radius:12px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.preview-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.preview-head h3{font-size:14px;font-weight:800}
+.preview-body{flex:1;overflow-y:auto;padding:20px}
+.preview-actions{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+
+/* print-ready document styles (used in export) */
+.doc-page{font-family:'Segoe UI',system-ui,sans-serif;max-width:900px;margin:0 auto;color:#0f172a;font-size:14px;line-height:1.6}
+.doc-cover{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;padding:48px;border-radius:12px;margin-bottom:32px}
+.doc-cover h1{font-size:32px;font-weight:800;margin-bottom:8px}
+.doc-cover .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:24px;font-size:13px;opacity:.85}
+.doc-section{margin-bottom:28px}
+.doc-section h2{font-size:18px;font-weight:800;color:#1e1b4b;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-bottom:14px}
+.doc-section h3{font-size:14px;font-weight:700;color:#334155;margin-bottom:8px;margin-top:14px}
+.doc-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.doc-table th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;border:1px solid #e2e8f0;font-size:12px}
+.doc-table td{padding:8px 10px;border:1px solid #e2e8f0;vertical-align:top}
+.doc-table tr:nth-child(even) td{background:#fafafa}
+
+/* hidden file input */
+#file-input{display:none}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+#form::-webkit-scrollbar-thumb{background:#cbd5e1}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside id="sb">
+  <div class="sb-head">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">📄</div>
+      BRD / TDD Generator
+    </div>
+    <div class="sb-sub">Business &amp; Technical Requirements</div>
+  </div>
+
+  <div class="dt-toggle">
+    <button class="dt-btn on" id="dt-brd" onclick="setDocType('brd')">BRD Only</button>
+    <button class="dt-btn" id="dt-both" onclick="setDocType('both')">Both</button>
+    <button class="dt-btn" id="dt-tdd" onclick="setDocType('tdd')">TDD Only</button>
+  </div>
+
+  <div class="sb-nav" id="sb-nav">
+    <!-- dynamically filled -->
+  </div>
+
+  <div class="sb-footer">
+    <button class="sb-btn accent" onclick="exportJSON()" title="Save to JSON file">⬇ Export</button>
+    <button class="sb-btn" onclick="document.getElementById('file-input').click()" title="Load JSON file">⬆ Import</button>
+    <button class="sb-btn" onclick="showPreview()" title="Preview document">👁 Preview</button>
+    <button class="sb-btn" onclick="exportHTML()" title="Export as HTML document">📄 Export HTML</button>
+    <button class="sb-btn danger" onclick="confirmReset()" title="Start fresh">↺ Reset</button>
+    <input type="file" id="file-input" accept=".json" onchange="importJSON(event)">
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main id="main">
+  <div class="topbar">
+    <div class="topbar-title">
+      <input type="text" id="doc-title" placeholder="Document Title…" oninput="markDirty()">
+    </div>
+    <select id="doc-status" class="btn btn-outline" style="padding:5px 10px;font-size:11px;font-weight:700;width:auto" onchange="updateStatusBadge()">
+      <option value="draft">Draft</option>
+      <option value="review">In Review</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+    </select>
+    <div class="topbar-actions">
+      <button class="btn btn-green btn-sm" onclick="saveToLocal()">💾 Save</button>
+      <button class="btn btn-primary btn-sm" onclick="exportHTML()">⬇ Export HTML</button>
+    </div>
+  </div>
+
+  <div id="form">
+    <!-- sections injected by JS -->
+  </div>
+</main>
+
+<!-- ── PREVIEW MODAL ── -->
+<div id="preview-overlay">
+  <div id="preview-box">
+    <div class="preview-head">
+      <h3>Document Preview</h3>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="exportHTML()">⬇ Export HTML</button>
+        <button class="btn btn-outline btn-sm" onclick="closePreview()">✕ Close</button>
+      </div>
+    </div>
+    <div class="preview-body" id="preview-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA MODEL
+// ═══════════════════════════════════════════════════════════
+let docType = 'brd';
+let dirty = false;
+
+const STORAGE_KEY = 'quicktools_brd_tdd';
+
+const BRD_SECTIONS = [
+  { id:'docinfo',   icon:'🗂️',  label:'Document Info',          group:'BRD' },
+  { id:'exec',      icon:'📌',  label:'Executive Summary',       group:'BRD' },
+  { id:'objectives',icon:'🎯',  label:'Business Objectives',     group:'BRD' },
+  { id:'scope',     icon:'📐',  label:'Scope',                   group:'BRD' },
+  { id:'stakeholders',icon:'👥',label:'Stakeholders',            group:'BRD' },
+  { id:'funreq',    icon:'📋',  label:'Functional Requirements', group:'BRD' },
+  { id:'nfr',       icon:'⚙️',  label:'Non-Functional Req.',     group:'BRD' },
+  { id:'userstories',icon:'👤', label:'User Stories',            group:'BRD' },
+  { id:'assumptions',icon:'💡', label:'Assumptions & Constraints',group:'BRD'},
+  { id:'dependencies',icon:'🔗',label:'Dependencies',            group:'BRD' },
+  { id:'milestones', icon:'🗓️', label:'Timeline & Milestones',   group:'BRD' },
+  { id:'risks',     icon:'⚠️',  label:'Risks & Mitigations',     group:'BRD' },
+  { id:'kpis',      icon:'📊',  label:'Success Metrics / KPIs',  group:'BRD' },
+  { id:'approvals', icon:'✅',  label:'Approvals',               group:'BRD' },
+];
+
+const TDD_SECTIONS = [
+  { id:'t-arch',    icon:'🏗️',  label:'Architecture Overview',   group:'TDD' },
+  { id:'t-stack',   icon:'🧱',  label:'Tech Stack',              group:'TDD' },
+  { id:'t-components',icon:'🧩',label:'System Components',       group:'TDD' },
+  { id:'t-api',     icon:'🔌',  label:'API Design',              group:'TDD' },
+  { id:'t-data',    icon:'🗃️',  label:'Data Model',              group:'TDD' },
+  { id:'t-security',icon:'🔒',  label:'Security Design',         group:'TDD' },
+  { id:'t-scale',   icon:'📈',  label:'Scalability & Performance',group:'TDD'},
+  { id:'t-deploy',  icon:'🚀',  label:'Deployment',              group:'TDD' },
+  { id:'t-monitor', icon:'📡',  label:'Monitoring & Observability',group:'TDD'},
+  { id:'t-testing', icon:'🧪',  label:'Testing Strategy',        group:'TDD' },
+  { id:'t-migration',icon:'🔄', label:'Migration Plan',          group:'TDD' },
+  { id:'t-issues',  icon:'🐛',  label:'Open Issues',             group:'TDD' },
+];
+
+// ═══════════════════════════════════════════════════════════
+// SIDEBAR NAV BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildNav() {
+  const nav = document.getElementById('sb-nav');
+  let html = '';
+  const sections = getActiveSections();
+  let lastGroup = '';
+  sections.forEach((s, i) => {
+    if (s.group !== lastGroup) {
+      html += `<div class="sb-group">${s.group}</div>`;
+      lastGroup = s.group;
+    }
+    html += `<div class="sb-item" id="nav-${s.id}" onclick="scrollToSection('${s.id}')">
+      <span class="sb-item-num">${i+1}</span>
+      <span>${s.icon}</span>
+      <span style="flex:1">${s.label}</span>
+      <span class="sb-dot" id="dot-${s.id}"></span>
+    </div>`;
+  });
+  nav.innerHTML = html;
+}
+
+function getActiveSections() {
+  if (docType === 'brd') return BRD_SECTIONS;
+  if (docType === 'tdd') return TDD_SECTIONS;
+  return [...BRD_SECTIONS, ...TDD_SECTIONS];
+}
+
+function scrollToSection(id) {
+  const el = document.getElementById('sec-' + id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    openSection(id);
+  }
+  document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+}
+
+function openSection(id) {
+  const body = document.querySelector(`#sec-${id} .sec-body`);
+  const chev = document.querySelector(`#sec-${id} .sec-chevron`);
+  if (body && !body.classList.contains('open')) {
+    body.classList.add('open');
+    if (chev) chev.classList.add('open');
+  }
+}
+
+function toggleSection(id) {
+  const body = document.querySelector(`#sec-${id} .sec-body`);
+  const chev = document.querySelector(`#sec-${id} .sec-chevron`);
+  if (!body) return;
+  body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORM BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildForm() {
+  const form = document.getElementById('form');
+  let html = '';
+  const sections = getActiveSections();
+  sections.forEach(s => {
+    const isTdd = s.group === 'TDD';
+    html += `<div class="section" id="sec-${s.id}">
+      <div class="sec-head ${isTdd?'sec-tdd':'sec-brd'}" onclick="toggleSection('${s.id}')">
+        <div class="sec-icon">${s.icon}</div>
+        <span class="sec-title">${s.label}</span>
+        <span class="sec-badge ${isTdd?'badge-tdd':'badge-brd'}">${s.group}</span>
+        <span class="sec-chevron" id="chev-${s.id}">▶</span>
+      </div>
+      <div class="sec-body" id="body-${s.id}">${getSectionBody(s.id)}</div>
+    </div>`;
+  });
+  form.innerHTML = html;
+
+  // open first section by default
+  const first = sections[0];
+  if (first) {
+    document.querySelector(`#sec-${first.id} .sec-body`).classList.add('open');
+    document.querySelector(`#sec-${first.id} .sec-chevron`).classList.add('open');
+  }
+}
+
+const SECTION_BODIES = {
+  'docinfo':      bodyDocInfo,
+  'exec':         bodyExec,
+  'objectives':   bodyObjectives,
+  'scope':        bodyScope,
+  'stakeholders': bodyStakeholders,
+  'funreq':       bodyFunReq,
+  'nfr':          bodyNFR,
+  'userstories':  bodyUserStories,
+  'assumptions':  bodyAssumptions,
+  'dependencies': bodyDependencies,
+  'milestones':   bodyMilestones,
+  'risks':        bodyRisks,
+  'kpis':         bodyKPIs,
+  'approvals':    bodyApprovals,
+  't-arch':       bodyTArch,
+  't-stack':      bodyTStack,
+  't-components': bodyTComponents,
+  't-api':        bodyTAPI,
+  't-data':       bodyTData,
+  't-security':   bodyTSecurity,
+  't-scale':      bodyTScale,
+  't-deploy':     bodyTDeploy,
+  't-monitor':    bodyTMonitor,
+  't-testing':    bodyTTesting,
+  't-migration':  bodyTMigration,
+  't-issues':     bodyTIssues,
+};
+
+function getSectionBody(id) {
+  const fn = SECTION_BODIES[id];
+  try { return fn ? fn() : '<p style="color:var(--muted);padding:8px">Coming soon</p>'; }
+  catch(e) { console.error('Section error [' + id + ']:', e); return `<p style="color:#ef4444;padding:8px">⚠ Error rendering section: ${e.message}</p>`; }
+}
+
+// ── HELPERS ──
+function field(id, label, type='text', placeholder='', hint='', req=false) {
+  const inp = type === 'textarea'
+    ? `<textarea id="${id}" placeholder="${placeholder}" oninput="markDirty()"></textarea>`
+    : `<input type="${type}" id="${id}" placeholder="${placeholder}" oninput="markDirty()">`;
+  return `<div class="field"><label for="${id}">${label}${req?'<span class="req">*</span>':''} ${hint?`<span class="hint">${hint}</span>`:''}</label>${inp}</div>`;
+}
+
+function sel(id, label, options, hint='') {
+  const opts = options.map(o => typeof o === 'string'
+    ? `<option>${o}</option>`
+    : `<option value="${o.v}">${o.l}</option>`).join('');
+  return `<div class="field"><label for="${id}">${label} ${hint?`<span class="hint">${hint}</span>`:''}</label>
+    <select id="${id}" onchange="markDirty()">${opts}</select></div>`;
+}
+
+function chips(id, label, items, color='') {
+  const cs = items.map(c => `<span class="chip ${color}" onclick="toggleChip(this,'${id}')" data-val="${c}">${c}</span>`).join('');
+  return `<div class="field"><label>${label}</label><div class="chip-group" id="${id}">${cs}</div></div>`;
+}
+
+function dynTable(id, cols, label='') {
+  const ths = cols.map(c => `<th>${c.label}</th>`).join('') + '<th style="width:30px"></th>';
+  return `${label?`<div class="sec-divider">${label}</div>`:''}
+  <div style="overflow-x:auto">
+  <table class="dyn-table" id="tbl-${id}">
+    <thead><tr>${ths}</tr></thead>
+    <tbody id="tbody-${id}"></tbody>
+  </table>
+  </div>
+  <button class="add-row-btn" onclick="addRow('${id}')">＋ Add Row</button>`;
+}
+
+function toggleChip(el, groupId) {
+  el.classList.toggle('on');
+  markDirty();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BRD SECTION BODIES
+// ═══════════════════════════════════════════════════════════
+function bodyDocInfo() {
+  return `<div class="form-grid">
+    ${field('di-title','Document Title','text','e.g. CRM Platform — BRD v1.0','',true)}
+    ${field('di-version','Version','text','e.g. 1.0')}
+    ${field('di-date','Date','date')}
+    ${field('di-author','Author / Owner','text','Full name')}
+    ${sel('di-type','Project Type',['Web Application','Mobile App','API / Microservice','Desktop App','Data Pipeline / ETL','Cloud Migration','Integration / Middleware','Platform / SDK','IoT Solution','Other'])}
+    ${sel('di-status2','Document Status',['Draft','In Review','Approved','Rejected','Superseded'])}
+    ${field('di-project','Project / Product Name','text','e.g. Project Phoenix')}
+    ${field('di-dept','Department / Business Unit','text','e.g. Digital Commerce')}
+    ${field('di-sponsor','Executive Sponsor','text','Full name')}
+    ${field('di-email','Sponsor Email','email','')}
+    ${sel('di-conf','Confidentiality',['Public','Internal Only','Confidential','Strictly Confidential'])}
+    ${field('di-related','Related Documents','text','e.g. PRD-001, RFC-043')}
+  </div>
+  <div class="form-grid g1">${field('di-desc','Brief Project Description','textarea','Describe the project in 2-3 sentences…')}</div>`;
+}
+
+function bodyExec() {
+  return `<div class="form-grid g1">
+    ${field('ex-background','Business Background','textarea','What is the current business situation and why is this initiative needed?')}
+    ${field('ex-problem','Problem Statement','textarea','What specific problem or opportunity does this project address?')}
+    ${field('ex-vision','Solution Vision','textarea','Describe the proposed solution at a high level.')}
+    ${field('ex-value','Business Value / ROI','textarea','Expected return, cost savings, revenue opportunity, or strategic benefit.')}
+    ${field('ex-urgency','Urgency / Trigger','textarea','What is driving the timeline? Market pressure, regulation, contract, etc.')}
+  </div>`;
+}
+
+function bodyObjectives() {
+  return `<div class="form-grid g1">
+    ${field('obj-primary','Primary Business Objective','textarea','The single most important outcome this project must deliver.')}
+  </div>
+  ${dynTable('objectives',
+    [{label:'#'},{label:'Objective'},{label:'Category'},{label:'Priority'},{label:'KPI / Measure'},{label:'Target Date'}],
+    'Business Objectives')}`;
+}
+
+function bodyScope() {
+  return `<div class="form-grid g1">
+    ${field('sc-in','In Scope','textarea','List features, modules, and capabilities included in this release.')}
+    ${field('sc-out','Out of Scope','textarea','Explicitly list what will NOT be delivered in this release.')}
+    ${field('sc-future','Future Phases','textarea','Items deferred to subsequent releases.')}
+  </div>
+  <div class="form-grid">
+    ${sel('sc-geography','Geographic Scope',['Global','North America','Europe','Asia Pacific','Specific Region — see notes'])}
+    ${sel('sc-users','Target User Base',['Internal employees only','External customers only','Both internal and external','Partners / 3rd parties','All of the above'])}
+    ${field('sc-volume','Expected User Volume','text','e.g. 5,000 DAU, 50,000 registered users')}
+    ${field('sc-languages','Languages / Locales','text','e.g. English, French, Spanish')}
+  </div>`;
+}
+
+function bodyStakeholders() {
+  return dynTable('stakeholders',
+    [{label:'Name'},{label:'Role/Title'},{label:'Department'},{label:'Interest'},{label:'Influence'},{label:'Contact/Email'},{label:'RACI'}],
+    'Stakeholder Register');
+}
+
+function bodyFunReq() {
+  return `<div class="form-grid g1">
+    ${chips('fr-cats','Requirement Categories',['User Management','Authentication','Authorization','Dashboard','Reporting','Notifications','Integrations','Payments','Search','File Management','Workflow','Admin','API','Audit / Logging','Other'])}
+  </div>
+  ${dynTable('funreq',
+    [{label:'ID'},{label:'Category'},{label:'Description'},{label:'Priority'},{label:'Rationale'},{label:'Acceptance Criteria'},{label:'Source'}],
+    'Functional Requirements')}`;
+}
+
+function bodyNFR() {
+  return `<div class="nfr-grid">
+    <div class="nfr-card">
+      <div class="nfr-card-title">⚡ Performance</div>
+      ${field('nfr-latency','Target Response Time','text','e.g. < 200ms p95')}
+      ${field('nfr-throughput','Throughput','text','e.g. 1,000 RPS peak')}
+      ${field('nfr-concurrent','Concurrent Users','text','e.g. 10,000 simultaneous')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🔒 Security</div>
+      ${chips('nfr-sec','Auth Mechanisms',['OAuth 2.0','SAML/SSO','JWT','MFA/2FA','API Key','Certificate','Basic Auth'])}
+      ${field('nfr-pentest','Pen Testing Required','text','Frequency / scope')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">📜 Compliance & Regulatory</div>
+      ${chips('nfr-comp','Standards Required',['GDPR','HIPAA','SOC 2','ISO 27001','PCI-DSS','CCPA','FedRAMP','NIST 800-53','WCAG 2.1 AA','Section 508','None'],'teal')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🟢 Availability & Reliability</div>
+      ${sel('nfr-sla','SLA Target',['99.9% (≤8.7h/yr downtime)','99.95% (≤4.4h/yr)','99.99% (≤52min/yr)','99.999% (≤5min/yr)','No formal SLA'])}
+      ${field('nfr-rto','RTO (Recovery Time Obj.)','text','e.g. 1 hour')}
+      ${field('nfr-rpo','RPO (Recovery Point Obj.)','text','e.g. 15 minutes')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">📦 Scalability</div>
+      ${sel('nfr-scale-type','Scaling Strategy',['Horizontal scaling','Vertical scaling','Auto-scaling','Manual scaling','Hybrid'])}
+      ${field('nfr-peak','Peak Load Expectation','text','e.g. 3x normal during campaign')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🖥️ Usability</div>
+      ${sel('nfr-browser','Browser Support',['All modern browsers','Chrome + Firefox + Edge','Chrome only','IE11+','Mobile browsers only','Cross-platform mobile + web'])}
+      ${field('nfr-a11y','Accessibility Standard','text','e.g. WCAG 2.1 AA')}
+      ${field('nfr-ux','UX Guidelines','text','e.g. Company Design System v2')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🔧 Maintainability</div>
+      ${field('nfr-doc','Documentation Req.','text','e.g. API docs, runbooks, ADRs')}
+      ${field('nfr-coverage','Min. Test Coverage','text','e.g. 80% unit test coverage')}
+      ${sel('nfr-logging','Logging Level',['Debug (all)','Info','Warning','Error only','Custom'])}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🌐 Data & Retention</div>
+      ${field('nfr-retention','Data Retention Period','text','e.g. 7 years')}
+      ${sel('nfr-location','Data Residency',['No restriction','EU only','US only','In-country','Multi-region'])}
+      ${sel('nfr-backup','Backup Frequency',['Real-time','Hourly','Daily','Weekly','None'])}
+    </div>
+  </div>
+  <div class="form-grid g1" style="margin-top:10px">
+    ${field('nfr-other','Additional NFR Notes','textarea','Any other non-functional requirements…')}
+  </div>`;
+}
+
+function bodyUserStories() {
+  return `<div class="form-grid g1">
+    ${chips('us-personas','User Personas',['End User','Admin','Manager','Developer','Partner','Guest','API Consumer','Super Admin','Support Agent','Auditor'])}
+  </div>
+  ${dynTable('userstories',
+    [{label:'ID'},{label:'Persona'},{label:'Story (As a… I want… So that…)'},{label:'Priority'},{label:'Story Points'},{label:'Acceptance Criteria'},{label:'Sprint'}],
+    'User Stories')}`;
+}
+
+function bodyAssumptions() {
+  return `<div class="form-grid g1">
+    ${field('as-assumptions','Assumptions','textarea','List all assumptions made while defining these requirements. Each on a new line.')}
+    ${field('as-constraints','Constraints','textarea','Technical, business, legal, or resource constraints. Each on a new line.')}
+    ${field('as-exclusions','Explicit Exclusions','textarea','Anything explicitly excluded from scope or consideration.')}
+  </div>
+  <div class="form-grid">
+    ${field('as-budget','Budget Constraint','text','e.g. Not to exceed $500K')}
+    ${field('as-timeline','Timeline Constraint','text','e.g. Must go live before Q4')}
+    ${field('as-resources','Resource Constraint','text','e.g. Max 5 engineers')}
+    ${field('as-tech','Technology Constraint','text','e.g. Must use Azure, .NET 8')}
+  </div>`;
+}
+
+function bodyDependencies() {
+  return dynTable('dependencies',
+    [{label:'Dependency Name'},{label:'Dep Type'},{label:'Owner'},{label:'Dep Status'},{label:'Impact if Late'},{label:'Due Date'},{label:'Notes'}],
+    'Project Dependencies');
+}
+
+function bodyMilestones() {
+  return `<div class="form-grid">
+    ${field('ms-start','Project Start Date','date')}
+    ${field('ms-end','Target Go-Live Date','date')}
+    ${sel('ms-methodology','Delivery Methodology',['Agile / Scrum','Kanban','SAFe','Waterfall','Hybrid Agile','Shape Up'])}
+    ${field('ms-sprint','Sprint Length','text','e.g. 2 weeks')}
+  </div>
+  ${dynTable('milestones',
+    [{label:'Milestone'},{label:'Target Date'},{label:'Deliverable'},{label:'Owner'},{label:'Status'},{label:'Notes'}],
+    'Timeline & Milestones')}`;
+}
+
+function bodyRisks() {
+  return dynTable('risks',
+    [{label:'Risk Description'},{label:'Category'},{label:'Likelihood'},{label:'Impact'},{label:'Score'},{label:'Mitigation'},{label:'Owner'},{label:'Status'}],
+    'Risk Register');
+}
+
+function bodyKPIs() {
+  return `<div class="form-grid g1">
+    ${chips('kpi-cats','KPI Categories',['Revenue','Cost Reduction','User Adoption','Performance','Quality','Compliance','Customer Satisfaction','Operational Efficiency','Time to Market'])}
+  </div>
+  ${dynTable('kpis',
+    [{label:'Metric'},{label:'Category'},{label:'Baseline'},{label:'Target'},{label:'Measurement Method'},{label:'Frequency'},{label:'Owner'}],
+    'Success Metrics & KPIs')}`;
+}
+
+function bodyApprovals() {
+  return `<div class="form-grid g1">${field('ap-notes','Approval Notes / Conditions','textarea','Any conditions or comments related to the approval process.')}</div>
+  ${dynTable('approvals',
+    [{label:'Name'},{label:'Role/Title'},{label:'Signature'},{label:'Date'},{label:'Status'},{label:'Comments'}],
+    'Approval Sign-off')}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TDD SECTION BODIES
+// ═══════════════════════════════════════════════════════════
+function bodyTArch() {
+  return `<div class="form-grid">
+    ${sel('ta-pattern','Architecture Pattern',['Monolith','Microservices','Event-Driven','CQRS + Event Sourcing','Layered (N-Tier)','Hexagonal / Ports & Adapters','Serverless','Service Mesh','Modular Monolith','Micro-Frontends','SOA'])}
+    ${sel('ta-cloud','Cloud Provider',['Azure','AWS','Google Cloud','Multi-Cloud','On-Premises','Hybrid (Cloud + On-Prem)','None'])}
+    ${sel('ta-region','Primary Region',['East US','West US','West Europe','North Europe','Australia East','Southeast Asia','UK South','Canada Central','Multiple regions','On-Prem DC'])}
+    ${sel('ta-ha','High Availability Strategy',['Active-Active','Active-Passive','Single Region HA','Multi-Region HA','No formal HA','DR only'])}
+  </div>
+  <div class="form-grid g1">
+    ${field('ta-overview','Architecture Overview','textarea','Describe the high-level architecture, key design decisions, and major components.')}
+    ${field('ta-diagram','Architecture Diagram Notes','textarea','Describe or link to the architecture diagram. Describe key flows.')}
+    ${field('ta-constraints','Architectural Constraints','textarea','Technical standards, existing system constraints, team expertise constraints.')}
+    ${field('ta-adr','Key ADRs / Decisions','textarea','Reference key architectural decisions made (or link to ADR tool).')}
+  </div>`;
+}
+
+function bodyTStack() {
+  return `<div class="nfr-grid">
+    <div class="nfr-card">
+      <div class="nfr-card-title">🖥️ Frontend</div>
+      ${sel('ts-fe-fw','Framework',['React','Angular','Vue.js','Next.js','Nuxt.js','Svelte','Blazor','Razor Pages','None / Server-rendered','Other'])}
+      ${field('ts-fe-lang','Language','text','e.g. TypeScript 5.x')}
+      ${field('ts-fe-ui','UI Component Library','text','e.g. MUI, Tailwind, Fluent UI')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">⚙️ Backend</div>
+      ${sel('ts-be-lang','Language / Runtime',['C# / .NET 8+','.NET 6','.NET Framework','Node.js','Python','Java / Spring','Go','Rust','Ruby on Rails','PHP','Other'])}
+      ${sel('ts-be-fw','Framework',['ASP.NET Core','FastAPI','Express','NestJS','Spring Boot','Django','Flask','Laravel','Other'])}
+      ${field('ts-be-api','API Style','text','e.g. REST, GraphQL, gRPC, WebSocket')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🗄️ Database</div>
+      ${sel('ts-db-primary','Primary Database',['SQL Server','PostgreSQL','MySQL','Oracle','SQLite','MongoDB','CosmosDB','DynamoDB','Cassandra','Redis','Other'])}
+      ${sel('ts-db-orm','ORM / Data Access',['Entity Framework Core','Dapper','TypeORM','Prisma','Hibernate','SQLAlchemy','GORM','Raw SQL','Other'])}
+      ${field('ts-db-secondary','Secondary / Cache DB','text','e.g. Redis, Elasticsearch')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">📨 Messaging / Events</div>
+      ${sel('ts-msg','Message Broker',['Azure Service Bus','Azure Event Grid','Azure Event Hubs','RabbitMQ','Apache Kafka','AWS SQS/SNS','Google Pub/Sub','None','Other'])}
+      ${field('ts-msg-pattern','Messaging Pattern','text','e.g. Pub/Sub, Queue, Topic')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🚀 Infrastructure</div>
+      ${sel('ts-iac','IaC Tool',['Terraform','Bicep','ARM Templates','Pulumi','AWS CDK','Ansible','None','Other'])}
+      ${sel('ts-container','Containerisation',['Docker + Kubernetes (AKS/EKS/GKE)','Docker Compose (dev only)','Azure Container Apps','AWS Fargate','Google Cloud Run','No containers','Other'])}
+      ${field('ts-cdn','CDN / Edge','text','e.g. Azure CDN, CloudFront, Cloudflare')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🔧 DevOps & Tooling</div>
+      ${sel('ts-ci','CI/CD Platform',['Azure DevOps','GitHub Actions','GitLab CI','Jenkins','TeamCity','Bitbucket Pipelines','CircleCI','Other'])}
+      ${field('ts-registry','Container Registry','text','e.g. ACR, ECR, Docker Hub')}
+      ${field('ts-secrets','Secrets Management','text','e.g. Azure Key Vault, AWS SM, Vault')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">📡 Monitoring & Observability</div>
+      ${sel('ts-apm','APM Tool',['Azure Application Insights','Datadog','New Relic','Dynatrace','Prometheus + Grafana','OpenTelemetry','ELK Stack','AWS CloudWatch','None'])}
+      ${field('ts-logging','Logging Solution','text','e.g. Serilog → Azure Log Analytics')}
+    </div>
+    <div class="nfr-card">
+      <div class="nfr-card-title">🔒 Security Tools</div>
+      ${field('ts-sast','SAST Tool','text','e.g. SonarQube, Veracode')}
+      ${field('ts-dast','DAST / Pen Test','text','e.g. OWASP ZAP, Burp Suite')}
+      ${field('ts-sca','SCA / Dependencies','text','e.g. Snyk, Dependabot')}
+    </div>
+  </div>
+  <div class="form-grid g1" style="margin-top:10px">
+    ${field('ts-notes','Tech Stack Notes / Rationale','textarea','Explain key technology choices and trade-offs.')}
+  </div>`;
+}
+
+function bodyTComponents() {
+  return dynTable('t-components',
+    [{label:'Component Name'},{label:'Type'},{label:'Responsibility'},{label:'Technology'},{label:'Exposes Interface'},{label:'Consumes'},{label:'Scaling'},{label:'Owner Team'}],
+    'System Components');
+}
+
+function bodyTAPI() {
+  return `<div class="form-grid">
+    ${sel('ta-auth','Default Auth Mechanism',['Bearer JWT','OAuth 2.0 (Authorization Code)','OAuth 2.0 (Client Credentials)','API Key','HMAC Signature','Mutual TLS','None / Internal only'])}
+    ${sel('ta-versioning','API Versioning Strategy',['URI versioning (/v1/, /v2/)','Header versioning','Query param versioning','No versioning','Semantic versioning'])}
+    ${sel('ta-format','Response Format',['JSON (application/json)','JSON + HAL','JSON:API spec','XML','Both JSON and XML','gRPC Protobuf'])}
+    ${field('ta-base','Base URL','url','https://api.example.com/v1')}
+  </div>
+  ${dynTable('t-api',
+    [{label:'Method'},{label:'Endpoint Path'},{label:'Auth Required'},{label:'Request Body / Params'},{label:'Response Schema'},{label:'Status Codes'},{label:'Rate Limit'},{label:'Notes'}],
+    'API Endpoints')}`;
+}
+
+function bodyTData() {
+  return `<div class="form-grid">
+    ${sel('td-pattern','Data Storage Pattern',['RDBMS (Normalized)','RDBMS (Denormalized for read perf)','Document Store','Wide-Column','Time-Series','Graph DB','Event Store','Hybrid (Polyglot persistence)'])}
+    ${sel('td-consistency','Consistency Model',['Strong consistency','Eventual consistency','Read-your-writes','Monotonic reads','Custom'])}
+    ${field('td-partitioning','Partitioning Strategy','text','e.g. By tenant ID, by date range')}
+    ${field('td-indexing','Indexing Strategy','text','e.g. Covering indexes, composite indexes')}
+  </div>
+  <div class="form-grid g1">
+    ${field('td-entities','Entity / Table Definitions','textarea','List key entities with their main fields. E.g.:\nOrder: id, customerId, status, totalAmount, createdAt\nProduct: id, sku, name, price, stockLevel')}
+    ${field('td-relationships','Entity Relationships','textarea','Describe key relationships. E.g.: Order has many OrderItems (1:N), Customer has many Orders (1:N)')}
+    ${field('td-migration','Schema Migration Notes','textarea','Migration strategy, tooling (e.g. FluentMigrator, EF Migrations, Flyway), rollback approach.')}
+    ${field('td-seeding','Data Seeding / Test Data','textarea','Approach for seeding reference data and test data.')}
+  </div>`;
+}
+
+function bodyTSecurity() {
+  return `<div class="form-grid">
+    ${sel('ts2-authn','Authentication Pattern',['JWT (stateless)','Session-based (stateful)','OAuth 2.0 Authorization Code + PKCE','OAuth 2.0 Client Credentials','SAML 2.0 / SSO','Certificate-based mTLS','Custom token'])}
+    ${sel('ts2-authz','Authorization Model',['RBAC (Role-Based)','ABAC (Attribute-Based)','PBAC (Policy-Based)','ACL','Flat permissions','Custom'])}
+    ${sel('ts2-tls','TLS Version',['TLS 1.3 only','TLS 1.2 minimum','TLS 1.2 + 1.3'])}
+    ${sel('ts2-secrets','Secrets Management',['Azure Key Vault','AWS Secrets Manager','HashiCorp Vault','Environment variables (non-prod only)','Kubernetes Secrets','Other'])}
+  </div>
+  <div class="form-grid g1">
+    ${field('ts2-threats','Threat Model Summary','textarea','Key threats identified and mitigations. Reference OWASP Top 10 items where applicable.')}
+    ${field('ts2-encrypt','Encryption at Rest','textarea','What data is encrypted, algorithm, key management approach.')}
+    ${field('ts2-network','Network Security','textarea','VNet, private endpoints, NSGs, WAF, DDoS protection measures.')}
+    ${field('ts2-audit','Audit Logging','textarea','What is logged, retention period, access controls on logs.')}
+    ${field('ts2-comp','Compliance Controls','textarea','Specific technical controls required by regulations (GDPR, HIPAA, etc.).')}
+  </div>`;
+}
+
+function bodyTScale() {
+  return `<div class="form-grid">
+    ${sel('tsc-strategy','Scaling Strategy',['Horizontal scaling (stateless services)','Vertical scaling','Auto-scaling based on metrics','Scheduled scaling','KEDA event-driven scaling','Manual'])}
+    ${sel('tsc-cache','Caching Strategy',['No caching','In-memory (L1)','Distributed cache (Redis)','CDN edge caching','Database query cache','Multi-tier (L1 + L2)','Output caching'])}
+    ${field('tsc-load','Expected Load','text','e.g. 10k RPS peak, 2k RPS average')}
+    ${field('tsc-peak','Peak Traffic Scenario','text','e.g. Black Friday 10x baseline for 4 hours')}
+  </div>
+  <div class="form-grid g1">
+    ${field('tsc-bottlenecks','Known Bottlenecks','textarea','Identify potential bottlenecks and mitigation approach.')}
+    ${field('tsc-perf-targets','Performance Targets','textarea','SLIs/SLOs e.g.: P50 < 80ms, P95 < 200ms, P99 < 500ms, Error rate < 0.1%')}
+    ${field('tsc-loadtest','Load Testing Plan','textarea','Tool (e.g. k6, JMeter, Azure Load Testing), scenarios, pass criteria.')}
+    ${field('tsc-cdn','CDN / Edge Strategy','textarea','What assets are cached at the edge, TTLs, purge strategy.')}
+  </div>`;
+}
+
+function bodyTDeploy() {
+  return `<div class="form-grid">
+    ${sel('td2-strategy','Deployment Strategy',['Blue-Green','Canary','Rolling Update','Recreate (downtime)','Feature Flags + Dark Launch','A/B with traffic split'])}
+    ${sel('td2-envs','Number of Environments',['dev → prod (2)','dev → test → prod (3)','dev → test → staging → prod (4)','dev → SIT → UAT → prod (4)','Custom'])}
+    ${sel('td2-container','Container Orchestration',['AKS (Azure Kubernetes Service)','Amazon EKS','Google GKE','Azure Container Apps','Docker Compose (non-prod)','No containers','Other'])}
+    ${sel('td2-registry','Image Registry',['Azure Container Registry','Amazon ECR','Docker Hub','GitHub Container Registry','Google Artifact Registry','Other'])}
+  </div>
+  <div class="form-grid g1">
+    ${field('td2-pipeline','CI/CD Pipeline Description','textarea','Describe the pipeline stages: build → test → scan → publish → deploy → smoke test.')}
+    ${field('td2-rollback','Rollback Strategy','textarea','How to roll back a failed deployment. Automated or manual? How long does it take?')}
+    ${field('td2-config','Configuration Management','textarea','How environment-specific config is handled (env vars, Key Vault refs, config maps, etc.).')}
+    ${field('td2-slots','Deployment Slots / Gates','textarea','Approval gates, QA sign-off requirements, performance gate thresholds.')}
+  </div>`;
+}
+
+function bodyTMonitor() {
+  return `<div class="form-grid">
+    ${sel('tm-apm','APM Platform',['Azure Application Insights','Datadog','New Relic','Dynatrace','Prometheus + Grafana','AWS CloudWatch + X-Ray','OpenTelemetry (vendor-agnostic)','ELK / OpenSearch','None'])}
+    ${sel('tm-alerting','Alerting Channel',['PagerDuty','OpsGenie','Azure Monitor Alerts','Slack','Email','Teams','Custom webhook','None'])}
+    ${sel('tm-tracing','Distributed Tracing',['OpenTelemetry','Jaeger','Zipkin','Azure App Insights','Datadog APM','AWS X-Ray','None'])}
+    ${sel('tm-oncall','On-Call Rotation',['24/7 rotation','Business hours only','Hybrid','None defined'])}
+  </div>
+  <div class="form-grid g1">
+    ${field('tm-slos','SLOs / SLIs','textarea','Define SLIs and SLOs.\ne.g. SLI: P95 latency | SLO: < 200ms for 99.5% of requests over 30-day window')}
+    ${field('tm-dashboards','Dashboards','textarea','Key dashboards to build: latency, error rate, throughput, queue depth, infra health.')}
+    ${field('tm-runbooks','Runbooks','textarea','Link or describe key runbooks for common incidents.')}
+    ${field('tm-log-schema','Log Schema','textarea','Structured log fields: correlationId, userId, tenantId, service, operation, duration, status.')}
+  </div>`;
+}
+
+function bodyTTesting() {
+  return `<div class="form-grid">
+    ${sel('tt-framework-unit','Unit Test Framework',['xUnit (.NET)','NUnit (.NET)','MSTest (.NET)','Jest (JS/TS)','Vitest','PyTest','JUnit 5','Go test','Other'])}
+    ${sel('tt-framework-int','Integration Test Framework',['xUnit + TestContainers','Pytest + Docker','Spring Boot Test','Supertest (Node)','REST-assured','Custom','Other'])}
+    ${sel('tt-e2e','E2E Test Framework',['Playwright','Cypress','Selenium','Puppeteer','Appium (mobile)','None','Other'])}
+    ${sel('tt-perf','Performance Testing Tool',['k6','Apache JMeter','Gatling','Azure Load Testing','Locust','wrk','None'])}
+  </div>
+  <div class="form-grid">
+    ${field('tt-unit-cov','Unit Test Coverage Target','text','e.g. ≥ 80% line coverage')}
+    ${field('tt-int-cov','Integration Test Coverage','text','e.g. All API endpoints, critical flows')}
+    ${field('tt-e2e-scope','E2E Test Scope','text','e.g. Happy path + top 5 critical user journeys')}
+    ${field('tt-perf-criteria','Performance Test Pass Criteria','text','e.g. P95 < 200ms at 1000 RPS')}
+  </div>
+  <div class="form-grid g1">
+    ${field('tt-strategy','Overall Testing Strategy','textarea','Describe the test pyramid, ownership (dev vs QA), shift-left approach, and CI integration.')}
+    ${field('tt-security-test','Security Testing','textarea','SAST in CI, DAST schedule, pen test frequency, dependency scanning.')}
+    ${field('tt-uat','UAT Plan','textarea','Who signs off UAT, entry/exit criteria, UAT environment.')}
+  </div>`;
+}
+
+function bodyTMigration() {
+  return `<div class="form-grid">
+    ${sel('tmig-strategy','Migration Strategy',['Big Bang (full cutover)','Phased / Incremental','Strangler Fig pattern','Blue-Green cutover','Parallel run then cutover','No migration needed'])}
+    ${sel('tmig-data','Data Migration Approach',['ETL batch migration','Real-time sync then cutover','Dual-write period','Snapshot + replay events','Manual migration','No data migration'])}
+    ${sel('tmig-rollback','Rollback Approach',['Automated rollback','Manual rollback with runbook','Blue-Green swap back','Feature flag disable','No rollback — forward only'])}
+    ${field('tmig-cutover','Cutover Window','text','e.g. Saturday 02:00–06:00 UTC')}
+  </div>
+  <div class="form-grid g1">
+    ${field('tmig-phases','Migration Phases','textarea','Phase 1: …\nPhase 2: …\nPhase 3: …')}
+    ${field('tmig-data-notes','Data Migration Notes','textarea','Volume, transformation rules, validation checks, reconciliation approach.')}
+    ${field('tmig-comms','Communication Plan','textarea','Who is notified, when, and via what channel before/during/after cutover.')}
+  </div>`;
+}
+
+function bodyTIssues() {
+  return dynTable('t-issues',
+    [{label:'ID'},{label:'Issue / Decision Needed'},{label:'Issue Cat'},{label:'Priority'},{label:'Owner'},{label:'Due Date'},{label:'Status'},{label:'Resolution'}],
+    'Open Technical Issues & Decisions');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DYNAMIC ROWS
+// ═══════════════════════════════════════════════════════════
+const TABLE_CONFIGS = {
+  objectives:    ['#','Objective','Category','Priority','KPI / Measure','Target Date'],
+  stakeholders:  ['Name','Role/Title','Department','Interest','Influence','Contact/Email','RACI'],
+  funreq:        ['ID','Category','Description','Priority','Rationale','Acceptance Criteria','Source'],
+  userstories:   ['ID','Persona','Story','Priority','Points','Acceptance Criteria','Sprint'],
+  dependencies:  ['Dependency','Dep Type','Owner','Dep Status','Impact if Late','Due Date','Notes'],
+  milestones:    ['Milestone','Target Date','Deliverable','Owner','Status','Notes'],
+  risks:         ['Risk','Category','Likelihood','Impact','Score','Mitigation','Owner','Status'],
+  kpis:          ['Metric','Category','Baseline','Target','Measurement','Frequency','Owner'],
+  approvals:     ['Name','Role','Signature','Date','Status','Comments'],
+  't-components':['Component','Type','Responsibility','Technology','Exposes','Consumes','Scaling','Owner Team'],
+  't-api':       ['Method','Endpoint','Auth','Request','Response','Status Codes','Rate Limit','Notes'],
+  't-issues':    ['ID','Issue','Issue Cat','Priority','Owner','Due Date','Status','Resolution'],
+};
+
+const PRIORITY_OPTS = `<option value="">—</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>`;
+const STATUS_OPTS   = `<option value="">—</option><option>Open</option><option>In Progress</option><option>Done</option><option>Blocked</option><option>N/A</option>`;
+const METHOD_OPTS   = `<option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>WS</option>`;
+const RACI_OPTS     = `<option value="">—</option><option>R</option><option>A</option><option>C</option><option>I</option><option>R/A</option>`;
+const LH_OPTS       = `<option value="">—</option><option>Very Low</option><option>Low</option><option>Medium</option><option>High</option><option>Very High</option>`;
+const COMP_TYPE     = `<option value="">—</option><option>Service</option><option>Library</option><option>Gateway</option><option>Queue</option><option>Database</option><option>UI</option><option>Cache</option><option>Worker</option>`;
+const ISSUE_CAT     = `<option value="">—</option><option>Architecture</option><option>Security</option><option>Performance</option><option>Data</option><option>Integration</option><option>Compliance</option><option>Deployment</option><option>Other</option>`;
+const DEP_TYPE      = `<option value="">—</option><option>Internal Team</option><option>External Vendor</option><option>3rd Party API</option><option>Infrastructure</option><option>Data</option><option>Regulatory</option>`;
+const DEP_STATUS    = `<option value="">—</option><option>Confirmed</option><option>Pending</option><option>At Risk</option><option>Blocked</option>`;
+
+function cellInput(col) {
+  col = col.toLowerCase();
+  if (col.includes('priority'))   return `<select onchange="updateRowStyle(this);markDirty()">${PRIORITY_OPTS}</select>`;
+  if (col === 'dep status')       return `<select onchange="markDirty()">${DEP_STATUS}</select>`;
+  if (col.includes('status'))     return `<select onchange="markDirty()">${STATUS_OPTS}</select>`;
+  if (col.includes('raci'))       return `<select onchange="markDirty()">${RACI_OPTS}</select>`;
+  if (col === 'method')           return `<select onchange="markDirty()">${METHOD_OPTS}</select>`;
+  if (col.includes('likelihood')) return `<select onchange="markDirty()">${LH_OPTS}</select>`;
+  if (col === 'dep type')         return `<select onchange="markDirty()">${DEP_TYPE}</select>`;
+  if (col === 'type')             return `<select onchange="markDirty()">${COMP_TYPE}</select>`;
+  if (col === 'category')         return `<input type="text" placeholder="Category" oninput="markDirty()">`;
+  if (col.includes('impact') && !col.includes('if')) return `<select onchange="markDirty()">${LH_OPTS}</select>`;
+  if (col.includes('date'))       return `<input type="date" oninput="markDirty()">`;
+  if (col === 'issue cat')        return `<select onchange="markDirty()">${ISSUE_CAT}</select>`;
+  if (col.includes('story') || col.includes('accept') || col.includes('criteria') ||
+      col.includes('notes') || col.includes('resolution') || col.includes('mitigation') ||
+      col.includes('rationale') || col.includes('desc') || col.includes('responsibility') ||
+      col.includes('request') || col.includes('response') || col.includes('consumes') ||
+      col.includes('exposes') || col.includes('impact if')) {
+    return `<textarea rows="2" placeholder="…" oninput="markDirty()" style="min-height:40px"></textarea>`;
+  }
+  return `<input type="text" placeholder="…" oninput="markDirty()">`;
+}
+
+function addRow(tableId) {
+  const tbody = document.getElementById('tbody-' + tableId);
+  if (!tbody) return;
+  const cols = TABLE_CONFIGS[tableId] || [];
+  const tr = document.createElement('tr');
+  tr.innerHTML = cols.map(c => `<td>${cellInput(c)}</td>`).join('')
+    + `<td><button class="del-btn" onclick="this.closest('tr').remove();markDirty()" title="Remove">✕</button></td>`;
+  tbody.appendChild(tr);
+  markDirty();
+}
+
+function updateRowStyle(sel) {
+  const val = sel.value.toLowerCase();
+  sel.className = '';
+  if (val === 'critical') sel.className = 'p-critical';
+  else if (val === 'high') sel.className = 'p-high';
+  else if (val === 'medium') sel.className = 'p-medium';
+  else if (val === 'low') sel.className = 'p-low';
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOC TYPE SWITCHING
+// ═══════════════════════════════════════════════════════════
+function setDocType(type) {
+  docType = type;
+  ['brd','both','tdd'].forEach(t => document.getElementById('dt-'+t).classList.toggle('on', t === type));
+  buildNav();
+  buildForm();
+  loadFromLocal();
+  markDirty(false);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DIRTY / SAVE / LOAD
+// ═══════════════════════════════════════════════════════════
+let dirtyTimer;
+function markDirty(d=true) {
+  dirty = d;
+  clearTimeout(dirtyTimer);
+  if (d) dirtyTimer = setTimeout(saveToLocal, 3000);
+}
+
+function collectFormData() {
+  const data = { docType, meta: {}, brd: {}, tdd: {} };
+  document.querySelectorAll('[id]').forEach(el => {
+    const id = el.id;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') data.meta[id] = el.value;
+    else if (el.tagName === 'SELECT') data.meta[id] = el.value;
+  });
+  // collect chip groups
+  document.querySelectorAll('.chip-group').forEach(g => {
+    data.meta[g.id] = [...g.querySelectorAll('.chip.on')].map(c => c.dataset.val);
+  });
+  // collect dynamic tables
+  Object.keys(TABLE_CONFIGS).forEach(tid => {
+    const tbody = document.getElementById('tbody-' + tid);
+    if (!tbody) return;
+    data.meta['tbl-' + tid] = [...tbody.querySelectorAll('tr')].map(tr =>
+      [...tr.querySelectorAll('input,select,textarea')].map(inp => inp.value)
+    );
+  });
+  return data;
+}
+
+function restoreFormData(data) {
+  if (!data) return;
+  Object.entries(data.meta || {}).forEach(([id, val]) => {
+    if (id.startsWith('tbl-')) return; // handled separately
+    if (Array.isArray(val)) {
+      const grp = document.getElementById(id);
+      if (grp) grp.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('on', val.includes(c.dataset.val));
+      });
+    } else {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    }
+  });
+  // restore tables
+  Object.keys(TABLE_CONFIGS).forEach(tid => {
+    const rows = (data.meta || {})['tbl-' + tid];
+    const tbody = document.getElementById('tbody-' + tid);
+    if (!tbody || !rows) return;
+    tbody.innerHTML = '';
+    rows.forEach(rowVals => {
+      addRow(tid);
+      const lastRow = tbody.lastElementChild;
+      const inputs = lastRow.querySelectorAll('input,select,textarea');
+      rowVals.forEach((v, i) => { if (inputs[i]) inputs[i].value = v; });
+    });
+  });
+}
+
+function saveToLocal() {
+  const data = collectFormData();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  markDirty(false);
+  toast('Saved to browser storage');
+}
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    restoreFormData(data);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════
+function exportJSON() {
+  const data = collectFormData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const title = (document.getElementById('doc-title') || {}).value || 'document';
+  a.href = url;
+  a.download = `brd-tdd-${title.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported JSON');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.docType) {
+        docType = data.docType;
+        ['brd','both','tdd'].forEach(t => document.getElementById('dt-'+t).classList.toggle('on', t === data.docType));
+        buildNav();
+        buildForm();
+      }
+      restoreFormData(data);
+      toast('Imported successfully');
+    } catch(err) {
+      toast('Error reading file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// HTML EXPORT
+// ═══════════════════════════════════════════════════════════
+function generateDocHTML(forExport=false) {
+  const d = collectFormData();
+  const m = d.meta;
+  const title = m['doc-title'] || m['di-title'] || 'Untitled Document';
+  const statusMap = {draft:'Draft',review:'In Review',approved:'Approved',rejected:'Rejected'};
+  const status = statusMap[m['doc-status']] || 'Draft';
+  const statusColor = {Draft:'#64748b','In Review':'#d97706',Approved:'#16a34a',Rejected:'#dc2626'}[status];
+
+  const section = (heading, content, show=true) => show && content.trim()
+    ? `<div class="doc-section"><h2>${heading}</h2>${content}</div>` : '';
+
+  const kv = (label, val) => val ? `<p><strong>${label}:</strong> ${val}</p>` : '';
+
+  const tableHTML = (tid, headers) => {
+    const rows = m['tbl-'+tid] || [];
+    if (!rows.length) return '';
+    return `<table class="doc-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map(r=>`<tr>${r.map(c=>`<td>${c||'—'}</td>`).join('')}</tr>`).join('')}
+    </tbody></table>`;
+  };
+
+  const chipList = (id) => {
+    const vals = m[id];
+    if (!Array.isArray(vals) || !vals.length) return '';
+    return `<p>${vals.map(v=>`<span style="display:inline-block;padding:2px 8px;background:#eef2ff;color:#4f46e5;border-radius:20px;font-size:12px;margin:2px">${v}</span>`).join(' ')}</p>`;
+  };
+
+  const brdHTML = docType !== 'tdd' ? `
+    ${section('1. Executive Summary', `
+      ${kv('Business Background', m['ex-background'])}
+      ${kv('Problem Statement', m['ex-problem'])}
+      ${kv('Solution Vision', m['ex-vision'])}
+      ${kv('Business Value / ROI', m['ex-value'])}
+      ${kv('Urgency / Trigger', m['ex-urgency'])}
+    `)}
+    ${section('2. Business Objectives', `
+      ${kv('Primary Objective', m['obj-primary'])}
+      <h3>Objectives Register</h3>
+      ${tableHTML('objectives', TABLE_CONFIGS['objectives'])}
+    `)}
+    ${section('3. Scope', `
+      ${kv('In Scope', m['sc-in'])}
+      ${kv('Out of Scope', m['sc-out'])}
+      ${kv('Future Phases', m['sc-future'])}
+      ${kv('Geographic Scope', m['sc-geography'])}
+      ${kv('Target User Base', m['sc-users'])}
+      ${kv('Expected Volume', m['sc-volume'])}
+    `)}
+    ${section('4. Stakeholders', tableHTML('stakeholders', TABLE_CONFIGS['stakeholders']))}
+    ${section('5. Functional Requirements', `
+      ${chipList('fr-cats')}
+      ${tableHTML('funreq', TABLE_CONFIGS['funreq'])}
+    `)}
+    ${section('6. Non-Functional Requirements', `
+      ${kv('Target Response Time', m['nfr-latency'])}
+      ${kv('Throughput', m['nfr-throughput'])}
+      ${kv('SLA', m['nfr-sla'])}
+      ${kv('RTO', m['nfr-rto'])}  ${kv('RPO', m['nfr-rpo'])}
+      ${kv('Scaling Strategy', m['nfr-scale-type'])}
+      ${kv('Compliance', Array.isArray(m['nfr-comp']) ? m['nfr-comp'].join(', ') : '')}
+      ${kv('Browser Support', m['nfr-browser'])}
+      ${kv('Data Retention', m['nfr-retention'])}
+      ${kv('Data Residency', m['nfr-location'])}
+      ${kv('Additional NFR Notes', m['nfr-other'])}
+    `)}
+    ${section('7. User Stories', tableHTML('userstories', TABLE_CONFIGS['userstories']))}
+    ${section('8. Assumptions & Constraints', `
+      ${kv('Assumptions', m['as-assumptions'])}
+      ${kv('Constraints', m['as-constraints'])}
+      ${kv('Budget', m['as-budget'])}
+      ${kv('Timeline', m['as-timeline'])}
+      ${kv('Technology', m['as-tech'])}
+    `)}
+    ${section('9. Dependencies', tableHTML('dependencies', TABLE_CONFIGS['dependencies']))}
+    ${section('10. Timeline & Milestones', `
+      ${kv('Project Start', m['ms-start'])} ${kv('Target Go-Live', m['ms-end'])}
+      ${kv('Methodology', m['ms-methodology'])}
+      ${tableHTML('milestones', TABLE_CONFIGS['milestones'])}
+    `)}
+    ${section('11. Risks & Mitigations', tableHTML('risks', TABLE_CONFIGS['risks']))}
+    ${section('12. Success Metrics / KPIs', tableHTML('kpis', TABLE_CONFIGS['kpis']))}
+    ${section('13. Approvals', tableHTML('approvals', TABLE_CONFIGS['approvals']))}
+  ` : '';
+
+  const tddHTML = docType !== 'brd' ? `
+    ${section('T1. Architecture Overview', `
+      ${kv('Pattern', m['ta-pattern'])}
+      ${kv('Cloud Provider', m['ta-cloud'])}
+      ${kv('Primary Region', m['ta-region'])}
+      ${kv('HA Strategy', m['ta-ha'])}
+      ${kv('Overview', m['ta-overview'])}
+      ${kv('Diagram Notes', m['ta-diagram'])}
+      ${kv('Architectural Constraints', m['ta-constraints'])}
+      ${kv('Key ADRs', m['ta-adr'])}
+    `)}
+    ${section('T2. Tech Stack', `
+      ${kv('Frontend Framework', m['ts-fe-fw'])} ${kv('Language', m['ts-fe-lang'])}
+      ${kv('Backend Language', m['ts-be-lang'])} ${kv('Framework', m['ts-be-fw'])}
+      ${kv('API Style', m['ts-be-api'])}
+      ${kv('Primary Database', m['ts-db-primary'])} ${kv('ORM', m['ts-db-orm'])}
+      ${kv('Messaging', m['ts-msg'])} ${kv('Pattern', m['ts-msg-pattern'])}
+      ${kv('IaC Tool', m['ts-iac'])} ${kv('Containers', m['ts-container'])}
+      ${kv('CI/CD', m['ts-ci'])}
+      ${kv('APM', m['ts-apm'])} ${kv('Logging', m['ts-logging'])}
+      ${kv('Tech Stack Notes', m['ts-notes'])}
+    `)}
+    ${section('T3. System Components', tableHTML('t-components', TABLE_CONFIGS['t-components']))}
+    ${section('T4. API Design', `
+      ${kv('Default Auth', m['ta-auth'])}
+      ${kv('Versioning Strategy', m['ta-versioning'])}
+      ${kv('Response Format', m['ta-format'])}
+      ${kv('Base URL', m['ta-base'])}
+      ${tableHTML('t-api', TABLE_CONFIGS['t-api'])}
+    `)}
+    ${section('T5. Data Model', `
+      ${kv('Storage Pattern', m['td-pattern'])}
+      ${kv('Consistency', m['td-consistency'])}
+      ${kv('Partitioning', m['td-partitioning'])}
+      ${kv('Entity Definitions', m['td-entities'])}
+      ${kv('Relationships', m['td-relationships'])}
+      ${kv('Migration Notes', m['td-migration'])}
+    `)}
+    ${section('T6. Security Design', `
+      ${kv('Authentication', m['ts2-authn'])}
+      ${kv('Authorization', m['ts2-authz'])}
+      ${kv('TLS', m['ts2-tls'])}
+      ${kv('Secrets Management', m['ts2-secrets'])}
+      ${kv('Threat Model', m['ts2-threats'])}
+      ${kv('Encryption at Rest', m['ts2-encrypt'])}
+      ${kv('Network Security', m['ts2-network'])}
+      ${kv('Audit Logging', m['ts2-audit'])}
+    `)}
+    ${section('T7. Scalability & Performance', `
+      ${kv('Strategy', m['tsc-strategy'])}
+      ${kv('Caching', m['tsc-cache'])}
+      ${kv('Expected Load', m['tsc-load'])}
+      ${kv('Peak Scenario', m['tsc-peak'])}
+      ${kv('Performance Targets', m['tsc-perf-targets'])}
+      ${kv('Load Testing', m['tsc-loadtest'])}
+    `)}
+    ${section('T8. Deployment', `
+      ${kv('Strategy', m['td2-strategy'])}
+      ${kv('Environments', m['td2-envs'])}
+      ${kv('Container Orchestration', m['td2-container'])}
+      ${kv('Pipeline', m['td2-pipeline'])}
+      ${kv('Rollback Strategy', m['td2-rollback'])}
+    `)}
+    ${section('T9. Monitoring & Observability', `
+      ${kv('APM', m['tm-apm'])}
+      ${kv('Alerting', m['tm-alerting'])}
+      ${kv('Distributed Tracing', m['tm-tracing'])}
+      ${kv('SLOs / SLIs', m['tm-slos'])}
+      ${kv('Dashboards', m['tm-dashboards'])}
+      ${kv('Log Schema', m['tm-log-schema'])}
+    `)}
+    ${section('T10. Testing Strategy', `
+      ${kv('Unit Test Framework', m['tt-framework-unit'])}
+      ${kv('Integration Framework', m['tt-framework-int'])}
+      ${kv('E2E Framework', m['tt-e2e'])}
+      ${kv('Performance Tool', m['tt-perf'])}
+      ${kv('Unit Coverage Target', m['tt-unit-cov'])}
+      ${kv('Strategy', m['tt-strategy'])}
+      ${kv('Security Testing', m['tt-security-test'])}
+      ${kv('UAT Plan', m['tt-uat'])}
+    `)}
+    ${section('T11. Migration Plan', `
+      ${kv('Strategy', m['tmig-strategy'])}
+      ${kv('Data Migration', m['tmig-data'])}
+      ${kv('Cutover Window', m['tmig-cutover'])}
+      ${kv('Phases', m['tmig-phases'])}
+      ${kv('Rollback', m['tmig-rollback'])}
+    `)}
+    ${section('T12. Open Issues', tableHTML('t-issues', TABLE_CONFIGS['t-issues']))}
+  ` : '';
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>${title}</title>
+<style>
+body{font-family:'Segoe UI',system-ui,sans-serif;margin:0;background:#f8fafc;color:#0f172a}
+.doc-page{max-width:960px;margin:0 auto;padding:32px 24px;font-size:14px;line-height:1.7}
+.doc-cover{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;padding:48px 40px;border-radius:12px;margin-bottom:32px}
+.doc-cover h1{font-size:28px;font-weight:800;margin-bottom:6px}
+.doc-cover .sub{font-size:14px;opacity:.8;margin-bottom:24px}
+.doc-cover .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px}
+.doc-cover .meta-grid span{opacity:.7}
+.doc-cover .meta-grid strong{display:block}
+.status-pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(255,255,255,.2);margin-top:12px}
+.doc-section{margin-bottom:32px;background:#fff;border-radius:10px;padding:24px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.doc-section h2{font-size:17px;font-weight:800;color:#1e1b4b;border-bottom:2px solid #eef2ff;padding-bottom:10px;margin-bottom:14px}
+.doc-section h3{font-size:13px;font-weight:700;color:#334155;margin:14px 0 8px}
+.doc-section p{margin-bottom:6px;white-space:pre-line}
+.doc-section p strong{color:#334155}
+.doc-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}
+.doc-table th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;border:1px solid #e2e8f0;font-size:11.5px;color:#334155}
+.doc-table td{padding:8px 10px;border:1px solid #e2e8f0;vertical-align:top}
+.doc-table tr:nth-child(even) td{background:#fafafa}
+@media print{body{background:#fff}.doc-cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc-section{break-inside:avoid}}
+</style></head><body>
+<div class="doc-page">
+  <div class="doc-cover">
+    <div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">
+      ${docType === 'brd' ? 'Business Requirements Document' : docType === 'tdd' ? 'Technical Design Document' : 'BRD + Technical Design Document'}
+    </div>
+    <h1>${title}</h1>
+    <div class="sub">${m['di-project'] || ''} ${m['di-dept'] ? '· ' + m['di-dept'] : ''}</div>
+    <div class="status-pill" style="background-color:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor}">${status}</div>
+    <div class="meta-grid" style="margin-top:20px">
+      <div><span>Version</span><strong>${m['di-version'] || '—'}</strong></div>
+      <div><span>Date</span><strong>${m['di-date'] || '—'}</strong></div>
+      <div><span>Author</span><strong>${m['di-author'] || '—'}</strong></div>
+      <div><span>Sponsor</span><strong>${m['di-sponsor'] || '—'}</strong></div>
+      <div><span>Project Type</span><strong>${m['di-type'] || '—'}</strong></div>
+      <div><span>Confidentiality</span><strong>${m['di-conf'] || '—'}</strong></div>
+    </div>
+  </div>
+  ${m['di-desc'] ? `<div class="doc-section"><h2>Project Description</h2><p>${m['di-desc']}</p></div>` : ''}
+  ${brdHTML}
+  ${tddHTML}
+  <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:32px">Generated by QuickTools BRD/TDD Generator · ${new Date().toLocaleDateString()}</p>
+</div></body></html>`;
+}
+
+function exportHTML() {
+  const html = generateDocHTML(true);
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const title = (document.getElementById('doc-title') || {}).value || 'document';
+  a.href = url;
+  a.download = `${title.replace(/[^a-z0-9]/gi,'_').toLowerCase() || 'brd-tdd'}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported HTML document');
+}
+
+function showPreview() {
+  const html = generateDocHTML(false);
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:100%;border:none';
+  const body = document.getElementById('preview-body');
+  body.innerHTML = '';
+  body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  document.getElementById('preview-overlay').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('preview-overlay').classList.remove('open');
+}
+
+function confirmReset() {
+  if (confirm('Reset all form data? This cannot be undone.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    buildForm();
+    document.getElementById('doc-title').value = '';
+    document.getElementById('doc-status').value = 'draft';
+    toast('Form reset');
+  }
+}
+
+function updateStatusBadge() { markDirty(); }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCROLL SPY
+// ═══════════════════════════════════════════════════════════
+function initScrollSpy() {
+  const form = document.getElementById('form');
+  form.addEventListener('scroll', () => {
+    const sections = getActiveSections();
+    let active = null;
+    sections.forEach(s => {
+      const el = document.getElementById('sec-' + s.id);
+      if (!el) return;
+      if (el.getBoundingClientRect().top < 120) active = s.id;
+    });
+    if (active) {
+      document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+      const nav = document.getElementById('nav-' + active);
+      if (nav) nav.classList.add('active');
+    }
+  }, { passive: true });
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+(function init() {
+  buildNav();
+  buildForm();
+  loadFromLocal();
+  initScrollSpy();
+})();
+</script>
+</body>
+</html>
