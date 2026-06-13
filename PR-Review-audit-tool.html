@@ -7,23 +7,23 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-:root{--pri:#2563eb;--pri-dk:#1d4ed8;--sb:#0f172a;--sb-txt:#94a3b8;--hdr:#1e293b;--bg:#f1f5f9;--card:#fff;--bdr:#e2e8f0;--txt:#1e293b;--mut:#64748b;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--inf:#3b82f6;--blocker:#dc2626;--critical:#ea580c;--high:#d97706;--medium:#2563eb;--low:#7c3aed;--sug:#059669}
+:root{--pri:#2563eb;--pri-dk:#1d4ed8;--sb:#ffffff;--sb-txt:#64748b;--hdr:#1e293b;--bg:#f1f5f9;--card:#fff;--bdr:#e2e8f0;--txt:#1e293b;--mut:#64748b;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--inf:#3b82f6;--blocker:#dc2626;--critical:#ea580c;--high:#d97706;--medium:#2563eb;--low:#7c3aed;--sug:#059669}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden;font-size:13px}
 /* ── Sidebar ── */
-#sb{width:248px;min-width:248px;background:var(--sb);display:flex;flex-direction:column;overflow-y:auto}
-.sb-logo{padding:16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+#sb{width:248px;min-width:248px;background:var(--sb);border-right:1px solid #e2e8f0;display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px}
 .sb-logo .ico{background:var(--pri);color:#fff;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.sb-logo .lbl{font-size:15px;font-weight:700;color:#fff}
+.sb-logo .lbl{font-size:15px;font-weight:700;color:#1e293b}
 .sb-logo .sub{font-size:10px;color:var(--sb-txt)}
-.nav-grp{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#475569;padding:12px 14px 3px}
+.nav-grp{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;padding:12px 14px 3px}
 .nav-it{display:flex;align-items:center;gap:9px;padding:8px 14px;color:var(--sb-txt);cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:12px;user-select:none}
-.nav-it:hover{background:rgba(255,255,255,.05);color:#fff}
-.nav-it.active{background:rgba(37,99,235,.2);color:#fff;border-left-color:var(--pri)}
+.nav-it:hover{background:rgba(37,99,235,.06);color:#1e293b}
+.nav-it.active{background:rgba(37,99,235,.08);color:var(--pri);border-left-color:var(--pri);font-weight:600}
 .nav-it .ni{width:15px;text-align:center;font-size:12px}
-.nbadge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:999px;font-weight:700;background:#334155;color:#94a3b8}
-.nbadge.fail{background:#fee2e2;color:#991b1b}
-.nbadge.pass{background:#d1fae5;color:#065f46}
+.nbadge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:999px;font-weight:700;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
+.nbadge.fail{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.nbadge.pass{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
 /* ── Main ── */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 /* ── Topbar ── */
