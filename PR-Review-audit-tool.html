@@ -81,11 +81,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sev-LOW{background:#ede9fe;color:#7c3aed}
 .sev-SUGGESTION{background:#d1fae5;color:#059669}
 .app-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;background:#f1f5f9;color:#64748b;white-space:nowrap;flex-shrink:0}
-.stat-sel{border:1px solid var(--bdr);border-radius:5px;padding:3px 7px;font-size:11px;font-weight:600;cursor:pointer;outline:none;flex-shrink:0;min-width:105px}
-.stat-sel.nr{background:#f8fafc;color:#64748b}
-.stat-sel.pass{background:#d1fae5;color:#065f46;border-color:var(--ok)}
-.stat-sel.fail{background:#fee2e2;color:#991b1b;border-color:var(--err)}
-.stat-sel.na{background:#f1f5f9;color:#475569;border-color:#94a3b8}
+.stat-radios{display:flex;gap:2px;flex-shrink:0}
+.sr-opt{display:inline-flex;align-items:center;cursor:pointer;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid var(--bdr);background:var(--panel);color:#94a3b8;transition:all .12s;user-select:none;white-space:nowrap}
+.sr-opt input[type=radio]{display:none}
+.sr-opt:hover{border-color:var(--pri);color:var(--pri)}
+.sr-nr.sr-active{background:#f1f5f9;color:#475569;border-color:#94a3b8}
+.sr-pass.sr-active{background:#d1fae5;color:#065f46;border-color:var(--ok)}
+.sr-fail.sr-active{background:#fee2e2;color:#991b1b;border-color:var(--err)}
+.sr-na.sr-active{background:#ede9fe;color:#5b21b6;border-color:#a78bfa}
 .exp-btn{background:none;border:none;color:#94a3b8;cursor:pointer;padding:3px;font-size:11px;flex-shrink:0}
 /* ── Global search ── */
 .gsearch-wrap{position:relative;display:flex;align-items:center}
@@ -2431,14 +2434,12 @@ function renderItem(it) {
       <span class="cl-title">${it.title}</span>
       <span class="sev sev-${it.sev}">${it.sev}</span>
       <span class="app-tag">${it.app}</span>
-      <select class="stat-sel ${selClass}" id="sel-${it.id}"
-        onclick="event.stopPropagation()"
-        onchange="onSelChange('${it.id}',this)">
-        <option value="nr"  ${st.status==='nr'  ?'selected':''}>— Not Reviewed</option>
-        <option value="pass"${st.status==='pass'?'selected':''}>✓ Pass</option>
-        <option value="fail"${st.status==='fail'?'selected':''}>✗ Fail</option>
-        <option value="na"  ${st.status==='na'  ?'selected':''}>N/A</option>
-      </select>
+      <div class="stat-radios" id="sel-${it.id}" onclick="event.stopPropagation()">
+        <label class="sr-opt sr-nr ${st.status==='nr'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="nr" ${st.status==='nr'?'checked':''} onchange="onSelChange('${it.id}',this)">NR</label>
+        <label class="sr-opt sr-pass ${st.status==='pass'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="pass" ${st.status==='pass'?'checked':''} onchange="onSelChange('${it.id}',this)">✓ Pass</label>
+        <label class="sr-opt sr-fail ${st.status==='fail'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="fail" ${st.status==='fail'?'checked':''} onchange="onSelChange('${it.id}',this)">✗ Fail</label>
+        <label class="sr-opt sr-na ${st.status==='na'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="na" ${st.status==='na'?'checked':''} onchange="onSelChange('${it.id}',this)">N/A</label>
+      </div>
       <button class="exp-btn" onclick="event.stopPropagation();toggleBody('${it.id}')"><i class="fas fa-chevron-down"></i></button>
     </div>
     <div class="cl-body" id="body-${it.id}">
@@ -2461,9 +2462,19 @@ function toggleBody(id) {
   if (btn) btn.className = b.classList.contains('open') ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
 }
 
-function onSelChange(id, sel) {
-  sel.className = 'stat-sel ' + sel.value;
-  setItemStatus(id, sel.value);
+function onSelChange(id, radio) {
+  const val = radio.value;
+  const group = document.getElementById('sel-' + id);
+  group.querySelectorAll('.sr-opt').forEach(lbl =>
+    lbl.classList.toggle('sr-active', lbl.querySelector('input').value === val)
+  );
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    card.dataset.stat = val;
+    card.className = card.className.replace(/\bs-\w+/g, '').trim();
+    if (val !== 'nr') card.classList.add('s-' + val);
+  }
+  setItemStatus(id, val);
   updateSectionProgress(getSectionForItem(id));
 }
 
@@ -2605,14 +2616,12 @@ function renderTogaf() {
             <span class="cl-title">${it.title}</span>
             <span class="sev sev-${it.sev}">${it.sev}</span>
             <span class="app-tag">${it.app}</span>
-            <select class="stat-sel ${selClass}" id="sel-${it.id}"
-              onclick="event.stopPropagation()"
-              onchange="onSelChange('${it.id}',this)">
-              <option value="nr"  ${st.status==='nr'  ?'selected':''}>— Not Reviewed</option>
-              <option value="pass"${st.status==='pass'?'selected':''}>✓ Pass</option>
-              <option value="fail"${st.status==='fail'?'selected':''}>✗ Fail</option>
-              <option value="na"  ${st.status==='na'  ?'selected':''}>N/A</option>
-            </select>
+            <div class="stat-radios" id="sel-${it.id}" onclick="event.stopPropagation()">
+              <label class="sr-opt sr-nr ${st.status==='nr'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="nr" ${st.status==='nr'?'checked':''} onchange="onSelChange('${it.id}',this)">NR</label>
+              <label class="sr-opt sr-pass ${st.status==='pass'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="pass" ${st.status==='pass'?'checked':''} onchange="onSelChange('${it.id}',this)">✓ Pass</label>
+              <label class="sr-opt sr-fail ${st.status==='fail'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="fail" ${st.status==='fail'?'checked':''} onchange="onSelChange('${it.id}',this)">✗ Fail</label>
+              <label class="sr-opt sr-na ${st.status==='na'?'sr-active':''}"><input type="radio" name="sr-${it.id}" value="na" ${st.status==='na'?'checked':''} onchange="onSelChange('${it.id}',this)">N/A</label>
+            </div>
             <button class="exp-btn" onclick="event.stopPropagation();toggleBody('${it.id}')"><i class="fas fa-chevron-down"></i></button>
           </div>
           <div class="cl-body" id="body-${it.id}">
