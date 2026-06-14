@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDD &amp; Clean Architecture Builder</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#ffffff; --panel-2:#f8fafc; --ink:#1e2433; --muted:#6b7280;
+    --line:#e3e8f0; --brand:#4f46e5; --brand-2:#6366f1; --accent:#0ea5e9;
+    --ok:#16a34a; --warn:#d97706; --danger:#dc2626; --chip:#eef2ff; --chip-ink:#4338ca;
+    --radius:12px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+  }
+  [data-theme="dark"]{
+    --bg:#0f1420; --panel:#161c2b; --panel-2:#1b2233; --ink:#e7ebf3; --muted:#9aa4b6;
+    --line:#28324a; --brand:#7c83ff; --brand-2:#8b8fff; --accent:#38bdf8;
+    --chip:#1e2540; --chip-ink:#aab2ff; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  header.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;
+    padding:10px 18px;background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--shadow)}
+  header.topbar h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  header.topbar .sub{font-size:12px;opacity:.85;margin-left:2px}
+  .grow{flex:1}
+  .toolbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);
+    padding:7px 11px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:550}
+  .toolbtn:hover{background:rgba(255,255,255,.26)}
+  .toolbtn.ghost{background:transparent}
+  .layout{display:flex;min-height:calc(100vh - 52px)}
+  nav.side{width:236px;flex:0 0 236px;background:var(--panel);border-right:1px solid var(--line);
+    padding:14px 10px;position:sticky;top:52px;height:calc(100vh - 52px);overflow:auto}
+  nav.side .navitem{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;
+    cursor:pointer;color:var(--ink);font-weight:540;font-size:13px;margin-bottom:2px}
+  nav.side .navitem:hover{background:var(--panel-2)}
+  nav.side .navitem.active{background:var(--chip);color:var(--chip-ink)}
+  nav.side .navitem .ix{width:22px;height:22px;border-radius:6px;background:var(--panel-2);
+    display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+  nav.side .navitem.active .ix{background:var(--brand);color:#fff}
+  nav.side .grouplabel{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);
+    margin:14px 8px 6px}
+  main{flex:1;padding:24px 30px;max-width:1080px}
+  .section{display:none;animation:fade .2s ease}
+  .section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .sec-head{margin:0 0 4px;font-size:21px;font-weight:680}
+  .sec-desc{color:var(--muted);margin:0 0 18px;max-width:760px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 12px;font-size:15px;font-weight:640;display:flex;align-items:center;gap:8px}
+  .card h3 .pill{font-size:10.5px;background:var(--chip);color:var(--chip-ink);padding:2px 8px;border-radius:20px;font-weight:600}
+  label.fld{display:block;margin-bottom:12px}
+  label.fld > span{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  input[type=text],textarea,select{width:100%;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:9px 11px;font:inherit;font-size:13px}
+  textarea{resize:vertical;min-height:64px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--chip)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row > *{flex:1;min-width:180px}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:560}
+  .btn:hover{border-color:var(--brand);color:var(--brand)}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2);color:#fff}
+  .btn.tiny{padding:4px 9px;font-size:11.5px}
+  .btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+  .item{border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:11px;background:var(--panel-2)}
+  .item .item-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .item .item-head .tag{font-size:10.5px;background:var(--chip);color:var(--chip-ink);padding:2px 8px;border-radius:20px;font-weight:650}
+  .sub-item{border-left:3px solid var(--brand);padding:10px 12px;margin:8px 0;background:var(--panel);border-radius:0 8px 8px 0}
+  .sub-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  @media(max-width:880px){.sub-grid{grid-template-columns:1fr}}
+  .nest{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .nest h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  .listchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{background:var(--chip);color:var(--chip-ink);border-radius:18px;padding:4px 10px;font-size:12px;display:flex;align-items:center;gap:6px}
+  .chip b{font-weight:650}
+  .chip .x{cursor:pointer;opacity:.6}.chip .x:hover{opacity:1}
+  .muted{color:var(--muted)}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .empty{color:var(--muted);font-style:italic;padding:8px 2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:880px){.grid2{grid-template-columns:1fr}}
+  pre.out{background:#0b1020;color:#d6e0ff;border-radius:10px;padding:14px;overflow:auto;max-height:60vh;
+    font-family:"Cascadia Code",Consolas,Menlo,monospace;font-size:12px;line-height:1.55;white-space:pre}
+  [data-theme="dark"] pre.out{background:#070b16}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .tab{padding:7px 13px;border-radius:8px;border:1px solid var(--line);cursor:pointer;font-size:12.5px;font-weight:560;background:var(--panel-2)}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .reldef{font-size:11px;color:var(--muted);margin-top:3px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+    padding:10px 18px;border-radius:10px;box-shadow:var(--shadow);font-size:13px;z-index:100;opacity:0;transition:.25s}
+  .toast.show{opacity:1}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .kpi{flex:1;min-width:120px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .kpi b{display:block;font-size:22px;font-weight:720}
+  .kpi span{font-size:11.5px;color:var(--muted)}
+  .diagram{font-family:"Cascadia Code",Consolas,monospace;font-size:12px;white-space:pre;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto}
+  .flex-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .smallcaps{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:650}
+  details.help{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:14px}
+  details.help summary{cursor:pointer;font-weight:600;font-size:12.5px}
+  details.help div{margin-top:8px;color:var(--muted);font-size:12.5px}
+  @media print{
+    header.topbar,nav.side,.tabs,.no-print{display:none!important}
+    main{max-width:none;padding:0}
+    .section{display:block!important}
+    body{background:#fff}
+    .card{break-inside:avoid;box-shadow:none}
+  }
+  #fileInput{display:none}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1>🏛️ DDD &amp; Clean Architecture Builder<span class="sub">requirement → design → C#</span></h1>
+  <div class="grow"></div>
+  <button class="toolbtn" id="btnExample">Load Example</button>
+  <button class="toolbtn" id="btnImport">Import JSON</button>
+  <button class="toolbtn" id="btnExportJson">Export JSON</button>
+  <button class="toolbtn ghost" id="btnTheme" title="Toggle theme">🌓</button>
+  <button class="toolbtn ghost" id="btnClear" title="Clear all">🗑</button>
+  <input type="file" id="fileInput" accept="application/json,.json">
+</header>
+
+<div class="layout">
+  <nav class="side" id="nav">
+    <div class="grouplabel">Discover</div>
+    <div class="navitem active" data-sec="requirement"><span class="ix">1</span> Project &amp; Requirement</div>
+    <div class="grouplabel">Strategic Design</div>
+    <div class="navitem" data-sec="language"><span class="ix">2</span> Ubiquitous Language</div>
+    <div class="navitem" data-sec="contexts"><span class="ix">3</span> Bounded Contexts</div>
+    <div class="grouplabel">Tactical Design</div>
+    <div class="navitem" data-sec="tactical"><span class="ix">4</span> Aggregates &amp; Building Blocks</div>
+    <div class="navitem" data-sec="usecases"><span class="ix">5</span> Use Cases</div>
+    <div class="grouplabel">Architecture</div>
+    <div class="navitem" data-sec="layers"><span class="ix">6</span> Clean Architecture Layers</div>
+    <div class="navitem" data-sec="crosscutting"><span class="ix">7</span> Cross-cutting Concerns</div>
+    <div class="grouplabel">Output</div>
+    <div class="navitem" data-sec="review"><span class="ix">8</span> Review &amp; Diagram</div>
+    <div class="navitem" data-sec="export"><span class="ix">9</span> Export &amp; Generate</div>
+  </nav>
+
+  <main>
+    <!-- 1. REQUIREMENT -->
+    <section class="section active" id="sec-requirement">
+      <h2 class="sec-head">Project &amp; Requirement</h2>
+      <p class="sec-desc">Capture the problem space before modeling. Everything below feeds the design document and code scaffolding.</p>
+      <div class="card">
+        <h3>Project</h3>
+        <div class="row">
+          <label class="fld"><span>Project / System name</span><input type="text" data-bind="meta.projectName" placeholder="e.g. Acme Order Management"></label>
+          <label class="fld"><span>Root C# namespace</span><input type="text" data-bind="meta.namespace" placeholder="e.g. Acme.Orders"></label>
+        </div>
+        <label class="fld"><span>Problem statement</span><textarea data-bind="meta.problem" placeholder="What problem does this system solve, and for whom?"></textarea></label>
+        <label class="fld"><span>Vision / business goals</span><textarea data-bind="meta.goals" placeholder="One goal per line"></textarea></label>
+      </div>
+      <div class="card">
+        <h3>Context</h3>
+        <div class="grid2">
+          <label class="fld"><span>Actors / personas (one per line)</span><textarea data-bind="meta.actors" placeholder="Customer&#10;Warehouse operator&#10;Billing system"></textarea></label>
+          <label class="fld"><span>Constraints &amp; assumptions (one per line)</span><textarea data-bind="meta.constraints" placeholder="Must integrate with SAP&#10;GDPR compliance&#10;Cloud-native on Azure"></textarea></label>
+        </div>
+        <label class="fld"><span>Non-functional requirements (one per line)</span><textarea data-bind="meta.nfrs" placeholder="99.9% availability&#10;< 200ms p95 latency&#10;Audit trail for all money movements"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 2. UBIQUITOUS LANGUAGE -->
+    <section class="section" id="sec-language">
+      <h2 class="sec-head">Ubiquitous Language</h2>
+      <p class="sec-desc">A shared glossary. Terms here should match class and method names in the generated code.</p>
+      <div class="card">
+        <div class="flex-between"><h3 style="margin:0">Glossary</h3><button class="btn primary tiny" id="addTerm">+ Term</button></div>
+        <div id="termList" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- 3. BOUNDED CONTEXTS -->
+    <section class="section" id="sec-contexts">
+      <h2 class="sec-head">Bounded Contexts &amp; Context Map</h2>
+      <p class="sec-desc">Partition the domain into bounded contexts and describe how they relate. Each context becomes a module / C# project.</p>
+      <details class="help"><summary>Context-map relationship patterns</summary>
+        <div id="relHelp"></div>
+      </details>
+      <div class="flex-between" style="margin-bottom:12px"><div class="smallcaps">Contexts</div><button class="btn primary" id="addContext">+ Bounded Context</button></div>
+      <div id="contextList"></div>
+    </section>
+
+    <!-- 4. TACTICAL -->
+    <section class="section" id="sec-tactical">
+      <h2 class="sec-head">Aggregates &amp; Tactical Building Blocks</h2>
+      <p class="sec-desc">For each bounded context, model the tactical DDD building blocks. These map directly to the Domain layer in C#.</p>
+      <div class="tabs" id="ctxTabs"></div>
+      <div id="tacticalBody"></div>
+    </section>
+
+    <!-- 5. USE CASES -->
+    <section class="section" id="sec-usecases">
+      <h2 class="sec-head">Use Cases (Application Layer)</h2>
+      <p class="sec-desc">Commands change state; queries read it. Each use case becomes a handler in the Application layer.</p>
+      <div class="card">
+        <div class="flex-between"><h3 style="margin:0">Use cases</h3><button class="btn primary tiny" id="addUseCase">+ Use Case</button></div>
+        <div id="useCaseList" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- 6. LAYERS -->
+    <section class="section" id="sec-layers">
+      <h2 class="sec-head">Clean Architecture Layers</h2>
+      <p class="sec-desc">The dependency rule: source code dependencies point only inward. Outer layers depend on inner; never the reverse.</p>
+      <div class="diagram" id="ringDiagram" style="margin-bottom:16px"></div>
+      <div id="layerCards"></div>
+    </section>
+
+    <!-- 7. CROSS-CUTTING -->
+    <section class="section" id="sec-crosscutting">
+      <h2 class="sec-head">Cross-cutting Concerns</h2>
+      <p class="sec-desc">Decisions that span layers. Captured for the design doc and to guide infrastructure choices.</p>
+      <div class="card">
+        <div class="row">
+          <label class="fld"><span>Authentication / authorization</span><select data-bind="cross.auth" data-opts="auth"></select></label>
+          <label class="fld"><span>Persistence</span><select data-bind="cross.persistence" data-opts="persistence"></select></label>
+        </div>
+        <div class="row">
+          <label class="fld"><span>Messaging / integration</span><select data-bind="cross.messaging" data-opts="messaging"></select></label>
+          <label class="fld"><span>Validation strategy</span><select data-bind="cross.validation" data-opts="validation"></select></label>
+        </div>
+        <div class="row">
+          <label class="fld"><span>Logging / observability</span><select data-bind="cross.logging" data-opts="logging"></select></label>
+          <label class="fld"><span>API style</span><select data-bind="cross.api" data-opts="api"></select></label>
+        </div>
+        <label class="fld"><span>Additional notes</span><textarea data-bind="cross.notes" placeholder="Caching, resiliency, multi-tenancy, etc."></textarea></label>
+      </div>
+    </section>
+
+    <!-- 8. REVIEW -->
+    <section class="section" id="sec-review">
+      <h2 class="sec-head">Review &amp; Diagram</h2>
+      <p class="sec-desc">Auto-assembled overview of the current design.</p>
+      <div class="kpis" id="kpis"></div>
+      <div class="card"><h3>Layered architecture map</h3><div class="diagram" id="reviewDiagram"></div></div>
+      <div class="card"><h3>Context map</h3><div class="diagram" id="contextMapDiagram"></div></div>
+      <div class="card"><h3>Outline</h3><div id="reviewOutline"></div></div>
+    </section>
+
+    <!-- 9. EXPORT -->
+    <section class="section" id="sec-export">
+      <h2 class="sec-head">Export &amp; Generate</h2>
+      <p class="sec-desc">Save your work to resume later, or generate deliverables.</p>
+      <div class="card no-print">
+        <h3>Save &amp; resume</h3>
+        <div class="row">
+          <button class="btn primary" id="dlJson">⬇ Export JSON (resume file)</button>
+          <button class="btn" id="dlImport">⬆ Import JSON</button>
+        </div>
+        <p class="hint">Your work also auto-saves to this browser. The JSON file is the portable backup you can re-import anywhere.</p>
+      </div>
+      <div class="card no-print">
+        <h3>Generate artifact</h3>
+        <div class="tabs" id="genTabs">
+          <div class="tab active" data-gen="markdown">Markdown doc</div>
+          <div class="tab" data-gen="text">Plain text</div>
+          <div class="tab" data-gen="csharp">C# scaffolding</div>
+        </div>
+        <div id="csOptions" class="item" style="display:none;margin-bottom:10px">
+          <div class="smallcaps" style="margin-bottom:8px">C# layers to emit</div>
+          <div id="csOptsBoxes" class="listchips"></div>
+        </div>
+        <div class="flex-between" style="margin-bottom:10px">
+          <span class="hint" id="genHint"></span>
+          <div>
+            <button class="btn tiny" id="copyOut">⧉ Copy</button>
+            <button class="btn tiny" id="dlOut">⬇ Download</button>
+            <button class="btn tiny" id="printOut">🖨 Print / PDF</button>
+          </div>
+        </div>
+        <pre class="out" id="genOut"></pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================ DATA / OPTIONS ============================ */
+const OPTIONS = {
+  rel: [
+    ["Partnership","Two contexts succeed or fail together; teams coordinate closely."],
+    ["Shared Kernel","A shared subset of the model both contexts depend on."],
+    ["Customer-Supplier","Downstream (customer) needs drive upstream (supplier) planning."],
+    ["Conformist","Downstream conforms to the upstream model with no translation."],
+    ["Anticorruption Layer (ACL)","Downstream translates the upstream model to protect its own."],
+    ["Open Host Service","Upstream exposes a well-defined protocol for many consumers."],
+    ["Published Language","A shared, documented interchange format (e.g. events, schema)."],
+    ["Separate Ways","No integration; contexts evolve independently."]
+  ],
+  auth:["JWT bearer tokens","OAuth2 / OpenID Connect","API keys","Session cookies","mTLS","None / TBD"],
+  persistence:["EF Core (SQL)","Dapper (SQL)","MongoDB","PostgreSQL + EF Core","Event sourcing","In-memory","TBD"],
+  messaging:["None","RabbitMQ","Azure Service Bus","Kafka","MediatR (in-process)","AWS SNS/SQS","Outbox pattern"],
+  validation:["FluentValidation","DataAnnotations","Domain guard clauses","Result pattern","TBD"],
+  logging:["Serilog","OpenTelemetry","Application Insights","ELK stack","TBD"],
+  api:["REST (ASP.NET Core)","gRPC","GraphQL","Minimal APIs","Background worker","TBD"]
+};
+const LAYER_DEFS = [
+  {key:"entities",name:"Enterprise Business Rules",ring:"Entities / Domain",
+   resp:"Aggregates, Entities, Value Objects, Domain Events, domain services and invariants. Pure business logic with zero framework dependencies."},
+  {key:"application",name:"Application Business Rules",ring:"Use Cases",
+   resp:"Use-case orchestration: command/query handlers, application services, repository & gateway interfaces (ports). Depends only on the Domain."},
+  {key:"adapters",name:"Interface Adapters",ring:"Adapters",
+   resp:"Controllers, presenters, DTOs, mappers, repository implementations. Converts between the outside world and use cases."},
+  {key:"infrastructure",name:"Frameworks & Drivers",ring:"Infrastructure",
+   resp:"DB, ORM, message brokers, external APIs, web framework, DI container. The volatile outer ring."}
+];
+const BUILDING_BLOCKS = ["Entity","Value Object","Domain Event","Domain Service","Repository","Factory","Specification"];
+
+/* ============================ STATE ============================ */
+function blankState(){
+  return {
+    meta:{projectName:"",namespace:"",problem:"",goals:"",actors:"",constraints:"",nfrs:""},
+    terms:[],
+    contexts:[],
+    useCases:[],
+    layers:{entities:"",application:"",adapters:"",infrastructure:""},
+    cross:{auth:"",persistence:"",messaging:"",validation:"",logging:"",api:"",notes:""}
+  };
+}
+let state = blankState();
+let activeCtx = 0;
+const uid = ()=> Math.random().toString(36).slice(2,9);
+
+/* ============================ UTIL ============================ */
+function $(s,r=document){return r.querySelector(s)}
+function $$(s,r=document){return [...r.querySelectorAll(s)]}
+function el(tag,props={},...kids){
+  const n=document.createElement(tag);
+  for(const k in props){
+    if(k==="class")n.className=props[k];
+    else if(k==="html")n.innerHTML=props[k];
+    else if(k.startsWith("on"))n.addEventListener(k.slice(2).toLowerCase(),props[k]);
+    else n.setAttribute(k,props[k]);
+  }
+  kids.flat().forEach(c=>n.append(c?.nodeType?c:document.createTextNode(c)));
+  return n;
+}
+function getPath(obj,path){return path.split(".").reduce((o,k)=>o?.[k],obj)}
+function setPath(obj,path,val){const ks=path.split(".");const last=ks.pop();let o=obj;ks.forEach(k=>o=o[k]);o[last]=val}
+function lines(s){return (s||"").split("\n").map(x=>x.trim()).filter(Boolean)}
+function pascal(s){return (s||"").replace(/[^a-zA-Z0-9]+/g," ").trim().split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join("")||"Unnamed"}
+function camel(s){const p=pascal(s);return p.charAt(0).toLowerCase()+p.slice(1)}
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1800)}
+
+/* ============================ PERSISTENCE ============================ */
+const LS_KEY="ddd_builder_state_v1";
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+function load(){try{const s=localStorage.getItem(LS_KEY);if(s){state=Object.assign(blankState(),JSON.parse(s));return true}}catch(e){}return false}
+
+/* ============================ BINDINGS (simple fields) ============================ */
+function bindStatic(){
+  $$("[data-bind]").forEach(inp=>{
+    const path=inp.getAttribute("data-bind");
+    const opts=inp.getAttribute("data-opts");
+    if(opts && inp.tagName==="SELECT"){
+      inp.innerHTML="";
+      inp.append(el("option",{value:""},"— select —"));
+      OPTIONS[opts].forEach(o=>inp.append(el("option",{value:o},o)));
+    }
+    const v=getPath(state,path);
+    if(v!==undefined && v!==null) inp.value=v;
+    inp.addEventListener("input",()=>{setPath(state,path,inp.value);save()});
+  });
+}
+
+/* ============================ NAV ============================ */
+function showSection(id){
+  $$(".section").forEach(s=>s.classList.toggle("active",s.id==="sec-"+id));
+  $$(".navitem").forEach(n=>n.classList.toggle("active",n.dataset.sec===id));
+  if(id==="tactical")renderTactical();
+  if(id==="layers")renderLayers();
+  if(id==="review")renderReview();
+  if(id==="export")renderGen();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$$(".navitem").forEach(n=>n.addEventListener("click",()=>showSection(n.dataset.sec)));
+
+/* ============================ UBIQUITOUS LANGUAGE ============================ */
+function renderTerms(){
+  const wrap=$("#termList");wrap.innerHTML="";
+  if(!state.terms.length){wrap.append(el("div",{class:"empty"},"No terms yet. Add the words your domain experts actually use."));return}
+  state.terms.forEach((t,i)=>{
+    const row=el("div",{class:"item"},
+      el("div",{class:"row"},
+        labeled("Term",text(t.term,v=>{t.term=v;save()},"e.g. Fulfilment")),
+        labeled("Definition",text(t.def,v=>{t.def=v;save()},"Plain-language meaning"))
+      ),
+      el("div",{class:"flex-between"},el("span",{}),btn("Remove","danger tiny",()=>{state.terms.splice(i,1);renderTerms();save()}))
+    );
+    wrap.append(row);
+  });
+}
+$("#addTerm").addEventListener("click",()=>{state.terms.push({term:"",def:""});renderTerms();save()});
+
+/* ============================ small builders ============================ */
+function labeled(label,node){return el("label",{class:"fld"},el("span",{},label),node)}
+function text(val,on,ph=""){const i=el("input",{type:"text",placeholder:ph});i.value=val||"";i.addEventListener("input",()=>on(i.value));return i}
+function area(val,on,ph=""){const t=el("textarea",{placeholder:ph});t.value=val||"";t.addEventListener("input",()=>on(t.value));return t}
+function sel(val,opts,on){const s=el("select");s.append(el("option",{value:""},"— select —"));opts.forEach(o=>{const op=el("option",{value:o},o);if(o===val)op.selected=true;s.append(op)});s.addEventListener("change",()=>on(s.value));return s}
+function btn(label,cls,on){return el("button",{class:"btn "+cls,onclick:on},label)}
+
+/* ============================ BOUNDED CONTEXTS ============================ */
+function ctxNames(exceptId){return state.contexts.filter(c=>c.id!==exceptId).map(c=>c.name||"(unnamed)")}
+function renderContexts(){
+  const wrap=$("#contextList");wrap.innerHTML="";
+  if(!state.contexts.length){wrap.append(el("div",{class:"empty"},"No bounded contexts yet. Most systems have 2–6."));}
+  state.contexts.forEach((c,i)=>{
+    const card=el("div",{class:"card"});
+    card.append(el("div",{class:"item-head"},
+      el("span",{class:"tag"},"CONTEXT "+(i+1)),
+      el("div",{class:"grow",style:"flex:1"}),
+      btn("Remove","danger tiny",()=>{state.contexts.splice(i,1);if(activeCtx>=state.contexts.length)activeCtx=Math.max(0,state.contexts.length-1);renderContexts();save()})
+    ));
+    card.append(el("div",{class:"row"},
+      labeled("Context name",text(c.name,v=>{c.name=v;save()},"e.g. Ordering")),
+      labeled("Type",sel(c.type,["Core Domain","Supporting Subdomain","Generic Subdomain"],v=>{c.type=v;save()}))
+    ));
+    card.append(labeled("Description / responsibility",area(c.description,v=>{c.description=v;save()},"What this context owns and decides.")));
+    // relationships
+    const relWrap=el("div",{class:"nest"},el("h4",{},"Relationships to other contexts"));
+    if(!c.rels.length)relWrap.append(el("div",{class:"empty"},"No relationships defined."));
+    c.rels.forEach((r,ri)=>{
+      const reldef=el("div",{class:"reldef"});
+      const updateDef=()=>{const f=OPTIONS.rel.find(x=>x[0]===r.type);reldef.textContent=f?f[1]:""};
+      const block=el("div",{class:"sub-item"},
+        el("div",{class:"sub-grid"},
+          labeled("Related context",sel(r.to,ctxNames(c.id),v=>{r.to=v;save()})),
+          labeled("Pattern",sel(r.type,OPTIONS.rel.map(x=>x[0]),v=>{r.type=v;updateDef();save()})),
+          labeled("Direction",sel(r.dir,["this → upstream","this → downstream","bidirectional"],v=>{r.dir=v;save()}))
+        ),
+        reldef,
+        labeled("Notes",text(r.notes,v=>{r.notes=v;save()},"Optional")),
+        el("div",{class:"flex-between"},el("span",{}),btn("Remove","danger tiny",()=>{c.rels.splice(ri,1);renderContexts();save()}))
+      );
+      updateDef();
+      relWrap.append(block);
+    });
+    relWrap.append(btn("+ Relationship","tiny",()=>{c.rels.push({to:"",type:"",dir:"",notes:""});renderContexts();save()}));
+    card.append(relWrap);
+    wrap.append(card);
+  });
+}
+$("#addContext").addEventListener("click",()=>{
+  state.contexts.push({id:uid(),name:"",type:"Core Domain",description:"",rels:[],aggregates:[]});
+  renderContexts();save();
+});
+function renderRelHelp(){
+  const w=$("#relHelp");w.innerHTML="";
+  OPTIONS.rel.forEach(([n,d])=>w.append(el("div",{style:"margin:4px 0"},el("b",{},n+": "),d)));
+}
+
+/* ============================ TACTICAL ============================ */
+function renderCtxTabs(){
+  const tabs=$("#ctxTabs");tabs.innerHTML="";
+  if(!state.contexts.length){tabs.append(el("div",{class:"empty"},"Add a bounded context first (section 3)."));return}
+  state.contexts.forEach((c,i)=>{
+    tabs.append(el("div",{class:"tab"+(i===activeCtx?" active":""),onclick:()=>{activeCtx=i;renderTactical()}},c.name||("Context "+(i+1))));
+  });
+}
+function renderTactical(){
+  renderCtxTabs();
+  const body=$("#tacticalBody");body.innerHTML="";
+  if(!state.contexts.length)return;
+  const c=state.contexts[activeCtx];
+  const head=el("div",{class:"flex-between",style:"margin-bottom:12px"},
+    el("div",{class:"smallcaps"},"Aggregates in “"+(c.name||"context")+"”"),
+    btn("+ Aggregate","primary",()=>{c.aggregates.push(newAggregate());renderTactical();save()}));
+  body.append(head);
+  if(!c.aggregates.length)body.append(el("div",{class:"empty"},"No aggregates yet. An aggregate is a consistency boundary around one or more entities."));
+  c.aggregates.forEach((a,ai)=>body.append(renderAggregate(c,a,ai)));
+}
+function newAggregate(){return{id:uid(),name:"",root:"",invariants:"",entities:[],valueObjects:[],events:[],services:[],repository:{name:"",methods:""}}}
+function renderAggregate(c,a,ai){
+  const card=el("div",{class:"card"});
+  card.append(el("div",{class:"item-head"},
+    el("span",{class:"tag"},"AGGREGATE"),
+    el("div",{style:"flex:1"}),
+    btn("Remove","danger tiny",()=>{c.aggregates.splice(ai,1);renderTactical();save()})));
+  card.append(el("div",{class:"row"},
+    labeled("Aggregate name",text(a.name,v=>{a.name=v;save()},"e.g. Order")),
+    labeled("Aggregate root (entity)",text(a.root,v=>{a.root=v;save()},"e.g. Order"))
+  ));
+  card.append(labeled("Invariants (business rules guaranteed, one per line)",area(a.invariants,v=>{a.invariants=v;save()},"An order must have at least one line item\nTotal cannot be negative")));
+
+  // ENTITIES
+  card.append(blockEditor("Entities",a.entities,()=>({id:uid(),name:"",props:""}),(e)=>[
+    labeled("Entity name",text(e.name,v=>{e.name=v;save()},"e.g. OrderLine")),
+    labeled("Properties (name:Type, one per line)",area(e.props,v=>{e.props=v;save()},"ProductId:Guid\nQuantity:int\nUnitPrice:Money"))
+  ]));
+  // VALUE OBJECTS
+  card.append(blockEditor("Value Objects",a.valueObjects,()=>({id:uid(),name:"",props:""}),(e)=>[
+    labeled("Value object name",text(e.name,v=>{e.name=v;save()},"e.g. Money")),
+    labeled("Properties (name:Type, one per line)",area(e.props,v=>{e.props=v;save()},"Amount:decimal\nCurrency:string"))
+  ]));
+  // DOMAIN EVENTS
+  card.append(blockEditor("Domain Events",a.events,()=>({id:uid(),name:"",props:""}),(e)=>[
+    labeled("Event name (past tense)",text(e.name,v=>{e.name=v;save()},"e.g. OrderPlaced")),
+    labeled("Payload (name:Type, one per line)",area(e.props,v=>{e.props=v;save()},"OrderId:Guid\nPlacedAt:DateTime"))
+  ]));
+  // DOMAIN SERVICES
+  card.append(blockEditor("Domain Services",a.services,()=>({id:uid(),name:"",props:""}),(e)=>[
+    labeled("Service name",text(e.name,v=>{e.name=v;save()},"e.g. PricingService")),
+    labeled("Operations (one per line)",area(e.props,v=>{e.props=v;save()},"Money CalculateTotal(Order order)"))
+  ]));
+  // REPOSITORY
+  const rep=el("div",{class:"nest"},el("h4",{},"Repository (port)"),
+    el("div",{class:"row"},
+      labeled("Repository interface",text(a.repository.name,v=>{a.repository.name=v;save()},"e.g. IOrderRepository")),
+      labeled("Methods (one per line)",area(a.repository.methods,v=>{a.repository.methods=v;save()},"Task<Order> GetByIdAsync(Guid id)\nTask AddAsync(Order order)"))
+    ));
+  card.append(rep);
+  return card;
+}
+function blockEditor(title,arr,factory,fields){
+  const nest=el("div",{class:"nest"});
+  nest.append(el("div",{class:"flex-between"},el("h4",{style:"margin:0"},title+" ("+arr.length+")"),
+    btn("+ "+title.replace(/s$/,""),"tiny",()=>{arr.push(factory());renderTactical();save()})));
+  arr.forEach((item,i)=>{
+    const si=el("div",{class:"sub-item"});
+    fields(item).forEach(f=>si.append(f));
+    si.append(el("div",{class:"flex-between"},el("span",{}),btn("Remove","danger tiny",()=>{arr.splice(i,1);renderTactical();save()})));
+    nest.append(si);
+  });
+  return nest;
+}
+
+/* ============================ USE CASES ============================ */
+function renderUseCases(){
+  const wrap=$("#useCaseList");wrap.innerHTML="";
+  if(!state.useCases.length){wrap.append(el("div",{class:"empty"},"No use cases yet."));return}
+  state.useCases.forEach((u,i)=>{
+    wrap.append(el("div",{class:"item"},
+      el("div",{class:"row"},
+        labeled("Name",text(u.name,v=>{u.name=v;save()},"e.g. PlaceOrder")),
+        labeled("Type",sel(u.type,["Command","Query"],v=>{u.type=v;save()})),
+        labeled("Bounded context",sel(u.context,state.contexts.map(c=>c.name||"(unnamed)"),v=>{u.context=v;save()}))
+      ),
+      el("div",{class:"row"},
+        labeled("Input (DTO fields, one per line)",area(u.input,v=>{u.input=v;save()},"CustomerId:Guid\nItems:List<OrderItemDto>")),
+        labeled("Output",text(u.output,v=>{u.output=v;save()},"e.g. OrderId or OrderDto"))
+      ),
+      labeled("Description",area(u.desc,v=>{u.desc=v;save()},"What happens, which aggregates are touched, which events fire.")),
+      el("div",{class:"flex-between"},el("span",{}),btn("Remove","danger tiny",()=>{state.useCases.splice(i,1);renderUseCases();save()}))
+    ));
+  });
+}
+$("#addUseCase").addEventListener("click",()=>{state.useCases.push({name:"",type:"Command",context:"",input:"",output:"",desc:""});renderUseCases();save()});
+
+/* ============================ LAYERS ============================ */
+function renderLayers(){
+  $("#ringDiagram").textContent=ringDiagram();
+  const wrap=$("#layerCards");wrap.innerHTML="";
+  LAYER_DEFS.forEach(L=>{
+    const card=el("div",{class:"card"});
+    card.append(el("h3",{},L.name,el("span",{class:"pill"},L.ring)));
+    card.append(el("p",{class:"hint",style:"margin-top:-6px"},L.resp));
+    card.append(labeled("Your notes / mapped components for this layer",area(state.layers[L.key],v=>{state.layers[L.key]=v;save()},"")));
+    // auto-mapped
+    const mapped=autoMapped(L.key);
+    if(mapped.length){
+      const chips=el("div",{class:"listchips"});
+      mapped.forEach(m=>chips.append(el("span",{class:"chip"},el("b",{},m.kind+": "),m.name)));
+      card.append(el("div",{class:"smallcaps",style:"margin-top:8px"},"Auto-derived from your model"));
+      card.append(chips);
+    }
+    wrap.append(card);
+  });
+}
+function autoMapped(layer){
+  const out=[];
+  if(layer==="entities"){
+    state.contexts.forEach(c=>c.aggregates.forEach(a=>{
+      if(a.name)out.push({kind:"Aggregate",name:a.name});
+      a.entities.forEach(e=>e.name&&out.push({kind:"Entity",name:e.name}));
+      a.valueObjects.forEach(e=>e.name&&out.push({kind:"VO",name:e.name}));
+      a.events.forEach(e=>e.name&&out.push({kind:"Event",name:e.name}));
+    }));
+  }else if(layer==="application"){
+    state.useCases.forEach(u=>u.name&&out.push({kind:u.type||"UseCase",name:u.name}));
+    state.contexts.forEach(c=>c.aggregates.forEach(a=>a.repository.name&&out.push({kind:"Port",name:a.repository.name})));
+  }else if(layer==="adapters"){
+    state.useCases.forEach(u=>u.name&&out.push({kind:"Controller",name:u.name+"Controller"}));
+    state.contexts.forEach(c=>c.aggregates.forEach(a=>a.repository.name&&out.push({kind:"Impl",name:a.repository.name.replace(/^I/,"")})));
+  }else if(layer==="infrastructure"){
+    if(state.cross.persistence)out.push({kind:"Persistence",name:state.cross.persistence});
+    if(state.cross.messaging&&state.cross.messaging!=="None")out.push({kind:"Messaging",name:state.cross.messaging});
+    if(state.cross.logging)out.push({kind:"Logging",name:state.cross.logging});
+  }
+  return out;
+}
+
+/* ============================ DIAGRAMS ============================ */
+function ringDiagram(){
+  return [
+"   ┌─────────────────────────────────────────────┐",
+"   │           Frameworks & Drivers              │  ← DB, web, brokers, DI",
+"   │   ┌─────────────────────────────────────┐   │",
+"   │   │        Interface Adapters           │   │  ← controllers, gateways, mappers",
+"   │   │   ┌─────────────────────────────┐   │   │",
+"   │   │   │        Use Cases            │   │   │  ← application / orchestration",
+"   │   │   │   ┌─────────────────────┐   │   │   │",
+"   │   │   │   │   Entities / Domain │   │   │   │  ← aggregates, VOs, events",
+"   │   │   │   └─────────────────────┘   │   │   │",
+"   │   │   └─────────────────────────────┘   │   │",
+"   │   └─────────────────────────────────────┘   │",
+"   └─────────────────────────────────────────────┘",
+"        Dependencies point INWARD only ──▶"
+  ].join("\n");
+}
+function contextMapDiagram(){
+  if(!state.contexts.length)return "(no bounded contexts yet)";
+  const out=[];
+  state.contexts.forEach(c=>{
+    out.push("┌─ "+(c.name||"(unnamed)")+"  ["+(c.type||"")+"]");
+    if(c.rels.length){
+      c.rels.forEach(r=>out.push("│   ──("+(r.type||"?")+")──▶ "+(r.to||"?")));
+    }else out.push("│   (no relationships)");
+    out.push("└"+"─".repeat(30));
+  });
+  return out.join("\n");
+}
+
+/* ============================ REVIEW ============================ */
+function renderReview(){
+  const nAgg=state.contexts.reduce((s,c)=>s+c.aggregates.length,0);
+  const nEnt=state.contexts.reduce((s,c)=>s+c.aggregates.reduce((x,a)=>x+a.entities.length+(a.root?1:0),0),0);
+  const nVO=state.contexts.reduce((s,c)=>s+c.aggregates.reduce((x,a)=>x+a.valueObjects.length,0),0);
+  const nEv=state.contexts.reduce((s,c)=>s+c.aggregates.reduce((x,a)=>x+a.events.length,0),0);
+  const kpi=[["Contexts",state.contexts.length],["Aggregates",nAgg],["Entities",nEnt],["Value Objects",nVO],["Domain Events",nEv],["Use Cases",state.useCases.length]];
+  const k=$("#kpis");k.innerHTML="";
+  kpi.forEach(([l,v])=>k.append(el("div",{class:"kpi"},el("b",{},String(v)),el("span",{},l))));
+  $("#reviewDiagram").textContent=ringDiagram();
+  $("#contextMapDiagram").textContent=contextMapDiagram();
+  const o=$("#reviewOutline");o.innerHTML="";
+  o.append(el("p",{},el("b",{},(state.meta.projectName||"Untitled project")),state.meta.problem?" — "+state.meta.problem:""));
+  state.contexts.forEach(c=>{
+    o.append(el("div",{class:"smallcaps",style:"margin-top:10px"},(c.name||"(unnamed)")+" · "+(c.type||"")));
+    if(!c.aggregates.length)o.append(el("div",{class:"empty"},"no aggregates"));
+    c.aggregates.forEach(a=>{
+      const parts=[];
+      if(a.entities.length)parts.push(a.entities.length+" entities");
+      if(a.valueObjects.length)parts.push(a.valueObjects.length+" VOs");
+      if(a.events.length)parts.push(a.events.length+" events");
+      o.append(el("div",{style:"margin-left:8px"},"• "+(a.name||"(aggregate)")+(parts.length?" — "+parts.join(", "):"")));
+    });
+  });
+}
+
+/* ============================ GENERATORS ============================ */
+let curGen="markdown";
+const csOpts={domain:true,application:true,dtos:true,validators:true,infrastructure:true,efconfig:true,repoimpl:true,migrations:true,di:true,api:true};
+const CS_OPT_LABELS=[
+  ["domain","Domain (entities, VOs, events, ports)"],
+  ["application","Application (handlers + Result<T>)"],
+  ["dtos","DTOs"],
+  ["validators","FluentValidation validators"],
+  ["infrastructure","Infrastructure (DbContext)"],
+  ["efconfig","EF Core type configs"],
+  ["repoimpl","Repository implementations"],
+  ["migrations","EF migrations (factory + applier)"],
+  ["di","Dependency injection wiring"],
+  ["api","API controllers + Program.cs"]
+];
+function renderCsOpts(){
+  const box=$("#csOptsBoxes");if(!box)return;box.innerHTML="";
+  CS_OPT_LABELS.forEach(([k,label])=>{
+    const id="csopt_"+k;
+    const wrap=el("label",{class:"chip",style:"cursor:pointer"});
+    const cb=el("input",{type:"checkbox",id});cb.checked=csOpts[k];
+    cb.addEventListener("change",()=>{csOpts[k]=cb.checked;renderGen()});
+    wrap.append(cb,document.createTextNode(" "+label));
+    box.append(wrap);
+  });
+}
+function genHintText(g){return {markdown:"Full design document in Markdown.",text:"Plain-text summary, no markup.",csharp:"Richer DDD + Clean Architecture C#: domain, application, EF Core infrastructure, DI and API — toggle layers above."}[g]}
+function renderGen(){
+  $("#genHint").textContent=genHintText(curGen);
+  const csBox=$("#csOptions");if(csBox)csBox.style.display=(curGen==="csharp")?"block":"none";
+  if(curGen==="csharp"&&$("#csOptsBoxes")&&!$("#csOptsBoxes").children.length)renderCsOpts();
+  const out=curGen==="markdown"?genMarkdown():curGen==="text"?genText():genCSharp();
+  $("#genOut").textContent=out;
+}
+function bullets(s){return lines(s).map(x=>"- "+x).join("\n")}
+
+function genMarkdown(){
+  const m=state.meta;const L=[];
+  L.push("# "+(m.projectName||"Domain Design")+" — Architecture & Domain Model");
+  L.push("");L.push("_Generated by DDD & Clean Architecture Builder._");L.push("");
+  L.push("## 1. Requirement");
+  if(m.problem){L.push("**Problem statement.** "+m.problem);L.push("")}
+  if(lines(m.goals).length){L.push("**Business goals**");L.push(bullets(m.goals));L.push("")}
+  if(lines(m.actors).length){L.push("**Actors**");L.push(bullets(m.actors));L.push("")}
+  if(lines(m.constraints).length){L.push("**Constraints & assumptions**");L.push(bullets(m.constraints));L.push("")}
+  if(lines(m.nfrs).length){L.push("**Non-functional requirements**");L.push(bullets(m.nfrs));L.push("")}
+  if(state.terms.length){
+    L.push("## 2. Ubiquitous Language");L.push("");L.push("| Term | Definition |");L.push("|------|------------|");
+    state.terms.forEach(t=>L.push("| "+(t.term||"")+" | "+(t.def||"").replace(/\n/g," ")+" |"));L.push("");
+  }
+  L.push("## 3. Bounded Contexts");L.push("");
+  state.contexts.forEach((c,i)=>{
+    L.push("### 3."+(i+1)+" "+(c.name||"Unnamed")+"  _("+(c.type||"")+")_");
+    if(c.description){L.push("");L.push(c.description)}
+    if(c.rels.length){L.push("");L.push("**Relationships**");c.rels.forEach(r=>L.push("- "+(r.dir||"")+" **"+(r.to||"?")+"** via _"+(r.type||"?")+"_"+(r.notes?" — "+r.notes:"")))}
+    L.push("");
+  });
+  L.push("## 4. Tactical Design");L.push("");
+  state.contexts.forEach(c=>{
+    if(!c.aggregates.length)return;
+    L.push("### "+(c.name||"Context"));L.push("");
+    c.aggregates.forEach(a=>{
+      L.push("#### Aggregate: "+(a.name||"Unnamed")+(a.root?"  (root: "+a.root+")":""));
+      if(lines(a.invariants).length){L.push("");L.push("_Invariants:_");L.push(bullets(a.invariants))}
+      const dump=(title,arr)=>{if(arr.length){L.push("");L.push("*"+title+":*");arr.forEach(e=>{const p=lines(e.props).join("; ");L.push("- **"+(e.name||"?")+"**"+(p?" — "+p:""));});}};
+      dump("Entities",a.entities);dump("Value Objects",a.valueObjects);dump("Domain Events",a.events);dump("Domain Services",a.services);
+      if(a.repository.name){L.push("");L.push("*Repository:* `"+a.repository.name+"`");lines(a.repository.methods).forEach(mm=>L.push("  - `"+mm+"`"))}
+      L.push("");
+    });
+  });
+  if(state.useCases.length){
+    L.push("## 5. Use Cases");L.push("");
+    state.useCases.forEach(u=>{
+      L.push("#### "+(u.name||"Unnamed")+"  _("+(u.type||"")+(u.context?", "+u.context:"")+")_");
+      if(u.desc)L.push(u.desc);
+      if(lines(u.input).length)L.push("- **Input:** "+lines(u.input).join(", "));
+      if(u.output)L.push("- **Output:** "+u.output);
+      L.push("");
+    });
+  }
+  L.push("## 6. Clean Architecture Layers");L.push("");
+  LAYER_DEFS.forEach(Ld=>{
+    L.push("### "+Ld.name+"  ("+Ld.ring+")");L.push(Ld.resp);
+    if(state.layers[Ld.key]){L.push("");L.push(state.layers[Ld.key])}
+    const mp=autoMapped(Ld.key);if(mp.length){L.push("");L.push("_Components:_ "+mp.map(x=>x.name).join(", "))}
+    L.push("");
+  });
+  L.push("```");L.push(ringDiagram());L.push("```");L.push("");
+  L.push("## 7. Cross-cutting Concerns");L.push("");
+  const cc=state.cross;
+  [["Authentication",cc.auth],["Persistence",cc.persistence],["Messaging",cc.messaging],["Validation",cc.validation],["Logging",cc.logging],["API style",cc.api]].forEach(([k,v])=>{if(v)L.push("- **"+k+":** "+v)});
+  if(cc.notes){L.push("");L.push(cc.notes)}
+  L.push("");
+  L.push("## 8. Context Map");L.push("");L.push("```");L.push(contextMapDiagram());L.push("```");
+  return L.join("\n");
+}
+
+function genText(){
+  return genMarkdown()
+    .replace(/^#{1,6}\s*/gm,"")
+    .replace(/\*\*(.*?)\*\*/g,"$1")
+    .replace(/_([^_]+)_/g,"$1")
+    .replace(/`([^`]+)`/g,"$1")
+    .replace(/^\|.*\|$/gm,m=>m.replace(/\|/g," ").replace(/-+/g,"").trim())
+    .replace(/```/g,"");
+}
+
+/* ----- C# GENERATOR ----- */
+function csType(line){ // "Name:Type" -> {name,type}
+  const idx=line.indexOf(":");
+  if(idx<0)return {name:pascal(line),type:"string"};
+  return {name:pascal(line.slice(0,idx)),type:line.slice(idx+1).trim()||"string"};
+}
+function fileHeader(path){return "// ───────────────────────────────────────────────\n// FILE: "+path+"\n// ───────────────────────────────────────────────"}
+function resultType(outRaw){
+  const s=(outRaw||"").trim();
+  if(!s||/^unit$/i.test(s))return "System.Guid";
+  if(/dto$/i.test(s))return pascal(s);
+  if(/id$/i.test(s))return "System.Guid";
+  return pascal(s);
+}
+function nsName(){
+  // valid C# root namespace: keep dots, drop spaces/invalid chars
+  const raw=(state.meta.namespace||state.meta.projectName||"App").trim();
+  const cleaned=raw.replace(/[^A-Za-z0-9.]+/g,"").replace(/\.{2,}/g,".").replace(/^\.|\.$/g,"");
+  return cleaned||"App";
+}
+function genCSharp(){
+  const ns=nsName();
+  const o=csOpts;
+  const L=[]; const P=(...x)=>x.forEach(s=>L.push(s));
+  const HDR=p=>P(fileHeader(p));
+  const propsOf=e=>lines(e.props).map(csType);
+  const persistence=state.cross.persistence||"TBD";
+  const efProvider=/PostgreSQL/i.test(persistence)?"UseNpgsql":"UseSqlServer";
+  const useFV=o.validators;
+
+  // ---------- banner ----------
+  P(
+"/*",
+" *  "+(state.meta.projectName||"Domain")+" — C# scaffolding (Clean Architecture + DDD)",
+" *  Solution layout — one project per layer:",
+" *    "+ns+".Domain          aggregates, entities, value objects, events, repository ports",
+" *    "+ns+".Application     use-case handlers, DTOs, validators, Result<T>",
+" *    "+ns+".Infrastructure  EF Core DbContext, type configs, repository implementations, DI",
+" *    "+ns+".Api             REST controllers, DI wiring (Program.cs)",
+" *  Persistence: "+persistence+"   |   Messaging: "+(state.cross.messaging||"None")+"   |   Validation: "+(state.cross.validation||"—"),
+" *  NuGet (suggested): Microsoft.EntityFrameworkCore, FluentValidation, Swashbuckle.AspNetCore",
+" */","");
+
+  if(!state.contexts.length){P("// No bounded contexts defined yet — add aggregates (section 3 & 4) to generate code.","");}
+
+  // ---------- DOMAIN: seedwork ----------
+  if(o.domain){
+    HDR(ns+".Domain/SeedWork/BuildingBlocks.cs");
+    P(`using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ${ns}.Domain.SeedWork
+{
+    public interface IDomainEvent { DateTime OccurredOn { get; } }
+
+    public abstract class Entity<TId>
+    {
+        public TId Id { get; protected set; } = default!;
+        private readonly List<IDomainEvent> _events = new();
+        public IReadOnlyCollection<IDomainEvent> DomainEvents => _events.AsReadOnly();
+        protected void Raise(IDomainEvent e) => _events.Add(e);
+        public void ClearEvents() => _events.Clear();
+
+        public override bool Equals(object? obj) =>
+            obj is Entity<TId> other && GetType() == other.GetType() &&
+            EqualityComparer<TId>.Default.Equals(Id, other.Id);
+        public override int GetHashCode() => HashCode.Combine(GetType(), Id);
+    }
+
+    public abstract class AggregateRoot<TId> : Entity<TId> { }
+
+    public abstract class ValueObject
+    {
+        protected abstract IEnumerable<object?> GetEqualityComponents();
+        public override bool Equals(object? obj)
+        {
+            if (obj is null || obj.GetType() != GetType()) return false;
+            return GetEqualityComponents().SequenceEqual(((ValueObject)obj).GetEqualityComponents());
+        }
+        public override int GetHashCode() =>
+            GetEqualityComponents().Aggregate(1, (h, o) => HashCode.Combine(h, o));
+    }
+
+    public interface IRepository<T> where T : class { }
+
+    public interface IUnitOfWork
+    {
+        System.Threading.Tasks.Task<int> SaveChangesAsync(System.Threading.CancellationToken ct = default);
+    }
+}
+`);
+  }
+
+  // ---------- DOMAIN: types per aggregate ----------
+  if(o.domain) state.contexts.forEach(c=>{
+    const dom=ns+".Domain."+pascal(c.name||"Context");
+    c.aggregates.forEach(a=>{
+      const root=pascal(a.root||a.name||"Aggregate");
+      const childEntities=a.entities.filter(e=>e.name&&pascal(e.name)!==root);
+      // Value objects
+      a.valueObjects.filter(v=>v.name).forEach(vo=>{
+        const name=pascal(vo.name);const ps=propsOf(vo);
+        HDR(dom+"/"+name+".cs");
+        P(`namespace ${dom}
+{
+    public sealed class ${name} : ${ns}.Domain.SeedWork.ValueObject
+    {
+${ps.map(p=>`        public ${p.type} ${p.name} { get; }`).join("\n")}
+        public ${name}(${ps.map(p=>p.type+" "+camel(p.name)).join(", ")})
+        {
+${ps.map(p=>`            ${p.name} = ${camel(p.name)};`).join("\n")}
+        }
+        protected override System.Collections.Generic.IEnumerable<object?> GetEqualityComponents()
+        {
+${ps.length?ps.map(p=>`            yield return ${p.name};`).join("\n"):"            yield break;"}
+        }
+    }
+}
+`);
+      });
+      // Domain events
+      a.events.filter(e=>e.name).forEach(ev=>{
+        const name=pascal(ev.name);const ps=propsOf(ev);
+        HDR(dom+"/Events/"+name+".cs");
+        P(`namespace ${dom}.Events
+{
+    public sealed record ${name}(${ps.map(p=>p.type+" "+p.name).join(", ")}) : ${ns}.Domain.SeedWork.IDomainEvent
+    {
+        public System.DateTime OccurredOn { get; } = System.DateTime.UtcNow;
+    }
+}
+`);
+      });
+      // Child entities
+      childEntities.forEach(en=>{
+        const name=pascal(en.name);const ps=propsOf(en);
+        HDR(dom+"/"+name+".cs");
+        P(`namespace ${dom}
+{
+    public class ${name} : ${ns}.Domain.SeedWork.Entity<System.Guid>
+    {
+${ps.map(p=>`        public ${p.type} ${p.name} { get; private set; } = default!;`).join("\n")}
+        private ${name}() { }
+        internal ${name}(${ps.map(p=>p.type+" "+camel(p.name)).join(", ")})
+        {
+            Id = System.Guid.NewGuid();
+${ps.map(p=>`            ${p.name} = ${camel(p.name)};`).join("\n")}
+        }
+    }
+}
+`);
+      });
+      // Aggregate root
+      const rootEnt=a.entities.find(e=>pascal(e.name)===root);
+      const rps=rootEnt?propsOf(rootEnt):[];
+      const firstEvt=a.events.find(e=>e.name)?pascal(a.events.find(e=>e.name).name):null;
+      HDR(dom+"/"+root+".cs");
+      P(`namespace ${dom}
+{
+    /// <summary>Aggregate root for ${a.name||root}.</summary>
+    public class ${root} : ${ns}.Domain.SeedWork.AggregateRoot<System.Guid>
+    {
+${rps.map(p=>`        public ${p.type} ${p.name} { get; private set; } = default!;`).join("\n")}
+${childEntities.map(e=>`        private readonly System.Collections.Generic.List<${pascal(e.name)}> _${camel(e.name)}s = new();
+        public System.Collections.Generic.IReadOnlyCollection<${pascal(e.name)}> ${pascal(e.name)}s => _${camel(e.name)}s.AsReadOnly();`).join("\n")}
+
+        private ${root}() { }
+
+        public static ${root} Create(${rps.map(p=>p.type+" "+camel(p.name)).join(", ")})
+        {
+            var entity = new ${root} { Id = System.Guid.NewGuid() };
+${rps.map(p=>`            entity.${p.name} = ${camel(p.name)};`).join("\n")}
+${firstEvt?`            // entity.Raise(new Events.${firstEvt}(...));`:"            // raise domain events here"}
+            return entity;
+        }
+${lines(a.invariants).map(inv=>`        // INVARIANT: ${inv}`).join("\n")}
+    }
+}
+`);
+      // Repository port
+      if(a.repository.name){
+        const rname=pascal(a.repository.name).replace(/^I?/,"I");
+        const ms=lines(a.repository.methods);
+        const body=(ms.length?ms:[
+          `System.Threading.Tasks.Task<${root}?> GetByIdAsync(System.Guid id, System.Threading.CancellationToken ct = default)`,
+          `System.Threading.Tasks.Task AddAsync(${root} aggregate, System.Threading.CancellationToken ct = default)`
+        ]).map(m=>`        ${m.replace(/;?$/,";")}`).join("\n");
+        HDR(dom+"/"+rname+".cs");
+        P(`namespace ${dom}
+{
+    public interface ${rname} : ${ns}.Domain.SeedWork.IRepository<${root}>
+    {
+${body}
+    }
+}
+`);
+      }
+    });
+  });
+
+  // ---------- APPLICATION ----------
+  if(o.application){
+    HDR(ns+".Application/Common/Result.cs");
+    P(`namespace ${ns}.Application.Common
+{
+    public sealed class Result<T>
+    {
+        public bool IsSuccess { get; }
+        public T? Value { get; }
+        public string? Error { get; }
+        private Result(bool ok, T? value, string? error) { IsSuccess = ok; Value = value; Error = error; }
+        public static Result<T> Success(T value) => new(true, value, null);
+        public static Result<T> Failure(string error) => new(false, default, error);
+    }
+}
+`);
+    state.useCases.filter(u=>u.name).forEach(u=>{
+      const name=pascal(u.name);const isCmd=(u.type||"Command")==="Command";
+      const ctx=pascal(u.context||"App");
+      const reqType=name+(isCmd?"Command":"Query");
+      const inFields=lines(u.input).map(csType);
+      const resType=resultType(u.output);
+      const dir=ns+".Application/"+ctx+"/"+name;
+      HDR(dir+"/"+reqType+".cs");
+      P(`using System.Threading;
+using System.Threading.Tasks;
+using ${ns}.Application.Common;
+
+namespace ${ns}.Application.${ctx}.${name}
+{
+${u.desc?`    /// <summary>${u.desc.replace(/\n/g," ")}</summary>\n`:""}    public sealed record ${reqType}(${inFields.map(p=>p.type+" "+p.name).join(", ")});
+
+    public interface I${name}Handler
+    {
+        Task<Result<${resType}>> HandleAsync(${reqType} request, CancellationToken ct = default);
+    }
+
+    public sealed class ${name}Handler : I${name}Handler
+    {
+        // TODO: inject repository ports + IUnitOfWork via the constructor
+        public async Task<Result<${resType}>> HandleAsync(${reqType} request, CancellationToken ct = default)
+        {
+            // 1) load aggregate(s)  2) execute domain behaviour  3) persist  4) return Result
+            await Task.CompletedTask;
+            return Result<${resType}>.Failure("Not implemented");
+        }
+    }
+}
+`);
+      if(useFV && inFields.length){
+        HDR(dir+"/"+reqType+"Validator.cs");
+        P(`using FluentValidation;
+
+namespace ${ns}.Application.${ctx}.${name}
+{
+    public sealed class ${reqType}Validator : AbstractValidator<${reqType}>
+    {
+        public ${reqType}Validator()
+        {
+${inFields.map(p=>`            RuleFor(x => x.${p.name}).NotNull();`).join("\n")}
+        }
+    }
+}
+`);
+      }
+      if(o.dtos && /Dto$/.test(resType)){
+        HDR(dir+"/"+resType+".cs");
+        P(`namespace ${ns}.Application.${ctx}.${name}
+{
+    public sealed record ${resType}(System.Guid Id /* TODO: add projection fields */);
+}
+`);
+      }
+    });
+  }
+
+  // ---------- INFRASTRUCTURE ----------
+  if(o.infrastructure) state.contexts.forEach(c=>{
+    if(!c.aggregates.length)return;
+    const ctxName=pascal(c.name||"Context");
+    const dom=ns+".Domain."+ctxName;
+    const dbName=ctxName+"DbContext";
+    HDR(ns+".Infrastructure/"+ctxName+"/"+dbName+".cs");
+    P(`using Microsoft.EntityFrameworkCore;
+using ${dom};
+using ${ns}.Domain.SeedWork;
+
+namespace ${ns}.Infrastructure.${ctxName}
+{
+    public sealed class ${dbName} : DbContext, IUnitOfWork
+    {
+        public ${dbName}(DbContextOptions<${dbName}> options) : base(options) { }
+
+${c.aggregates.map(a=>{const r=pascal(a.root||a.name||"Aggregate");return `        public DbSet<${r}> ${r}s => Set<${r}>();`;}).join("\n")}
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(${dbName}).Assembly);
+            base.OnModelCreating(modelBuilder);
+        }
+
+        public System.Threading.Tasks.Task<int> SaveChangesAsync(System.Threading.CancellationToken ct = default)
+            => base.SaveChangesAsync(ct);
+    }
+}
+`);
+    if(o.migrations){
+      const defConn=efProvider==="UseNpgsql"
+        ? `Host=localhost;Database=${ns};Username=postgres;Password=postgres;`
+        : `Server=localhost;Database=${ns};Trusted_Connection=True;TrustServerCertificate=True;`;
+      HDR(ns+".Infrastructure/"+ctxName+"/"+dbName+"Factory.cs");
+      P(`using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+
+namespace ${ns}.Infrastructure.${ctxName}
+{
+    /// <summary>
+    /// Design-time factory: lets the EF Core CLI build ${dbName} without starting the app host,
+    /// e.g. when running 'dotnet ef migrations add ...'. Reads ConnectionStrings__Default if present.
+    /// </summary>
+    public sealed class ${dbName}Factory : IDesignTimeDbContextFactory<${dbName}>
+    {
+        public ${dbName} CreateDbContext(string[] args)
+        {
+            var connectionString =
+                System.Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+                ?? "${defConn}";
+
+            var options = new DbContextOptionsBuilder<${dbName}>()
+                .${efProvider}(connectionString)
+                .Options;
+
+            return new ${dbName}(options);
+        }
+    }
+}
+`);
+    }
+    if(o.efconfig) c.aggregates.forEach(a=>{
+      const r=pascal(a.root||a.name||"Aggregate");
+      const vos=a.valueObjects.filter(v=>v.name);
+      const childs=a.entities.filter(e=>e.name&&pascal(e.name)!==r);
+      const voNames=new Set(vos.map(v=>pascal(v.name)));
+      const voSub={}; vos.forEach(v=>voSub[pascal(v.name)]=propsOf(v));
+      const isVo=t=>voNames.has(pascal(t))||voNames.has(t);
+      const subOf=t=>voSub[pascal(t)]||voSub[t]||[];
+      // Build an active OwnsOne(...) mapping for a value-object property
+      const ownsOne=(owner,lv,prop,indent)=>{
+        const sub=subOf(prop.type);
+        const body=sub.length
+          ? sub.map(sp=>`${indent}    vb.Property(v => v.${sp.name}).HasColumnName("${prop.name}_${sp.name}");`).join("\n")
+          : `${indent}    // (no scalar properties defined on this value object)`;
+        return `${indent}${owner}.OwnsOne(${lv} => ${lv}.${prop.name}, vb =>\n${indent}{\n${body}\n${indent}});`;
+      };
+      const rootEnt=a.entities.find(e=>pascal(e.name)===r);
+      const rootOwned=(rootEnt?propsOf(rootEnt):[]).filter(p=>isVo(p.type));
+      const rootOwnedCode=rootOwned.map(p=>ownsOne("builder","x",p,"            ")).join("\n");
+      const childCode=childs.map(e=>{
+        const lv=camel(e.name);
+        const inner=propsOf(e).filter(p=>isVo(p.type)).map(p=>ownsOne("b",lv,p,"                ")).join("\n");
+        return `            builder.OwnsMany(x => x.${pascal(e.name)}s, b =>
+            {
+                b.WithOwner().HasForeignKey("${r}Id");
+                b.HasKey("Id");${inner?"\n"+inner:""}
+            });`;
+      }).join("\n");
+      const mappedVo=new Set();
+      rootOwned.forEach(p=>mappedVo.add(pascal(p.type)));
+      childs.forEach(e=>propsOf(e).filter(p=>isVo(p.type)).forEach(p=>mappedVo.add(pascal(p.type))));
+      const unmapped=[...voNames].filter(n=>!mappedVo.has(n));
+      const unmappedNote=unmapped.length?`\n            // Value object(s) not bound to a property yet — add a property of that type, then OwnsOne it: ${unmapped.join(", ")}`:"";
+      HDR(ns+".Infrastructure/"+ctxName+"/Configurations/"+r+"Configuration.cs");
+      P(`using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using ${dom};
+
+namespace ${ns}.Infrastructure.${ctxName}.Configurations
+{
+    public sealed class ${r}Configuration : IEntityTypeConfiguration<${r}>
+    {
+        public void Configure(EntityTypeBuilder<${r}> builder)
+        {
+            builder.ToTable("${r}s");
+            builder.HasKey(x => x.Id);${rootOwnedCode?"\n"+rootOwnedCode:""}${childCode?"\n"+childCode:""}${unmappedNote}
+        }
+    }
+}
+`);
+    });
+    if(o.repoimpl) c.aggregates.forEach(a=>{
+      if(!a.repository.name)return;
+      const r=pascal(a.root||a.name||"Aggregate");
+      const iface=pascal(a.repository.name).replace(/^I?/,"I");
+      const impl=iface.replace(/^I/,"");
+      HDR(ns+".Infrastructure/"+ctxName+"/"+impl+".cs");
+      P(`using Microsoft.EntityFrameworkCore;
+using ${dom};
+
+namespace ${ns}.Infrastructure.${ctxName}
+{
+    public sealed class ${impl} : ${iface}
+    {
+        private readonly ${dbName} _db;
+        public ${impl}(${dbName} db) => _db = db;
+
+        public async System.Threading.Tasks.Task<${r}?> GetByIdAsync(System.Guid id, System.Threading.CancellationToken ct = default)
+            => await _db.${r}s.FindAsync(new object?[] { id }, ct);
+
+        public async System.Threading.Tasks.Task AddAsync(${r} aggregate, System.Threading.CancellationToken ct = default)
+            => await _db.${r}s.AddAsync(aggregate, ct);
+
+        // TODO: implement any additional members declared on ${iface}
+    }
+}
+`);
+    });
+  });
+
+  if(o.infrastructure && o.migrations){
+    const ctxs=state.contexts.filter(c=>c.aggregates.length);
+    if(ctxs.length){
+      const project=ns+".Infrastructure", startup=ns+".Api";
+      const cli=[];
+      ctxs.forEach(c=>{
+        const ctxName=pascal(c.name||"Context");const dbName=ctxName+"DbContext";
+        cli.push(`//    dotnet ef migrations add Init --context ${dbName} --project ${project} --startup-project ${startup} --output-dir ${ctxName}/Migrations`);
+        cli.push(`//    dotnet ef database update --context ${dbName} --project ${project} --startup-project ${startup}`);
+      });
+      const apply=ctxs.map(c=>{
+        const ctxName=pascal(c.name||"Context");const dbName=ctxName+"DbContext";
+        return `            await scope.ServiceProvider.GetRequiredService<${ctxName}.${dbName}>().Database.MigrateAsync(ct);`;
+      }).join("\n");
+      HDR(ns+".Infrastructure/MigrationExtensions.cs");
+      P(`using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+// EF Core migrations — one DbContext per bounded context.
+// Install the CLI once:  dotnet tool install --global dotnet-ef
+// Create & apply the initial migration for each context (run from the solution root):
+${cli.join("\n")}
+
+namespace ${ns}.Infrastructure
+{
+    public static class MigrationExtensions
+    {
+        /// <summary>
+        /// Applies any pending migrations for every DbContext at startup.
+        /// Call from Program.cs:  await app.Services.ApplyMigrationsAsync();
+        /// </summary>
+        public static async System.Threading.Tasks.Task ApplyMigrationsAsync(
+            this IServiceProvider services, System.Threading.CancellationToken ct = default)
+        {
+            using var scope = services.CreateScope();
+${apply}
+        }
+    }
+}
+`);
+    }
+  }
+
+  if(o.infrastructure && o.di){
+    const regs=[];
+    state.contexts.forEach(c=>{
+      if(!c.aggregates.length)return;
+      const ctxName=pascal(c.name||"Context");const dbName=ctxName+"DbContext";
+      regs.push(`        services.AddDbContext<${ctxName}.${dbName}>(o => o.${efProvider}(connectionString));`);
+      c.aggregates.forEach(a=>{
+        if(!a.repository.name)return;
+        const iface=pascal(a.repository.name).replace(/^I?/,"I");
+        const impl=iface.replace(/^I/,"");
+        regs.push(`        services.AddScoped<${ns}.Domain.${ctxName}.${iface}, ${ctxName}.${impl}>();`);
+      });
+    });
+    HDR(ns+".Infrastructure/DependencyInjection.cs");
+    P(`using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ${ns}.Infrastructure
+{
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+        {
+${regs.join("\n")||"            // register DbContexts and repositories here"}
+            return services;
+        }
+    }
+}
+`);
+  }
+
+  // ---------- APPLICATION DI ----------
+  if(o.application && o.di){
+    const regs=state.useCases.filter(u=>u.name).map(u=>{
+      const name=pascal(u.name);const ctx=pascal(u.context||"App");
+      return `        services.AddScoped<${ctx}.${name}.I${name}Handler, ${ctx}.${name}.${name}Handler>();`;
+    });
+    HDR(ns+".Application/DependencyInjection.cs");
+    P(`using Microsoft.Extensions.DependencyInjection;
+${useFV?"using FluentValidation;\n":""}namespace ${ns}.Application
+{
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+${regs.join("\n")||"            // register use-case handlers here"}
+${useFV?"            services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);\n":""}            return services;
+        }
+    }
+}
+`);
+  }
+
+  // ---------- API ----------
+  if(o.api){
+    const byCtx={};
+    state.useCases.filter(u=>u.name).forEach(u=>{const ctx=pascal(u.context||"App");(byCtx[ctx]=byCtx[ctx]||[]).push(u);});
+    Object.keys(byCtx).forEach(ctx=>{
+      const ucs=byCtx[ctx];const ctrl=ctx+"Controller";
+      const usings=ucs.map(u=>`using ${ns}.Application.${ctx}.${pascal(u.name)};`).join("\n");
+      const actions=ucs.map(u=>{
+        const name=pascal(u.name);const isCmd=(u.type||"Command")==="Command";
+        const reqType=name+(isCmd?"Command":"Query");
+        const attr=isCmd?`[HttpPost("${camel(name)}")]`:`[HttpGet("${camel(name)}")]`;
+        const from=isCmd?"[FromBody]":"[FromQuery]";
+        return `        ${attr}
+        public async Task<IActionResult> ${name}(${from} ${reqType} request, [FromServices] I${name}Handler handler, CancellationToken ct)
+        {
+            var result = await handler.HandleAsync(request, ct);
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+        }`;
+      }).join("\n\n");
+      HDR(ns+".Api/Controllers/"+ctrl+".cs");
+      P(`using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+${usings}
+
+namespace ${ns}.Api.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class ${ctrl} : ControllerBase
+    {
+${actions||"        // add use cases for this context to generate endpoints"}
+    }
+}
+`);
+    });
+    HDR(ns+".Api/Program.cs");
+    P(`using ${ns}.Application;
+using ${ns}.Infrastructure;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("Default")!);
+
+var app = builder.Build();
+${o.migrations?"await app.Services.ApplyMigrationsAsync();\n":""}if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+app.UseHttpsRedirection();
+app.MapControllers();
+app.Run();
+`);
+  }
+
+  return L.join("\n");
+}
+
+/* ============================ EXPORT/IMPORT HELPERS ============================ */
+function download(filename,content,mime="text/plain"){
+  const blob=new Blob([content],{type:mime});
+  const a=el("a",{href:URL.createObjectURL(blob),download:filename});
+  document.body.append(a);a.click();a.remove();
+}
+function exportJson(){download((pascal(state.meta.projectName)||"design")+".ddd.json",JSON.stringify(state,null,2),"application/json");toast("JSON exported")}
+function importJson(){$("#fileInput").click()}
+$("#fileInput").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{const data=JSON.parse(r.result);state=Object.assign(blankState(),data);activeCtx=0;refreshAll();save();toast("Imported ✓");showSection("requirement")}
+    catch(err){toast("Invalid JSON file")}
+  };
+  r.readAsText(f);
+  e.target.value="";
+});
+
+/* ============================ TOP BAR ACTIONS ============================ */
+$("#btnExportJson").addEventListener("click",exportJson);
+$("#btnImport").addEventListener("click",importJson);
+$("#dlJson").addEventListener("click",exportJson);
+$("#dlImport").addEventListener("click",importJson);
+$("#btnExample").addEventListener("click",()=>{if(confirm("Load the example domain? This replaces current work (export first if needed).")){state=exampleState();activeCtx=0;refreshAll();save();toast("Example loaded");showSection("requirement")}});
+$("#btnClear").addEventListener("click",()=>{if(confirm("Clear everything and start fresh?")){state=blankState();activeCtx=0;refreshAll();save();toast("Cleared");showSection("requirement")}});
+$("#btnTheme").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme")==="dark"?"":"dark";
+  document.documentElement.setAttribute("data-theme",cur);
+  try{localStorage.setItem("ddd_theme",cur)}catch(e){}
+});
+
+/* ============================ GEN TABS ============================ */
+$$("#genTabs .tab").forEach(t=>t.addEventListener("click",()=>{
+  $$("#genTabs .tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
+  curGen=t.dataset.gen;renderGen();
+}));
+$("#copyOut").addEventListener("click",()=>{navigator.clipboard.writeText($("#genOut").textContent).then(()=>toast("Copied to clipboard"))});
+$("#dlOut").addEventListener("click",()=>{
+  const ext={markdown:"md",text:"txt",csharp:"cs"}[curGen];
+  const mime={markdown:"text/markdown",text:"text/plain",csharp:"text/plain"}[curGen];
+  download((pascal(state.meta.projectName)||"design")+"."+ext,$("#genOut").textContent,mime);toast("Downloaded");
+});
+$("#printOut").addEventListener("click",()=>window.print());
+
+/* ============================ REFRESH ============================ */
+function refreshAll(){
+  bindStatic();
+  renderTerms();renderContexts();renderRelHelp();renderUseCases();
+  renderCtxTabs();renderTactical();renderLayers();renderReview();renderGen();
+}
+
+/* ============================ EXAMPLE ============================ */
+function exampleState(){
+  return {
+    meta:{
+      projectName:"Acme Order Management",
+      namespace:"Acme.Orders",
+      problem:"Customers need to place and track orders online while the warehouse fulfils them and billing collects payment.",
+      goals:"Reduce order errors\nReal-time order tracking\nSupport 10x growth",
+      actors:"Customer\nWarehouse operator\nBilling system\nSupport agent",
+      constraints:"Cloud-native on Azure\nIntegrate with existing SAP finance\nGDPR compliant",
+      nfrs:"99.9% availability\n< 200ms p95 API latency\nFull audit trail for money movements"
+    },
+    terms:[
+      {term:"Order",def:"A customer's request to purchase one or more products."},
+      {term:"Fulfilment",def:"Picking, packing and shipping the items of an order."},
+      {term:"Line Item",def:"A single product and quantity within an order."}
+    ],
+    contexts:[
+      {id:uid(),name:"Ordering",type:"Core Domain",description:"Owns the lifecycle of a customer order from draft to placed.",
+       rels:[{to:"Billing",type:"Customer-Supplier",dir:"this → upstream",notes:"Ordering requests payment authorization."},
+             {to:"Fulfilment",type:"Published Language",dir:"this → downstream",notes:"Emits OrderPlaced events."}],
+       aggregates:[
+         {id:uid(),name:"Order",root:"Order",invariants:"An order must contain at least one line item\nOrder total must equal the sum of line totals\nCannot place an empty order",
+          entities:[{id:uid(),name:"Order",props:"CustomerId:System.Guid\nStatus:OrderStatus\nPlacedAt:System.DateTime?"},
+                    {id:uid(),name:"OrderLine",props:"ProductId:System.Guid\nQuantity:int\nUnitPrice:Money"}],
+          valueObjects:[{id:uid(),name:"Money",props:"Amount:decimal\nCurrency:string"},
+                        {id:uid(),name:"Address",props:"Street:string\nCity:string\nPostalCode:string\nCountry:string"}],
+          events:[{id:uid(),name:"OrderPlaced",props:"OrderId:System.Guid\nCustomerId:System.Guid\nTotal:decimal"}],
+          services:[],
+          repository:{name:"IOrderRepository",methods:"System.Threading.Tasks.Task<Order?> GetByIdAsync(System.Guid id)\nSystem.Threading.Tasks.Task AddAsync(Order order)"}}
+       ]},
+      {id:uid(),name:"Billing",type:"Supporting Subdomain",description:"Handles payment authorization and invoicing.",
+       rels:[{to:"Ordering",type:"Open Host Service",dir:"this → upstream",notes:"Exposes a payment API."}],
+       aggregates:[
+         {id:uid(),name:"Invoice",root:"Invoice",invariants:"Invoice total cannot be negative",
+          entities:[{id:uid(),name:"Invoice",props:"OrderId:System.Guid\nAmount:decimal\nPaid:bool"}],
+          valueObjects:[],events:[{id:uid(),name:"InvoicePaid",props:"InvoiceId:System.Guid\nPaidAt:System.DateTime"}],services:[],
+          repository:{name:"IInvoiceRepository",methods:"System.Threading.Tasks.Task<Invoice?> GetByIdAsync(System.Guid id)"}}
+       ]}
+    ],
+    useCases:[
+      {name:"PlaceOrder",type:"Command",context:"Ordering",input:"CustomerId:System.Guid\nItems:System.Collections.Generic.List<OrderItemDto>",output:"OrderId",desc:"Validates the cart, creates an Order aggregate, raises OrderPlaced, persists, and returns the new order id."},
+      {name:"GetOrder",type:"Query",context:"Ordering",input:"OrderId:System.Guid",output:"OrderDto",desc:"Returns the current state of an order for the customer."}
+    ],
+    layers:{
+      entities:"Order, OrderLine, Invoice aggregates; Money & Address value objects; OrderPlaced & InvoicePaid events.",
+      application:"PlaceOrder, GetOrder handlers; IOrderRepository / IInvoiceRepository ports.",
+      adapters:"OrdersController, EF Core repository implementations, DTO mappers.",
+      infrastructure:"EF Core + Azure SQL, Azure Service Bus for events, Serilog logging."
+    },
+    cross:{auth:"OAuth2 / OpenID Connect",persistence:"EF Core (SQL)",messaging:"Azure Service Bus",validation:"FluentValidation",logging:"Serilog",api:"REST (ASP.NET Core)",notes:"Outbox pattern for reliable event publishing; per-tenant data isolation."}
+  };
+}
+
+/* ===== BOOT ===== */
+(function(){
+  try{const th=localStorage.getItem("ddd_theme");if(th)document.documentElement.setAttribute("data-theme",th)}catch(e){}
+  if(!load()){state=blankState();}
+  refreshAll();
+})();
+</script>
+</body>
+</html>

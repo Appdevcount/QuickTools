@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagram Studio — Mermaid &amp; PlantUML</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --border:#e2e5ea; --text:#1d2330;
+    --muted:#6b7280; --accent:#4f6df5; --accent-soft:#eef1ff; --code-bg:#f3f4f6;
+    --danger:#d64545; --ok:#22a06b; --shadow:0 1px 3px rgba(0,0,0,.07);
+  }
+  [data-theme="dark"]{
+    --bg:#0f1320; --panel:#171c2b; --border:#2a3146; --text:#e6e9f0;
+    --muted:#9aa3b5; --accent:#6d86ff; --accent-soft:#1e2540; --code-bg:#0c1020;
+    --danger:#ff7676; --ok:#4cd2a0; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  header{
+    display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);
+    border-bottom:1px solid var(--border);box-shadow:var(--shadow);z-index:5;
+  }
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  header h1 span{color:var(--accent)}
+  .tabs{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap}
+  .tab{
+    padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--muted);
+    border-radius:7px;cursor:pointer;font-size:13px;font-weight:550;
+  }
+  .tab.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+  .spacer{flex:1}
+  .engine-toggle{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden}
+  .engine-toggle button{padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:600;font-size:12px}
+  .engine-toggle button.active{background:var(--accent);color:#fff}
+  .icon-btn{
+    border:1px solid var(--border);background:transparent;color:var(--text);border-radius:7px;
+    padding:6px 10px;cursor:pointer;font-size:13px;font-weight:550;
+  }
+  .icon-btn:hover{background:var(--accent-soft)}
+  main{flex:1;display:grid;grid-template-columns:300px 1fr 1fr;min-height:0}
+  .pane{overflow:auto;padding:14px;border-right:1px solid var(--border);background:var(--panel)}
+  .pane:last-child{border-right:0}
+  .pane h2{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 10px}
+  .builder-block{border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:12px;background:var(--bg)}
+  .builder-block h3{margin:0 0 8px;font-size:12px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  label{display:block;font-size:12px;color:var(--muted);margin:6px 0 3px}
+  input,select,textarea{
+    width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:var(--panel);
+    color:var(--text);font-size:13px;font-family:inherit;
+  }
+  textarea{resize:vertical}
+  .row{display:flex;gap:6px;align-items:flex-end}
+  .row > *{flex:1}
+  .row .sm{flex:0 0 auto;width:auto}
+  .item-row{display:grid;gap:6px;border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;background:var(--panel)}
+  .item-row .del{background:transparent;border:0;color:var(--danger);cursor:pointer;font-size:12px;justify-self:end;font-weight:600}
+  .add-btn{width:100%;padding:8px;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+  .btn-primary{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:13px;width:100%}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .editor-head,.preview-head{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .editor-head .spacer,.preview-head .spacer{flex:1}
+  #scriptEditor{
+    width:100%;height:calc(100% - 44px);min-height:300px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    font-size:12.5px;line-height:1.55;background:var(--code-bg);border-radius:8px;tab-size:2;white-space:pre;
+  }
+  #previewWrap{height:calc(100% - 44px);overflow:auto;border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:12px}
+  #preview svg{max-width:100%;height:auto}
+  .err{color:var(--danger);font-size:12.5px;white-space:pre-wrap;font-family:ui-monospace,monospace;padding:8px;background:var(--accent-soft);border-radius:6px}
+  .plantuml-view{display:flex;flex-direction:column;gap:10px}
+  .plantuml-view a{color:var(--accent);font-weight:600;text-decoration:none}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  @media(max-width:1000px){main{grid-template-columns:1fr;grid-auto-rows:minmax(280px,auto);overflow:auto}.pane{border-right:0;border-bottom:1px solid var(--border)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Diagram<span>Studio</span></h1>
+  <div class="tabs" id="tabs"></div>
+  <div class="spacer"></div>
+  <div class="engine-toggle" id="engineToggle">
+    <button data-engine="mermaid" class="active">Mermaid</button>
+    <button data-engine="plantuml">PlantUML</button>
+  </div>
+  <button class="icon-btn" id="themeBtn" title="Toggle theme">🌓</button>
+</header>
+
+<main>
+  <section class="pane" id="builderPane">
+    <h2>Requirement builder</h2>
+    <div id="builderRoot"></div>
+    <button class="btn-primary" id="genBtn" style="margin-top:8px">↻ Generate script</button>
+    <div class="hint" id="builderHint"></div>
+  </section>
+
+  <section class="pane">
+    <div class="editor-head">
+      <h2 style="margin:0">Script <span class="badge" id="engineBadge">Mermaid</span></h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="exampleBtn">Load example</button>
+      <button class="icon-btn" id="copyBtn">Copy</button>
+      <button class="icon-btn" id="downloadScriptBtn">Download</button>
+    </div>
+    <textarea id="scriptEditor" spellcheck="false" placeholder="Your diagram script appears here…"></textarea>
+  </section>
+
+  <section class="pane">
+    <div class="preview-head">
+      <h2 style="margin:0">Preview</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="svgBtn">Download SVG</button>
+      <button class="icon-btn" id="pngBtn">Download PNG</button>
+    </div>
+    <div id="previewWrap">
+      <div id="preview"></div>
+      <div id="plantumlView" class="plantuml-view" style="display:none"></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Setup ---------------- */
+const $ = s => document.querySelector(s);
+const el = (t,a={},...kids)=>{const e=document.createElement(t);for(const k in a){if(k==='class')e.className=a[k];else if(k==='html')e.innerHTML=a[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),a[k]);else e.setAttribute(k,a[k]);}kids.flat().forEach(c=>e.append(c.nodeType?c:document.createTextNode(c)));return e;};
+
+let theme = localStorage.getItem('ds-theme') || 'light';
+document.documentElement.dataset.theme = theme;
+mermaid.initialize({startOnLoad:false, theme: theme==='dark'?'dark':'default', securityLevel:'loose'});
+
+let engine = 'mermaid';
+let current = 'sequence';
+
+/* ---------------- Diagram definitions ---------------- */
+const TYPES = {
+  sequence:  {label:'Sequence'},
+  swimlane:  {label:'Swimlane'},
+  workflow:  {label:'Workflow'},
+  azure:     {label:'Azure Arch'},
+  er:        {label:'ER'},
+  class:     {label:'Class'},
+  gantt:     {label:'Gantt'}
+};
+
+/* Inline Azure icon pack (offline, registered with Mermaid architecture diagrams) */
+const AZ_ICONS={prefix:'az',width:24,height:24,icons:{
+  users:{body:'<circle cx="12" cy="7" r="4" fill="#0078D4"/><path d="M3 21c0-5 4-8 9-8s9 3 9 8z" fill="#0078D4"/>'},
+  appservice:{body:'<circle cx="12" cy="12" r="9" fill="#0078D4"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="#fff" stroke-width="1.3" fill="none"/>'},
+  function:{body:'<rect x="3" y="3" width="18" height="18" rx="3" fill="#0062AD"/><path d="M13 4l-7 9h5l-2 7 8-10h-5z" fill="#FFD23F"/>'},
+  sql:{body:'<ellipse cx="12" cy="6" rx="7" ry="3" fill="#0078D4"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" fill="#0078D4"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" stroke="#fff" stroke-width="1" fill="none"/>'},
+  cosmos:{body:'<circle cx="12" cy="12" r="9" fill="#0062AD"/><ellipse cx="12" cy="12" rx="8" ry="3.2" stroke="#fff" fill="none" stroke-width="1"/><ellipse cx="12" cy="12" rx="8" ry="3.2" stroke="#fff" fill="none" stroke-width="1" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="8" ry="3.2" stroke="#fff" fill="none" stroke-width="1" transform="rotate(120 12 12)"/>'},
+  storage:{body:'<rect x="3" y="5" width="18" height="5" rx="1" fill="#0078D4"/><rect x="3" y="11" width="18" height="5" rx="1" fill="#0a86e0"/><rect x="3" y="17" width="18" height="2.5" rx="1" fill="#5aaceb"/>'},
+  frontdoor:{body:'<path d="M12 2l9 5v10l-9 5-9-5V7z" fill="#0078D4"/><circle cx="12" cy="12" r="3.5" fill="#fff"/>'},
+  loadbalancer:{body:'<rect x="3" y="3" width="18" height="18" rx="3" fill="#0062AD"/><path d="M12 6v12M12 9h4M12 15h4M6 12h6" stroke="#fff" stroke-width="1.3" fill="none"/><circle cx="12" cy="12" r="1.6" fill="#fff"/>'},
+  keyvault:{body:'<rect x="3" y="3" width="18" height="18" rx="3" fill="#0078D4"/><circle cx="10" cy="11" r="3" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M12 12l5 5M15 15h2M15 17h1.5" stroke="#fff" stroke-width="1.5" fill="none"/>'},
+  servicebus:{body:'<rect x="3" y="5" width="18" height="14" rx="2" fill="#0078D4"/><path d="M3 7l9 6 9-6" stroke="#fff" stroke-width="1.3" fill="none"/>'},
+  vm:{body:'<rect x="2" y="4" width="20" height="13" rx="2" fill="#0078D4"/><rect x="5" y="7" width="14" height="7" rx="1" fill="#fff"/><path d="M8 20h8M10 17v3M14 17v3" stroke="#0078D4" stroke-width="1.5"/>'},
+  aks:{body:'<path d="M12 2l8 4.5v9L12 20l-8-4.5v-9z" fill="#0062AD"/><circle cx="12" cy="11" r="2.5" fill="#fff"/><path d="M12 4v3M12 15v3M5 8l3 1.5M16 9.5L19 8M6 15l3-2M15 13l3 2" stroke="#fff" stroke-width="1"/>'},
+  apim:{body:'<rect x="3" y="3" width="18" height="18" rx="3" fill="#0078D4"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="1.5"/>'},
+  cdn:{body:'<circle cx="12" cy="12" r="9" fill="#0078D4"/><path d="M3 12h18M12 3v18" stroke="#fff" stroke-width="1"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="1"/>'}
+}};
+const AZ_LABEL={users:'User',appservice:'App Service',function:'Function App',sql:'Azure SQL',cosmos:'Cosmos DB',storage:'Storage Account',frontdoor:'Front Door',loadbalancer:'Load Balancer',keyvault:'Key Vault',servicebus:'Service Bus',vm:'Virtual Machine',aks:'AKS Cluster',apim:'API Management',cdn:'CDN',cloud:'Cloud',server:'Server',database:'Database',disk:'Disk',internet:'Internet'};
+
+/* Default builder state */
+const defaults = ()=>({
+  sequence:{
+    title:'User login',
+    participants:[{id:'U',name:'User'},{id:'A',name:'App'},{id:'DB',name:'Database'}],
+    messages:[
+      {from:'U',to:'A',text:'Enter credentials',type:'->>'},
+      {from:'A',to:'DB',text:'Validate user',type:'->>'},
+      {from:'DB',to:'A',text:'User record',type:'-->>'},
+      {from:'A',to:'U',text:'Login success',type:'-->>'}
+    ]
+  },
+  swimlane:{
+    title:'Order fulfilment',
+    direction:'TD',
+    lanes:[{id:'cust',name:'Customer'},{id:'sales',name:'Sales'},{id:'wh',name:'Warehouse'}],
+    steps:[
+      {id:'s1',lane:'cust',text:'Place order',shape:'box'},
+      {id:'s2',lane:'sales',text:'Confirm order',shape:'box'},
+      {id:'s3',lane:'wh',text:'Pack items',shape:'box'},
+      {id:'s4',lane:'wh',text:'Ship order',shape:'box'},
+      {id:'s5',lane:'cust',text:'Receive order',shape:'box'}
+    ],
+    links:[['s1','s2'],['s2','s3'],['s3','s4'],['s4','s5']]
+  },
+  workflow:{
+    title:'Deploy pipeline',
+    direction:'TD',
+    nodes:[
+      {id:'start',text:'Commit code',shape:'round'},
+      {id:'build',text:'Build',shape:'box'},
+      {id:'test',text:'Tests pass?',shape:'diamond'},
+      {id:'deploy',text:'Deploy',shape:'box'},
+      {id:'fix',text:'Fix issues',shape:'box'},
+      {id:'done',text:'Done',shape:'round'}
+    ],
+    links:[
+      {from:'start',to:'build',label:''},
+      {from:'build',to:'test',label:''},
+      {from:'test',to:'deploy',label:'Yes'},
+      {from:'test',to:'fix',label:'No'},
+      {from:'fix',to:'build',label:''},
+      {from:'deploy',to:'done',label:''}
+    ]
+  },
+  azure:{
+    title:'Web app architecture',
+    groups:[{id:'rg',name:'Resource Group'}],
+    services:[
+      {id:'users',name:'Users',icon:'users',group:''},
+      {id:'fd',name:'Front Door',icon:'frontdoor',group:'rg'},
+      {id:'app',name:'App Service',icon:'appservice',group:'rg'},
+      {id:'fn',name:'Functions',icon:'function',group:'rg'},
+      {id:'sql',name:'Azure SQL',icon:'sql',group:'rg'},
+      {id:'blob',name:'Blob Storage',icon:'storage',group:'rg'}
+    ],
+    links:[['users','fd'],['fd','app'],['app','fn'],['app','sql'],['fn','blob']]
+  },
+  er:{
+    title:'Shop schema',
+    entities:[
+      {id:'CUSTOMER',attrs:[{key:'PK',type:'int',name:'id'},{key:'',type:'string',name:'name'},{key:'',type:'string',name:'email'}]},
+      {id:'ORDER',attrs:[{key:'PK',type:'int',name:'id'},{key:'FK',type:'int',name:'customer_id'},{key:'',type:'date',name:'created'}]},
+      {id:'PRODUCT',attrs:[{key:'PK',type:'int',name:'id'},{key:'',type:'string',name:'name'},{key:'',type:'decimal',name:'price'}]}
+    ],
+    rels:[
+      {from:'CUSTOMER',to:'ORDER',card:'||--o{',label:'places'},
+      {from:'ORDER',to:'PRODUCT',card:'}o--o{',label:'contains'}
+    ]
+  },
+  class:{
+    title:'Animals',
+    classes:[
+      {id:'Animal',attrs:['+String name','#int age'],methods:['+eat() void','+sleep() void']},
+      {id:'Dog',attrs:['+String breed'],methods:['+bark() void']},
+      {id:'Cat',attrs:[],methods:['+meow() void']}
+    ],
+    rels:[
+      {from:'Animal',to:'Dog',type:'<|--',label:''},
+      {from:'Animal',to:'Cat',type:'<|--',label:''}
+    ]
+  },
+  gantt:{
+    title:'Project plan',
+    dateFormat:'YYYY-MM-DD',
+    sections:[
+      {name:'Design',tasks:[
+        {id:'a1',name:'Research',start:'2026-07-01',dur:'5d',status:'done'},
+        {id:'a2',name:'Wireframes',start:'after a1',dur:'4d',status:'active'}
+      ]},
+      {name:'Build',tasks:[
+        {id:'b1',name:'Frontend',start:'after a2',dur:'8d',status:''},
+        {id:'b2',name:'Backend',start:'after a2',dur:'10d',status:'crit'}
+      ]}
+    ]
+  }
+});
+
+let state = JSON.parse(localStorage.getItem('ds-state')||'null') || defaults();
+function saveState(){localStorage.setItem('ds-state',JSON.stringify(state));}
+
+/* ---------------- Tabs ---------------- */
+const tabsEl = $('#tabs');
+Object.entries(TYPES).forEach(([k,v])=>{
+  tabsEl.append(el('button',{class:'tab'+(k===current?' active':''),'data-type':k,onclick:()=>switchType(k)},v.label));
+});
+function switchType(k){
+  current=k;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.type===k));
+  renderBuilder(); generate();
+}
+
+/* ---------------- Builder UI ---------------- */
+const ICONS=['users','appservice','function','sql','cosmos','storage','frontdoor','loadbalancer','keyvault','servicebus','vm','aks','apim','cdn','internet','cloud','server','database','disk'];
+function renderBuilder(){
+  const root=$('#builderRoot'); root.innerHTML='';
+  const st=state[current];
+  // title
+  root.append(field('Diagram title', st.title, v=>{st.title=v;}));
+  if(current==='sequence') buildSequence(root,st);
+  if(current==='swimlane') buildSwimlane(root,st);
+  if(current==='workflow') buildWorkflow(root,st);
+  if(current==='azure') buildAzure(root,st);
+  if(current==='er') buildER(root,st);
+  if(current==='class') buildClass(root,st);
+  if(current==='gantt') buildGantt(root,st);
+  $('#builderHint').textContent = hints[current];
+}
+const hints={
+  sequence:'Add participants, then messages between them. ->> sync, -->> dashed return, -) async.',
+  swimlane:'Define lanes (departments/actors), add steps to lanes, then connect steps in order.',
+  workflow:'Add nodes (box/diamond/round), then link them with optional edge labels (e.g. Yes/No).',
+  azure:'Add Azure services with authentic icons, optionally place them in a group, then connect them.',
+  er:'Add entities with attributes (PK/FK keys), then relationships with crow’s-foot cardinality.',
+  class:'Add classes with attributes (+public/-private/#protected) and methods, then relationships.',
+  gantt:'Add sections, then tasks with a start date or "after <id>", a duration (e.g. 5d), and status.'
+};
+
+function field(labelText,val,onInput,type='text'){
+  const wrap=el('div',{class:'builder-block'});
+  wrap.append(el('label',{},labelText), el('input',{type,value:val,oninput:e=>{onInput(e.target.value);}}));
+  return wrap;
+}
+
+function buildSequence(root,st){
+  const pb=el('div',{class:'builder-block'}); pb.append(el('h3',{},'Participants'));
+  st.participants.forEach((p,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Name',p.name,v=>p.name=v), rowInput('Alias/ID',p.id,v=>p.id=v),
+      el('button',{class:'del',onclick:()=>{st.participants.splice(i,1);renderBuilder();}},'✕ remove'));
+    pb.append(r);
+  });
+  pb.append(el('button',{class:'add-btn',onclick:()=>{st.participants.push({id:'P'+(st.participants.length+1),name:'Participant'});renderBuilder();}},'+ Add participant'));
+  root.append(pb);
+
+  const mb=el('div',{class:'builder-block'}); mb.append(el('h3',{},'Messages'));
+  st.messages.forEach((m,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(
+      twoCol(selectInput('From',st.participants.map(p=>p.id),m.from,v=>m.from=v),
+             selectInput('To',st.participants.map(p=>p.id),m.to,v=>m.to=v)),
+      rowInput('Message',m.text,v=>m.text=v),
+      selectInput('Arrow',['->>','-->>','->','-->','-)' ,'--)'],m.type,v=>m.type=v),
+      el('button',{class:'del',onclick:()=>{st.messages.splice(i,1);renderBuilder();}},'✕ remove'));
+    mb.append(r);
+  });
+  mb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.participants[0]?.id||'A';st.messages.push({from:f,to:f,text:'Message',type:'->>'});renderBuilder();}},'+ Add message'));
+  root.append(mb);
+}
+
+function buildSwimlane(root,st){
+  root.append(dirField(st));
+  const lb=el('div',{class:'builder-block'}); lb.append(el('h3',{},'Lanes'));
+  st.lanes.forEach((l,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Lane name',l.name,v=>l.name=v),rowInput('ID',l.id,v=>l.id=v),
+      el('button',{class:'del',onclick:()=>{st.lanes.splice(i,1);renderBuilder();}},'✕ remove'));
+    lb.append(r);
+  });
+  lb.append(el('button',{class:'add-btn',onclick:()=>{st.lanes.push({id:'lane'+(st.lanes.length+1),name:'Lane'});renderBuilder();}},'+ Add lane'));
+  root.append(lb);
+
+  const sb=el('div',{class:'builder-block'}); sb.append(el('h3',{},'Steps'));
+  st.steps.forEach((s,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Step text',s.text,v=>s.text=v),
+      twoCol(selectInput('Lane',st.lanes.map(l=>l.id),s.lane,v=>s.lane=v),
+             selectInput('Shape',['box','round','diamond'],s.shape,v=>s.shape=v)),
+      el('button',{class:'del',onclick:()=>{st.steps.splice(i,1);st.links=st.links.filter(x=>x[0]!==s.id&&x[1]!==s.id);renderBuilder();}},'✕ remove'));
+    sb.append(r);
+  });
+  sb.append(el('button',{class:'add-btn',onclick:()=>{const id='s'+(st.steps.length+1)+Date.now()%1000;st.steps.push({id,lane:st.lanes[0]?.id||'',text:'Step',shape:'box'});renderBuilder();}},'+ Add step'));
+  root.append(sb);
+  root.append(linkBlock(st,st.steps,true));
+}
+
+function buildWorkflow(root,st){
+  root.append(dirField(st));
+  const nb=el('div',{class:'builder-block'}); nb.append(el('h3',{},'Nodes'));
+  st.nodes.forEach((n,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Text',n.text,v=>n.text=v),
+      selectInput('Shape',['box','round','diamond','stadium','circle'],n.shape,v=>n.shape=v),
+      el('button',{class:'del',onclick:()=>{st.nodes.splice(i,1);st.links=st.links.filter(x=>x.from!==n.id&&x.to!==n.id);renderBuilder();}},'✕ remove'));
+    nb.append(r);
+  });
+  nb.append(el('button',{class:'add-btn',onclick:()=>{const id='n'+(st.nodes.length+1)+Date.now()%1000;st.nodes.push({id,text:'Node',shape:'box'});renderBuilder();}},'+ Add node'));
+  root.append(nb);
+
+  const cb=el('div',{class:'builder-block'}); cb.append(el('h3',{},'Connections'));
+  st.links.forEach((lk,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(selectInput('From',st.nodes.map(n=>n.id),lk.from,v=>lk.from=v),
+                    selectInput('To',st.nodes.map(n=>n.id),lk.to,v=>lk.to=v)),
+      rowInput('Edge label (optional)',lk.label,v=>lk.label=v),
+      el('button',{class:'del',onclick:()=>{st.links.splice(i,1);renderBuilder();}},'✕ remove'));
+    cb.append(r);
+  });
+  cb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.nodes[0]?.id||'';st.links.push({from:f,to:f,label:''});renderBuilder();}},'+ Add connection'));
+  root.append(cb);
+}
+
+function buildAzure(root,st){
+  const gb=el('div',{class:'builder-block'}); gb.append(el('h3',{},'Groups (optional)'));
+  st.groups.forEach((g,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Group name',g.name,v=>g.name=v),rowInput('ID',g.id,v=>g.id=v),
+      el('button',{class:'del',onclick:()=>{st.groups.splice(i,1);renderBuilder();}},'✕ remove'));
+    gb.append(r);
+  });
+  gb.append(el('button',{class:'add-btn',onclick:()=>{st.groups.push({id:'g'+(st.groups.length+1),name:'Group'});renderBuilder();}},'+ Add group'));
+  root.append(gb);
+
+  const sb=el('div',{class:'builder-block'}); sb.append(el('h3',{},'Services'));
+  st.services.forEach((s,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Service name',s.name,v=>s.name=v),
+      twoCol(selectInput('Icon',ICONS,s.icon,v=>s.icon=v),
+             selectInput('Group',['',...st.groups.map(g=>g.id)],s.group,v=>s.group=v)),
+      el('button',{class:'del',onclick:()=>{st.services.splice(i,1);st.links=st.links.filter(x=>x[0]!==s.id&&x[1]!==s.id);renderBuilder();}},'✕ remove'));
+    sb.append(r);
+  });
+  sb.append(el('button',{class:'add-btn',onclick:()=>{const id='svc'+(st.services.length+1)+Date.now()%1000;st.services.push({id,name:'Service',icon:'server',group:st.groups[0]?.id||''});renderBuilder();}},'+ Add service'));
+  root.append(sb);
+  root.append(linkBlock(st,st.services,true));
+}
+
+function buildER(root,st){
+  const eb=el('div',{class:'builder-block'}); eb.append(el('h3',{},'Entities'));
+  st.entities.forEach((e,i)=>{
+    const box=el('div',{class:'item-row'});
+    box.append(rowInput('Entity name',e.id,v=>e.id=v.toUpperCase().replace(/\s+/g,'_')));
+    e.attrs.forEach((a,j)=>{
+      const r=el('div',{class:'row'});
+      r.append(selectInput('Key',['','PK','FK','UK'],a.key,v=>a.key=v),
+               rowInput('Type',a.type,v=>a.type=v),
+               rowInput('Attribute',a.name,v=>a.name=v),
+               el('button',{class:'del',onclick:()=>{e.attrs.splice(j,1);renderBuilder();}},'✕'));
+      box.append(r);
+    });
+    box.append(el('button',{class:'add-btn',onclick:()=>{e.attrs.push({key:'',type:'string',name:'field'});renderBuilder();}},'+ attribute'),
+      el('button',{class:'del',onclick:()=>{st.entities.splice(i,1);st.rels=st.rels.filter(x=>x.from!==e.id&&x.to!==e.id);renderBuilder();}},'✕ remove entity'));
+    eb.append(box);
+  });
+  eb.append(el('button',{class:'add-btn',onclick:()=>{st.entities.push({id:'ENTITY'+(st.entities.length+1),attrs:[{key:'PK',type:'int',name:'id'}]});renderBuilder();}},'+ Add entity'));
+  root.append(eb);
+
+  const rb=el('div',{class:'builder-block'}); rb.append(el('h3',{},'Relationships'));
+  const cards={'one to many':'||--o{','one to one':'||--||','many to many':'}o--o{','one to zero/one':'||--o|','zero/one to many':'|o--o{'};
+  st.rels.forEach((rel,i)=>{
+    const r=el('div',{class:'item-row'});
+    const cardSel=el('div');cardSel.append(el('label',{},'Cardinality'));
+    const sel=el('select',{onchange:e=>rel.card=e.target.value});
+    Object.entries(cards).forEach(([lbl,val])=>{const o=el('option',{value:val},lbl);if(val===rel.card)o.selected=true;sel.append(o);});
+    cardSel.append(sel);
+    r.append(twoCol(selectInput('From',st.entities.map(e=>e.id),rel.from,v=>rel.from=v),
+                    selectInput('To',st.entities.map(e=>e.id),rel.to,v=>rel.to=v)),
+      twoCol(cardSel,rowInput('Label',rel.label,v=>rel.label=v)),
+      el('button',{class:'del',onclick:()=>{st.rels.splice(i,1);renderBuilder();}},'✕ remove'));
+    rb.append(r);
+  });
+  rb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.entities[0]?.id||'';st.rels.push({from:f,to:f,card:'||--o{',label:'relates'});renderBuilder();}},'+ Add relationship'));
+  root.append(rb);
+}
+
+function buildClass(root,st){
+  const cb=el('div',{class:'builder-block'}); cb.append(el('h3',{},'Classes'));
+  st.classes.forEach((c,i)=>{
+    const box=el('div',{class:'item-row'});
+    box.append(rowInput('Class name',c.id,v=>c.id=v.replace(/\s+/g,'')));
+    box.append(el('label',{},'Attributes (one per line, e.g. +String name)'),
+      el('textarea',{rows:Math.max(2,c.attrs.length),oninput:e=>c.attrs=e.target.value.split('\n').filter(x=>x.trim())},c.attrs.join('\n')));
+    box.append(el('label',{},'Methods (one per line, e.g. +run() void)'),
+      el('textarea',{rows:Math.max(2,c.methods.length),oninput:e=>c.methods=e.target.value.split('\n').filter(x=>x.trim())},c.methods.join('\n')));
+    box.append(el('button',{class:'del',onclick:()=>{st.classes.splice(i,1);st.rels=st.rels.filter(x=>x.from!==c.id&&x.to!==c.id);renderBuilder();}},'✕ remove class'));
+    cb.append(box);
+  });
+  cb.append(el('button',{class:'add-btn',onclick:()=>{st.classes.push({id:'Class'+(st.classes.length+1),attrs:[],methods:[]});renderBuilder();}},'+ Add class'));
+  root.append(cb);
+
+  const rb=el('div',{class:'builder-block'}); rb.append(el('h3',{},'Relationships'));
+  const rels={'inheritance (<|--)':'<|--','composition (*--)':'*--','aggregation (o--)':'o--','association (-->)':'-->','dependency (..>)':'..>','realization (<|..)':'<|..'};
+  st.rels.forEach((rel,i)=>{
+    const r=el('div',{class:'item-row'});
+    const tSel=el('div');tSel.append(el('label',{},'Type'));
+    const sel=el('select',{onchange:e=>rel.type=e.target.value});
+    Object.entries(rels).forEach(([lbl,val])=>{const o=el('option',{value:val},lbl);if(val===rel.type)o.selected=true;sel.append(o);});
+    tSel.append(sel);
+    r.append(twoCol(selectInput('From',st.classes.map(c=>c.id),rel.from,v=>rel.from=v),
+                    selectInput('To',st.classes.map(c=>c.id),rel.to,v=>rel.to=v)),
+      twoCol(tSel,rowInput('Label',rel.label,v=>rel.label=v)),
+      el('button',{class:'del',onclick:()=>{st.rels.splice(i,1);renderBuilder();}},'✕ remove'));
+    rb.append(r);
+  });
+  rb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.classes[0]?.id||'';st.rels.push({from:f,to:f,type:'<|--',label:''});renderBuilder();}},'+ Add relationship'));
+  root.append(rb);
+}
+
+function buildGantt(root,st){
+  root.append(field('Date format',st.dateFormat,v=>st.dateFormat=v));
+  st.sections.forEach((sec,si)=>{
+    const box=el('div',{class:'builder-block'});
+    const head=el('div',{class:'row'});
+    head.append(rowInput('Section',sec.name,v=>sec.name=v),
+      el('button',{class:'del',onclick:()=>{st.sections.splice(si,1);renderBuilder();}},'✕ section'));
+    box.append(head);
+    sec.tasks.forEach((t,ti)=>{
+      const r=el('div',{class:'item-row'});
+      r.append(rowInput('Task',t.name,v=>t.name=v),
+        twoCol(rowInput('ID',t.id,v=>t.id=v.replace(/\s+/g,'')),selectInput('Status',['','active','done','crit','milestone'],t.status,v=>t.status=v)),
+        twoCol(rowInput('Start (date or "after id")',t.start,v=>t.start=v),rowInput('Duration (e.g. 5d)',t.dur,v=>t.dur=v)),
+        el('button',{class:'del',onclick:()=>{sec.tasks.splice(ti,1);renderBuilder();}},'✕ remove'));
+      box.append(r);
+    });
+    box.append(el('button',{class:'add-btn',onclick:()=>{sec.tasks.push({id:'t'+Date.now()%10000,name:'Task',start:'2026-07-01',dur:'3d',status:''});renderBuilder();}},'+ Add task'));
+    root.append(box);
+  });
+  root.append(el('button',{class:'add-btn',onclick:()=>{st.sections.push({name:'Section',tasks:[]});renderBuilder();}},'+ Add section'));
+}
+
+/* shared builder helpers */
+function rowInput(lbl,val,on){const w=el('div');w.append(el('label',{},lbl),el('input',{value:val||'',oninput:e=>on(e.target.value)}));return w;}
+function selectInput(lbl,opts,val,on){const w=el('div');const s=el('select',{onchange:e=>on(e.target.value)});opts.forEach(o=>{const op=el('option',{value:o},o||'(none)');if(o===val)op.selected=true;s.append(op);});w.append(el('label',{},lbl),s);return w;}
+function twoCol(a,b){const w=el('div',{class:'row'});w.append(a,b);return w;}
+function dirField(st){const w=el('div',{class:'builder-block'});w.append(el('label',{},'Direction'));const s=el('select',{onchange:e=>st.direction=e.target.value});['TD','LR','BT','RL'].forEach(d=>{const o=el('option',{value:d},d);if(d===st.direction)o.selected=true;s.append(o);});w.append(s);return w;}
+function linkBlock(st,items,pairs){
+  const cb=el('div',{class:'builder-block'}); cb.append(el('h3',{},'Connections'));
+  st.links.forEach((lk,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(selectInput('From',items.map(x=>x.id),lk[0],v=>lk[0]=v),
+                    selectInput('To',items.map(x=>x.id),lk[1],v=>lk[1]=v)),
+      el('button',{class:'del',onclick:()=>{st.links.splice(i,1);renderBuilder();}},'✕ remove'));
+    cb.append(r);
+  });
+  cb.append(el('button',{class:'add-btn',onclick:()=>{const f=items[0]?.id||'';st.links.push([f,f]);renderBuilder();}},'+ Add connection'));
+  return cb;
+}
+
+/* ---------------- Script generation ---------------- */
+const ARROW_PUML={'->>':'->','-->>':'-->','->':'->','-->':'-->','-)':'->>','--)':'-->>'};
+function esc(s){return (s||'').replace(/"/g,"'");}
+
+function genMermaid(){
+  const st=state[current];
+  if(current==='sequence'){
+    let o=`sequenceDiagram\n  autonumber\n`;
+    if(st.title) o=`---\ntitle: ${st.title}\n---\n`+o;
+    st.participants.forEach(p=>o+=`  participant ${p.id} as ${p.name}\n`);
+    st.messages.forEach(m=>o+=`  ${m.from}${m.type}${m.to}: ${m.text}\n`);
+    return o;
+  }
+  if(current==='swimlane'){
+    let o=`flowchart ${st.direction}\n`;
+    st.lanes.forEach(l=>{
+      o+=`  subgraph ${l.id}["${esc(l.name)}"]\n`;
+      st.steps.filter(s=>s.lane===l.id).forEach(s=>o+=`    ${s.id}${shapeMermaid(s)}\n`);
+      o+=`  end\n`;
+    });
+    st.links.forEach(([a,b])=>o+=`  ${a} --> ${b}\n`);
+    return o;
+  }
+  if(current==='workflow'){
+    let o=`flowchart ${st.direction}\n`;
+    st.nodes.forEach(n=>o+=`  ${n.id}${shapeMermaid(n)}\n`);
+    st.links.forEach(lk=>o+=`  ${lk.from} -->${lk.label?`|${esc(lk.label)}|`:''} ${lk.to}\n`);
+    return o;
+  }
+  if(current==='azure'){
+    let o=`architecture-beta\n`;
+    st.groups.forEach(g=>o+=`  group ${g.id}(cloud)[${esc(g.name)}]\n`);
+    st.services.forEach(s=>{const ic=AZ_ICONS.icons[s.icon]?`az:${s.icon}`:s.icon;o+=`  service ${s.id}(${ic})[${esc(s.name)}]${s.group?` in ${s.group}`:''}\n`;});
+    o+='\n';
+    st.links.forEach(([a,b])=>o+=`  ${a}:R -- L:${b}\n`);
+    return o;
+  }
+  if(current==='er'){
+    let o=`erDiagram\n`;
+    st.rels.forEach(r=>o+=`  ${r.from} ${r.card} ${r.to} : "${esc(r.label)||'has'}"\n`);
+    st.entities.forEach(e=>{
+      o+=`  ${e.id} {\n`;
+      e.attrs.forEach(a=>o+=`    ${a.type||'string'} ${a.name}${a.key?' '+a.key:''}\n`);
+      o+=`  }\n`;
+    });
+    return o;
+  }
+  if(current==='class'){
+    let o=`classDiagram\n`;
+    if(st.direction) o+=`  direction LR\n`;
+    st.classes.forEach(c=>{
+      o+=`  class ${c.id} {\n`;
+      c.attrs.forEach(a=>o+=`    ${a}\n`);
+      c.methods.forEach(m=>o+=`    ${m}\n`);
+      o+=`  }\n`;
+    });
+    st.rels.forEach(r=>o+=`  ${r.from} ${r.type} ${r.to}${r.label?` : ${esc(r.label)}`:''}\n`);
+    return o;
+  }
+  if(current==='gantt'){
+    let o=`gantt\n  title ${st.title||'Gantt'}\n  dateFormat ${st.dateFormat}\n`;
+    st.sections.forEach(sec=>{
+      o+=`  section ${sec.name}\n`;
+      sec.tasks.forEach(t=>{
+        const tags=[t.status,t.id].filter(Boolean).join(', ');
+        o+=`  ${t.name} :${tags?tags+', ':''}${t.start}, ${t.dur}\n`;
+      });
+    });
+    return o;
+  }
+}
+function shapeMermaid(n){
+  const t=esc(n.text);
+  switch(n.shape){
+    case 'round':return `(["${t}"])`;
+    case 'diamond':return `{"${t}"}`;
+    case 'stadium':return `(["${t}"])`;
+    case 'circle':return `(("${t}"))`;
+    default:return `["${t}"]`;
+  }
+}
+
+function genPlantUML(){
+  const st=state[current];
+  if(current==='sequence'){
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${st.title}\nautonumber\n`;
+    st.participants.forEach(p=>o+=`participant "${p.name}" as ${p.id}\n`);
+    st.messages.forEach(m=>o+=`${m.from} ${ARROW_PUML[m.type]||'->'} ${m.to}: ${m.text}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='swimlane'){
+    // activity diagram with swimlanes — follows the link graph, sanitizes all text
+    const san=t=>(t||'').replace(/[|]/g,'/').replace(/;/g,',').replace(/"/g,"'").replace(/[\r\n]+/g,' ').trim();
+    const dq=t=>(san(t).replace(/\?+$/,''))||'decision';
+    const byId={}; st.steps.forEach(s=>byId[s.id]=s);
+    const laneName=id=>{const l=st.lanes.find(x=>x.id===id);return san(l?l.name:'Lane')||'Lane';};
+    const out={}; st.steps.forEach(s=>out[s.id]=[]);
+    (st.links||[]).forEach(([a,b])=>{ if(out[a]&&byId[b]) out[a].push(b); });
+    const hasIn={}; (st.links||[]).forEach(([a,b])=>{ if(byId[b]) hasIn[b]=true; });
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${san(st.title)}\n`;
+    o+=`start\n`;
+    const visited=new Set();
+    const emit=(id)=>{
+      let cur=id;
+      while(cur && byId[cur] && !visited.has(cur)){
+        visited.add(cur);
+        const s=byId[cur], nexts=out[cur]||[];
+        o+=`|${laneName(s.lane)}|\n`;
+        if(s.shape==='diamond'){
+          if(nexts.length===0){ o+=`:${dq(s.text)}?;\n`; return; }
+          o+=`if (${dq(s.text)}?) then (yes)\n`;
+          emit(nexts[0]);
+          if(nexts[1]){ o+=`else (no)\n`; emit(nexts[1]); }
+          o+=`endif\n`;
+          return;
+        }
+        o+=`:${san(s.text)||'step'};\n`;
+        if(nexts.length<=1){ cur=nexts[0]; }
+        else { nexts.forEach(n=>emit(n)); return; }
+      }
+    };
+    let startId = st.steps.find(s=>!hasIn[s.id])?.id || st.steps[0]?.id;
+    emit(startId);
+    st.steps.forEach(s=>{ if(!visited.has(s.id)) emit(s.id); });
+    o+=`stop\n@enduml\n`;
+    return o;
+  }
+  if(current==='workflow'){
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${st.title}\n`;
+    o+=`skinparam defaultTextAlignment center\n`;
+    st.nodes.forEach(n=>o+=`rectangle "${esc(n.text)}" as ${n.id}\n`);
+    st.links.forEach(lk=>o+=`${lk.from} --> ${lk.to}${lk.label?` : ${esc(lk.label)}`:''}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='azure'){
+    let o=`@startuml\nskinparam linetype ortho\nskinparam rectangle {\n  BackgroundColor #EAF3FB\n  BorderColor #0078D4\n}\n`;
+    if(st.title)o+=`title ${st.title}\n`;
+    const shapeMap={internet:'actor',cloud:'cloud',database:'database',disk:'storage'};
+    const place=(s)=>{
+      const kind=shapeMap[s.icon];
+      const label=`${s.name}\\n<<${AZ_LABEL[s.icon]||'Azure'}>>`;
+      return kind?`${kind} "${label}" as ${s.id}\n`:`rectangle "${label}" as ${s.id}\n`;
+    };
+    st.groups.forEach(g=>{
+      o+=`rectangle "${g.name}" as ${g.id} {\n`;
+      st.services.filter(s=>s.group===g.id).forEach(s=>o+='  '+place(s));
+      o+=`}\n`;
+    });
+    st.services.filter(s=>!s.group).forEach(s=>o+=place(s));
+    st.links.forEach(([a,b])=>o+=`${a} --> ${b}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='er'){
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${st.title}\n`;
+    o+=`hide circle\nskinparam linetype ortho\n`;
+    st.entities.forEach(e=>{
+      o+=`entity "${e.id}" as ${e.id} {\n`;
+      const pks=e.attrs.filter(a=>a.key==='PK'), rest=e.attrs.filter(a=>a.key!=='PK');
+      pks.forEach(a=>o+=`  * ${a.name} : ${a.type}\n`);
+      if(pks.length)o+=`  --\n`;
+      rest.forEach(a=>o+=`  ${a.key==='FK'?'+ ':''}${a.name} : ${a.type}\n`);
+      o+=`}\n`;
+    });
+    const cmap={'||--o{':'||--o{','||--||':'||--||','}o--o{':'}o--o{','||--o|':'||--o|','|o--o{':'|o--o{'};
+    st.rels.forEach(r=>o+=`${r.from} ${cmap[r.card]||'||--o{'} ${r.to} : ${r.label||'has'}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='class'){
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${st.title}\n`;
+    st.classes.forEach(c=>{
+      o+=`class ${c.id} {\n`;
+      c.attrs.forEach(a=>o+=`  ${a}\n`);
+      if(c.methods.length)o+=`  --\n`;
+      c.methods.forEach(m=>o+=`  ${m}\n`);
+      o+=`}\n`;
+    });
+    st.rels.forEach(r=>o+=`${r.to} ${r.type} ${r.from}${r.label?` : ${r.label}`:''}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='gantt'){
+    let o=`@startgantt\n`;
+    if(st.title)o+=`title ${st.title}\n`;
+    const all=[]; st.sections.forEach(s=>s.tasks.forEach(t=>all.push(t)));
+    const colorFor={done:'LightGreen',active:'#0078D4',crit:'Salmon'};
+    st.sections.forEach(sec=>{
+      if(sec.name)o+=`-- ${sec.name} --\n`;
+      sec.tasks.forEach(t=>{
+        const days=(t.dur||'1d').replace(/[^0-9]/g,'')||'1';
+        o+=`[${t.name}] lasts ${days} days\n`;
+        const m=(t.start||'').match(/after\s+(\S+)/);
+        if(m){const dep=all.find(x=>x.id===m[1]);if(dep)o+=`[${t.name}] starts at [${dep.name}]'s end\n`;}
+        else if(/^\d/.test(t.start||''))o+=`[${t.name}] starts ${t.start}\n`;
+        if(colorFor[t.status])o+=`[${t.name}] is colored in ${colorFor[t.status]}\n`;
+      });
+    });
+    return o+`@endgantt\n`;
+  }
+}
+
+function generate(){
+  const script = engine==='mermaid'?genMermaid():genPlantUML();
+  $('#scriptEditor').value=script;
+  saveState();
+  render();
+}
+
+/* ---------------- Rendering ---------------- */
+let renderSeq=0;
+async function render(){
+  const code=$('#scriptEditor').value;
+  const pv=$('#preview'), pu=$('#plantumlView');
+  if(engine==='plantuml'){
+    pv.style.display='none'; pu.style.display='flex';
+    const enc=plantumlEncode(code);
+    const svgUrl=`https://www.plantuml.com/plantuml/svg/${enc}`;
+    pu.innerHTML='';
+    pu.append(
+      el('div',{class:'hint'},'PlantUML renders via the public plantuml.com server (needs internet). Live image below:'),
+      el('img',{src:svgUrl,style:'max-width:100%;border:1px solid var(--border);border-radius:8px;background:#fff;padding:8px',onerror:function(){this.style.display='none';}}),
+      el('a',{href:`https://www.plantuml.com/plantuml/uml/${enc}`,target:'_blank'},'↗ Open / edit on plantuml.com'),
+      el('a',{href:`https://www.plantuml.com/plantuml/png/${enc}`,target:'_blank'},'⤓ PNG image')
+    );
+    return;
+  }
+  pv.style.display='block'; pu.style.display='none';
+  const seq=++renderSeq;
+  try{
+    const {svg}=await mermaid.render('m'+seq, code);
+    if(seq===renderSeq) pv.innerHTML=svg;
+  }catch(err){
+    if(seq===renderSeq) pv.innerHTML='';
+    const msg=(err&&err.message)||String(err);
+    pv.append(el('div',{class:'err'},'⚠ '+msg));
+  }
+}
+
+/* PlantUML text encoding: deflateRaw + custom base64 */
+function plantumlEncode(text){
+  const data=pako.deflateRaw(new TextEncoder().encode(text),{level:9});
+  return encode64(data);
+}
+function encode64(data){
+  let r='';
+  for(let i=0;i<data.length;i+=3){
+    if(i+2===data.length) r+=append3(data[i],data[i+1],0);
+    else if(i+1===data.length) r+=append3(data[i],0,0);
+    else r+=append3(data[i],data[i+1],data[i+2]);
+  }
+  return r;
+}
+function append3(b1,b2,b3){
+  const c1=b1>>2, c2=((b1&0x3)<<4)|(b2>>4), c3=((b2&0xF)<<2)|(b3>>6), c4=b3&0x3F;
+  return enc6(c1)+enc6(c2)+enc6(c3)+enc6(c4);
+}
+function enc6(b){
+  b&=0x3F;
+  if(b<10)return String.fromCharCode(48+b);
+  b-=10; if(b<26)return String.fromCharCode(65+b);
+  b-=26; if(b<26)return String.fromCharCode(97+b);
+  b-=26; if(b===0)return '-';
+  if(b===1)return '_';
+  return '?';
+}
+
+/* ---------------- Toolbar actions ---------------- */
+$('#engineToggle').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  engine=b.dataset.engine;
+  document.querySelectorAll('#engineToggle button').forEach(x=>x.classList.toggle('active',x===b));
+  $('#engineBadge').textContent=engine==='mermaid'?'Mermaid':'PlantUML';
+  $('#svgBtn').style.display=$('#pngBtn').style.display=engine==='mermaid'?'':'none';
+  generate();
+});
+
+$('#genBtn').onclick=generate;
+$('#scriptEditor').addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(render,400);});
+
+$('#themeBtn').onclick=()=>{
+  theme=theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=theme;
+  localStorage.setItem('ds-theme',theme);
+  mermaid.initialize({startOnLoad:false,theme:theme==='dark'?'dark':'default',securityLevel:'loose'});
+  render();
+};
+
+$('#copyBtn').onclick=()=>{navigator.clipboard.writeText($('#scriptEditor').value);toast('Script copied');};
+$('#downloadScriptBtn').onclick=()=>{
+  const ext=engine==='mermaid'?'mmd':'puml';
+  download(`${current}.${ext}`,$('#scriptEditor').value,'text/plain');
+};
+$('#exampleBtn').onclick=()=>{state[current]=defaults()[current];renderBuilder();generate();toast('Example loaded');};
+
+$('#svgBtn').onclick=()=>{
+  const svg=$('#preview').querySelector('svg'); if(!svg){toast('Nothing to export');return;}
+  download(`${current}.svg`,new XMLSerializer().serializeToString(svg),'image/svg+xml');
+};
+$('#pngBtn').onclick=()=>{
+  const svg=$('#preview').querySelector('svg'); if(!svg){toast('Nothing to export');return;}
+  const xml=new XMLSerializer().serializeToString(svg);
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');const sc=2;
+    c.width=img.width*sc;c.height=img.height*sc;
+    const ctx=c.getContext('2d');ctx.fillStyle=theme==='dark'?'#171c2b':'#fff';ctx.fillRect(0,0,c.width,c.height);
+    ctx.scale(sc,sc);ctx.drawImage(img,0,0);
+    c.toBlob(b=>{const u=URL.createObjectURL(b);const a=el('a',{href:u,download:`${current}.png`});a.click();URL.revokeObjectURL(u);});
+  };
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
+};
+
+function download(name,content,type){
+  const b=new Blob([content],{type});const u=URL.createObjectURL(b);
+  const a=el('a',{href:u,download:name});a.click();URL.revokeObjectURL(u);
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>t.classList.remove('show'),1600);}
+
+/* ---------------- Init ---------------- */
+try{ mermaid.registerIconPacks([{name:'az', loader:async()=>AZ_ICONS}]); }catch(e){ console.warn('icon pack register failed',e); }
+renderBuilder();
+generate();
+</script>
+</body>
+</html>

@@ -32,7 +32,7 @@ body {
 
 /* ── NAV ── */
 nav {
-  padding: 18px 40px;
+  padding: 12px 2vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,53 +62,52 @@ nav {
   color: var(--text2);
 }
 
-/* ── HERO ── */
-.hero {
-  text-align: center;
-  padding: 80px 24px 56px;
+/* ── NAV TAGLINE ── */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
-.hero-eyebrow {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(79,142,247,0.1);
-  border: 1px solid rgba(79,142,247,0.25);
-  border-radius: 20px;
-  padding: 4px 14px;
-  margin-bottom: 20px;
+.nav-divider {
+  width: 1px;
+  height: 34px;
+  background: var(--border);
+  flex-shrink: 0;
 }
-.hero h1 {
-  font-size: clamp(28px, 5vw, 48px);
-  font-weight: 800;
-  line-height: 1.15;
+.nav-tagline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.nav-title {
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text);
-  margin-bottom: 16px;
+  white-space: nowrap;
 }
-.hero h1 span {
+.nav-title strong {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.hero p {
-  font-size: 16px;
+.nav-desc {
+  font-size: 11.5px;
   color: var(--text2);
-  max-width: 520px;
-  margin: 0 auto;
-  line-height: 1.65;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── GRID ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  padding: 0 40px 80px;
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  padding: 0 2vw 40px;
   width: 100%;
 }
 
@@ -117,10 +116,10 @@ nav {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   transition: transform .2s, box-shadow .2s, border-color .2s;
   text-decoration: none;
   color: inherit;
@@ -219,9 +218,14 @@ nav {
   line-height: 1.3;
 }
 .card-meta p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text2);
-  line-height: 1.6;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .card-tags {
@@ -294,6 +298,18 @@ nav {
 .card-20 .card-icon { background: rgba(15,118,110,0.14); }
 .card-20 .card-cta { color: #2dd4bf; }
 .card-20 .tag { background: rgba(15,118,110,0.12); color: #2dd4bf; border-color: rgba(15,118,110,0.25); }
+
+.card-21::before { background: linear-gradient(90deg, #4f46e5, #7c3aed); }
+.card-21:hover   { border-color: #4f46e5; }
+.card-21 .card-icon { background: rgba(79,70,229,0.15); }
+.card-21 .card-cta { color: #a78bfa; }
+.card-21 .tag { background: rgba(79,70,229,0.12); color: #a78bfa; border-color: rgba(79,70,229,0.25); }
+
+.card-22::before { background: linear-gradient(90deg, #0891b2, #06b6d4); }
+.card-22:hover   { border-color: #0891b2; }
+.card-22 .card-icon { background: rgba(8,145,178,0.15); }
+.card-22 .card-cta { color: #22d3ee; }
+.card-22 .tag { background: rgba(8,145,178,0.12); color: #22d3ee; border-color: rgba(8,145,178,0.25); }
 .card-16::before { background: linear-gradient(90deg, #1e3a8a, #6366f1); }
 .card-16:hover   { border-color: #2563eb; }
 .card-16 .card-icon { background: rgba(37,99,235,0.15); }
@@ -321,10 +337,87 @@ footer {
   color: var(--text2);
 }
 
+/* ── TOOL BAR ── */
+.tool-bar {
+  margin: 20px 0 16px;
+  padding: 0 2vw;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-wrap .s-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 15px;
+  pointer-events: none;
+}
+#toolSearch {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 11px 40px 11px 42px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+#toolSearch::placeholder { color: var(--text2); }
+#toolSearch:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79,142,247,.15);
+}
+.clear-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+  line-height: 1;
+  padding: 4px;
+}
+.clear-btn.visible { display: block; }
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fchip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  transition: all .15s;
+}
+.fchip:hover { border-color: var(--accent); color: var(--accent); }
+.fchip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.no-results {
+  display: none;
+  padding: 60px 0;
+  text-align: center;
+  color: var(--text2);
+  font-size: 15px;
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 640px) {
-  nav { padding: 14px 20px; }
-  .hero { padding: 48px 20px 36px; }
-  .grid { padding: 0 20px 48px; gap: 16px; }
+  nav { padding: 10px 16px; }
+  .grid { padding: 0 16px 32px; gap: 16px; }
+  .tool-bar { padding: 0 16px; margin: 14px 0 12px; }
+  .nav-divider, .nav-desc { display: none; }
 }
 </style>
 </head>
@@ -335,7 +428,7 @@ footer {
     <span class="icon">⚡</span>
     QuickTools
   </a>
-  <span class="nav-badge">18 tools</span>
+  <span class="nav-badge">20 tools</span>
 </nav>
 
 <section class="hero">
@@ -343,6 +436,23 @@ footer {
   <h1>Tools that make<br><span>complex work faster</span></h1>
   <p>A curated set of interactive utilities for cloud migration, system design, estimation, interviewing, and architecture decisions — all running locally in your browser.</p>
 </section>
+
+<div class="tool-bar">
+  <div class="search-wrap">
+    <span class="s-icon">🔍</span>
+    <input type="text" id="toolSearch" placeholder="Search 20 tools…" autocomplete="off">
+    <button class="clear-btn" id="clearSearch" title="Clear">✕</button>
+  </div>
+  <div class="filter-chips">
+    <button class="fchip active" data-cat="all">All</button>
+    <button class="fchip" data-cat="agile">Agile</button>
+    <button class="fchip" data-cat="architecture">Architecture</button>
+    <button class="fchip" data-cat="planning">Planning</button>
+    <button class="fchip" data-cat="meetings">Meetings</button>
+    <button class="fchip" data-cat="devops">DevOps</button>
+    <button class="fchip" data-cat="docs">Docs</button>
+  </div>
+</div>
 
 <main class="grid">
 
@@ -671,6 +781,40 @@ footer {
     </div>
   </a>
 
+  <a class="card card-22" href="diagram-studio.html">
+    <div class="card-icon">🎨</div>
+    <div class="card-meta">
+      <h2>Diagram Studio</h2>
+      <p>Live Mermaid &amp; PlantUML diagram editor with instant preview. Supports flowcharts, sequence diagrams, class diagrams, ER, Gantt, and more. Export to SVG/PNG or share via encoded URL.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Mermaid</span>
+      <span class="tag">PlantUML</span>
+      <span class="tag">Diagrams</span>
+      <span class="tag">Architecture</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-21" href="ddd-clean-architecture-builder.html">
+    <div class="card-icon">🏛️</div>
+    <div class="card-meta">
+      <h2>DDD &amp; Clean Architecture Builder</h2>
+      <p>Model your domain end-to-end: ubiquitous language, bounded contexts, aggregates, use cases, and Clean Architecture layers. Generates a full C# scaffolding with EF Core, FluentValidation, DI, and REST controllers.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">DDD</span>
+      <span class="tag">Clean Architecture</span>
+      <span class="tag">C# Codegen</span>
+      <span class="tag">Domain Modelling</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
   <a class="card card-20" href="PR-Review-audit-tool.html">
     <div class="card-icon">🔍</div>
     <div class="card-meta">
@@ -688,11 +832,56 @@ footer {
     </div>
   </a>
 
+  <div class="no-results" id="noResults">No tools match your search. Try a different keyword or filter.</div>
 </main>
 
 <footer>
   Built with plain HTML · No dependencies · Works offline · Open source on GitHub
 </footer>
 
+<script>
+(function () {
+  const CAT = {
+    agile:        /agile|sprint|retrospective|capacity|workload|estimation|velocity|scrum/i,
+    architecture: /architecture|system design|ddd|clean arch|api contract|adr|decision record/i,
+    planning:     /planning|estimation|okr|goals|tracker|risk|project|roadmap/i,
+    meetings:     /meeting|agenda|1-on-1|one-on-one|notes/i,
+    devops:       /devops|dora|code review|pr audit|metrics|deployment|cicd/i,
+    docs:         /brd|tdd generator|document|export|technical design|requirement/i,
+  };
+
+  const cards = [...document.querySelectorAll('main.grid .card')];
+  const search = document.getElementById('toolSearch');
+  const clearBtn = document.getElementById('clearSearch');
+  const chips = [...document.querySelectorAll('.fchip')];
+  const noResults = document.getElementById('noResults');
+  let activeCat = 'all';
+
+  function applyFilter() {
+    const q = search.value.toLowerCase().trim();
+    clearBtn.classList.toggle('visible', q.length > 0);
+    let visible = 0;
+    cards.forEach(card => {
+      const text = card.textContent;
+      const matchSearch = !q || text.toLowerCase().includes(q);
+      const matchCat = activeCat === 'all' || CAT[activeCat]?.test(text);
+      const show = matchSearch && matchCat;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    noResults.style.display = visible ? 'none' : 'block';
+  }
+
+  search.addEventListener('input', applyFilter);
+  clearBtn.addEventListener('click', () => { search.value = ''; applyFilter(); search.focus(); });
+
+  chips.forEach(chip => chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeCat = chip.dataset.cat;
+    applyFilter();
+  }));
+})();
+</script>
 </body>
 </html>
