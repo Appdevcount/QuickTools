@@ -327,9 +327,103 @@ nav {
 }
 .card:hover .arrow { transform: translateX(4px); }
 
+/* ── PHILOSOPHY SECTION ── */
+.philosophy {
+  margin: 40px 2vw 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.philosophy-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.philosophy-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 6px;
+}
+.philosophy-statement {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.55;
+}
+.philosophy-statement em {
+  font-style: normal;
+  color: var(--accent);
+}
+.philosophy-body {
+  padding: 20px 28px 24px;
+}
+.philosophy-sub {
+  font-size: 12.5px;
+  color: var(--text2);
+  margin-bottom: 20px;
+  line-height: 1.6;
+  max-width: 680px;
+}
+.phil-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.phil-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text2);
+  padding: 6px 14px 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.phil-table td {
+  padding: 10px 14px 10px 0;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(46,52,80,0.5);
+  color: var(--text);
+  line-height: 1.5;
+}
+.phil-table tr:last-child td { border-bottom: none; }
+.phil-layer {
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.layer-prevent  { background: rgba(52,211,153,0.12); color: #34d399; }
+.layer-monitor  { background: rgba(79,142,247,0.12); color: #4f8ef7; }
+.layer-diagnose { background: rgba(251,146,60,0.12); color: #fb923c; }
+.layer-recover  { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.phil-tools {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text2);
+}
+.phil-purpose {
+  color: var(--text);
+  font-size: 13px;
+}
+.philosophy-note {
+  margin-top: 18px;
+  font-size: 11.5px;
+  color: var(--text2);
+  font-style: italic;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+
 /* ── FOOTER ── */
 footer {
-  margin-top: auto;
+  margin-top: 32px;
   text-align: center;
   padding: 24px;
   border-top: 1px solid var(--border);
@@ -431,8 +525,8 @@ footer {
     </a>
     <div class="nav-divider"></div>
     <div class="nav-tagline">
-      <span class="nav-title">Tools that make <strong>complex work faster</strong></span>
-      <span class="nav-desc">A curated set of interactive utilities for cloud migration, system design, estimation, interviewing, and architecture decisions — all running locally in your browser.</span>
+      <span class="nav-title">Effects are visible. Causes are not. <strong>Reach for a tool only when you need to understand — not just react.</strong></span>
+      <span class="nav-desc">A diagnostic toolkit for engineering teams. Not a checklist, not a workflow — each tool exists to trace an effect back to its cause, so you act on the root, not the symptom.</span>
     </div>
   </div>
   <span class="nav-badge">20 tools</span>
@@ -835,6 +929,56 @@ footer {
 
   <div class="no-results" id="noResults">No tools match your search. Try a different keyword or filter.</div>
 </main>
+
+<section class="philosophy">
+  <div class="philosophy-header">
+    <div class="philosophy-label">The Logic Behind These Tools</div>
+    <div class="philosophy-statement">
+      Every visible problem is an <em>effect</em>. These tools exist to find the <em>cause</em> —<br>
+      before it repeats. Not all tools, not always. Only the one that fits the question.
+    </div>
+  </div>
+  <div class="philosophy-body">
+    <p class="philosophy-sub">
+      This is not a workflow to follow. It is an adaptive engineering system — four layers that together
+      cover the full lifecycle from prevention to recovery. You reach for a tool only when the moment calls for it.
+    </p>
+    <table class="phil-table">
+      <thead>
+        <tr>
+          <th style="width:110px">Layer</th>
+          <th style="width:260px">Tools</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="phil-layer layer-prevent">Prevent</span></td>
+          <td class="phil-tools">ADR · API Contract · DoD · System Design</td>
+          <td class="phil-purpose">Stop the cause before the effect forms</td>
+        </tr>
+        <tr>
+          <td><span class="phil-layer layer-monitor">Monitor</span></td>
+          <td class="phil-tools">DORA · OKR · Work Distribution · 1-on-1</td>
+          <td class="phil-purpose">Catch drift before it becomes a crisis</td>
+        </tr>
+        <tr>
+          <td><span class="phil-layer layer-diagnose">Diagnose</span></td>
+          <td class="phil-tools">Risk Register · Sprint Retro · TDD Gap</td>
+          <td class="phil-purpose">Find the cause after the effect surfaces</td>
+        </tr>
+        <tr>
+          <td><span class="phil-layer layer-recover">Recover</span></td>
+          <td class="phil-tools">Estimation · Capacity Planner · Project Tracker</td>
+          <td class="phil-purpose">Rebuild with clarity, not guesswork</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="philosophy-note">
+      Why not call it a "Resilient System"? Resilience covers recovery well — but this toolkit also prevents failure before it forms, which is robustness. Adaptive Engineering System is the fuller name: design → observe → diagnose → recover → redesign.
+    </p>
+  </div>
+</section>
 
 <footer>
   Built with plain HTML · No dependencies · Works offline · Open source on GitHub
