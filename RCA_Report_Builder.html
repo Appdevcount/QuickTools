@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCA Report Builder — QuickTools</title>
+<style>
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface2: #f0f2f7;
+  --border: #dde1ea;
+  --accent: #2563eb;
+  --accent2: #7c3aed;
+  --accent3: #059669;
+  --accent4: #d97706;
+  --red: #dc2626;
+  --text: #111827;
+  --text2: #6b7280;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.nav-left { display: flex; align-items: center; gap: 12px; }
+.back-btn {
+  text-decoration: none; color: var(--text2); font-size: 13px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+  transition: all .2s; white-space: nowrap;
+}
+.back-btn:hover { color: var(--text); border-color: var(--accent); }
+.nav-icon { font-size: 20px; }
+.nav-title { font-size: 16px; font-weight: 700; }
+.nav-title span { color: var(--accent); }
+.nav-sub { font-size: 11.5px; color: var(--text2); margin-top: 1px; }
+.nav-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.btn {
+  padding: 7px 16px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; border: none;
+  transition: all .2s; font-family: inherit; white-space: nowrap;
+}
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: .85; }
+.btn-danger { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-danger:hover { border-color: var(--red); color: var(--red); }
+
+/* ── LAYOUT ── */
+.container {
+  max-width: 920px; margin: 0 auto;
+  padding: 28px 20px 80px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+/* ── SECTION CARD ── */
+.sec {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.sec-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.sec-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.sec-title { font-size: 14px; font-weight: 700; }
+.sec-desc { font-size: 11.5px; color: var(--text2); margin-top: 1px; }
+.sec-body { padding: 20px; }
+
+/* Section icon colors */
+.s1 .sec-icon { background: #eff6ff; }
+.s2 .sec-icon { background: #fef2f2; }
+.s3 .sec-icon { background: #f5f3ff; }
+.s4 .sec-icon { background: #fff7ed; }
+.s5 .sec-icon { background: #f0fdf4; }
+.s6 .sec-icon { background: #fefce8; }
+.s7 .sec-icon { background: #f0fdfa; }
+
+/* ── FORM ELEMENTS ── */
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f.full { grid-column: 1/-1; }
+label {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .7px;
+}
+input, textarea, select {
+  background: #ffffff; border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font: inherit;
+  font-size: 13.5px; padding: 9px 12px; outline: none; width: 100%;
+  transition: border-color .2s, box-shadow .2s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+}
+textarea { resize: vertical; min-height: 76px; line-height: 1.55; }
+select option { background: #ffffff; }
+input::placeholder, textarea::placeholder { color: #c0c8d8; }
+
+/* ── SEVERITY BUTTONS ── */
+.sev-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.sev-btn {
+  padding: 6px 18px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  cursor: pointer; border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--text2); transition: all .2s; font-family: inherit;
+}
+.sev-btn:hover { border-color: var(--text2); color: var(--text); }
+.sev-btn.p1 { background: #fef2f2; color: #dc2626; border-color: #dc2626; }
+.sev-btn.p2 { background: #fff7ed; color: #c2410c; border-color: #ea580c; }
+.sev-btn.p3 { background: #fefce8; color: #92400e; border-color: #ca8a04; }
+.sev-btn.p4 { background: #f0fdf4; color: #166534; border-color: #16a34a; }
+
+/* ── TIMELINE ── */
+.tl-list { display: flex; flex-direction: column; }
+.tl-item { display: flex; gap: 0; }
+.tl-spine { display: flex; flex-direction: column; align-items: center; width: 34px; flex-shrink: 0; }
+.tl-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg);
+  flex-shrink: 0; margin-top: 15px; position: relative; z-index: 1;
+}
+.tl-line { width: 2px; flex: 1; background: var(--border); min-height: 14px; }
+.tl-item:last-child .tl-line { display: none; }
+.tl-row {
+  flex: 1; padding: 6px 0 16px 10px;
+  display: grid; grid-template-columns: 160px 1fr 140px auto;
+  gap: 8px; align-items: start;
+}
+.tl-row input, .tl-row textarea { font-size: 12.5px; padding: 7px 10px; }
+.tl-row textarea { min-height: 38px; resize: none; overflow: hidden; }
+.tl-rm {
+  background: none; border: none; color: var(--text2); cursor: pointer;
+  font-size: 13px; padding: 8px 4px; transition: color .2s; margin-top: 2px;
+}
+.tl-rm:hover { color: var(--red); }
+.add-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px dashed var(--border);
+  border-radius: 8px; color: var(--text2); font: inherit; font-size: 12.5px;
+  padding: 8px 14px; cursor: pointer; width: 100%; margin-top: 8px;
+  transition: all .2s;
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── 5 WHYS CHAIN ── */
+.whys { display: flex; flex-direction: column; }
+.why-step { display: flex; gap: 0; }
+.why-spine { display: flex; flex-direction: column; align-items: center; width: 44px; flex-shrink: 0; }
+.why-badge {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2); border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  flex-shrink: 0; margin-top: 11px;
+}
+.why-badge.effect { background: #fef2f2; color: #dc2626; border-color: #dc2626; font-size: 14px; }
+.why-badge.root   { background: #f0fdf4; color: #059669; border-color: #16a34a; font-size: 14px; }
+.why-conn { width: 2px; flex: 1; background: var(--border); min-height: 10px; margin: 2px 0; }
+.why-step:last-child .why-conn { display: none; }
+.why-body { flex: 1; padding: 8px 0 14px 12px; }
+.why-lbl {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--text2); margin-bottom: 5px;
+}
+.why-lbl.eff { color: #dc2626; }
+.why-lbl.rt  { color: #059669; }
+.why-body textarea { font-size: 13px; }
+
+/* ── CONTRIBUTING FACTORS ── */
+.cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cf-cat {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.cf-cat-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cf-cat-icon { font-size: 16px; }
+.cf-cat-title { font-size: 12.5px; font-weight: 700; }
+.cf-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; min-height: 26px; }
+.cf-tag {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--text);
+}
+.cf-tag button {
+  background: none; border: none; color: var(--text2);
+  cursor: pointer; font-size: 11px; padding: 0 0 0 3px; line-height: 1;
+}
+.cf-tag button:hover { color: var(--red); }
+.cf-input-row { display: flex; gap: 6px; }
+.cf-input-row input { flex: 1; font-size: 12.5px; padding: 7px 10px; }
+.cf-add {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text2); font-size: 18px;
+  cursor: pointer; padding: 0 11px; transition: all .2s; line-height: 1;
+}
+.cf-add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── ACTION ITEMS ── */
+.act-list { display: flex; flex-direction: column; gap: 10px; }
+.act-row {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.act-top {
+  display: grid; grid-template-columns: 1fr 150px 140px auto;
+  gap: 10px; align-items: end;
+}
+.act-bot {
+  display: grid; grid-template-columns: 130px 110px 140px 1fr;
+  gap: 10px; align-items: end; margin-top: 10px;
+}
+.act-row input, .act-row select { font-size: 12.5px; padding: 7px 10px; }
+.act-rm {
+  background: none; border: none; color: var(--text2);
+  cursor: pointer; font-size: 13px; padding: 7px; transition: color .2s;
+}
+.act-rm:hover { color: var(--red); }
+
+/* ── EXPORT MODAL ── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 780px;
+  max-height: 84vh; display: flex; flex-direction: column;
+  box-shadow: 0 8px 64px rgba(0,0,0,.6);
+}
+.modal-head {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.modal-head h3 { font-size: 15px; font-weight: 700; }
+.modal-close {
+  background: none; border: none; color: var(--text2);
+  font-size: 18px; cursor: pointer; padding: 2px 6px; transition: color .2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-tabs {
+  display: flex; gap: 4px; padding: 12px 20px 0;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.m-tab {
+  padding: 7px 18px; font-size: 13px; font-weight: 600; border: none;
+  background: none; color: var(--text2); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: inherit; transition: color .2s;
+}
+.m-tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.export-pre {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 12.5px; white-space: pre-wrap; color: var(--text);
+  line-height: 1.65; min-height: 320px;
+}
+.modal-foot {
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.copy-ok { font-size: 12px; color: #059669; opacity: 0; transition: opacity .3s; margin-right: auto; }
+.copy-ok.show { opacity: 1; }
+
+/* ── IMPORT MODAL ── */
+.imp-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.imp-drop {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 28px 20px; text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s; background: var(--surface2);
+}
+.imp-drop:hover, .imp-drop.drag { border-color: var(--accent); background: #eff6ff; }
+.imp-drop-icon { font-size: 28px; margin-bottom: 8px; }
+.imp-drop-label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.imp-drop-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.imp-drop input[type="file"] { display: none; }
+.imp-or {
+  text-align: center; font-size: 11.5px; font-weight: 700;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 10px;
+}
+.imp-or::before, .imp-or::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.imp-paste {
+  background: #ffffff; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+  font-size: 12px; padding: 12px; width: 100%; min-height: 120px;
+  outline: none; resize: vertical; line-height: 1.55;
+  transition: border-color .2s;
+}
+.imp-paste:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.10); }
+.imp-paste::placeholder { color: #c0c8d8; font-family: inherit; }
+.imp-err {
+  font-size: 12.5px; color: var(--red); background: #fef2f2;
+  border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px;
+  display: none;
+}
+.imp-err.show { display: block; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 660px) {
+  .fg, .fg3, .cf-grid { grid-template-columns: 1fr; }
+  .tl-row { grid-template-columns: 1fr 1fr auto; }
+  .tl-row input[type="datetime-local"] { grid-column: 1/-2; }
+  .act-top, .act-bot { grid-template-columns: 1fr; }
+  nav { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a class="back-btn" href="index.html">← Back</a>
+    <span class="nav-icon">🔬</span>
+    <div>
+      <div class="nav-title">Root Cause Analysis <span>Report Builder</span></div>
+      <div class="nav-sub">Incident post-mortem · 5 Whys · Contributing factors · Action items</div>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <button class="btn btn-danger" onclick="clearAll()">Clear</button>
+    <button class="btn btn-outline" onclick="openImport()">⬇ Import</button>
+    <button class="btn btn-primary" onclick="openExport()">⬆ Export</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- 1. INCIDENT OVERVIEW -->
+  <div class="sec s1">
+    <div class="sec-head">
+      <div class="sec-icon">🔍</div>
+      <div>
+        <div class="sec-title">1 · Incident Overview</div>
+        <div class="sec-desc">Basic identification — what happened and who owns it</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="fg">
+        <div class="f full">
+          <label>Incident Title</label>
+          <input id="iTitle" type="text" placeholder="e.g. Payment service outage — checkout failures for EU users">
+        </div>
+        <div class="f">
+          <label>Date &amp; Time Detected</label>
+          <input id="iDetected" type="datetime-local">
+        </div>
+        <div class="f">
+          <label>Date &amp; Time Resolved</label>
+          <input id="iResolved" type="datetime-local">
+        </div>
+        <div class="f">
+          <label>Reported By</label>
+          <input id="iReporter" type="text" placeholder="Name or team">
+        </div>
+        <div class="f">
+          <label>Incident ID / Ticket</label>
+          <input id="iTicket" type="text" placeholder="INC-1234 or JIRA-5678">
+        </div>
+        <div class="f full">
+          <label>Severity</label>
+          <div class="sev-group">
+            <button class="sev-btn" onclick="setSev(this,'p1')">P1 — Critical</button>
+            <button class="sev-btn" onclick="setSev(this,'p2')">P2 — High</button>
+            <button class="sev-btn" onclick="setSev(this,'p3')">P3 — Medium</button>
+            <button class="sev-btn" onclick="setSev(this,'p4')">P4 — Low</button>
+          </div>
+        </div>
+        <div class="f full">
+          <label>Affected Systems / Services</label>
+          <input id="iSystems" type="text" placeholder="e.g. Payment API, Checkout UI, Order Database">
+        </div>
+        <div class="f full">
+          <label>Brief Description</label>
+          <textarea id="iDesc" placeholder="What happened? Summarise the incident in 2–3 sentences."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. IMPACT ASSESSMENT -->
+  <div class="sec s2">
+    <div class="sec-head">
+      <div class="sec-icon">💥</div>
+      <div>
+        <div class="sec-title">2 · Impact Assessment</div>
+        <div class="sec-desc">Quantify the effect — who was hurt and by how much</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="fg">
+        <div class="f">
+          <label>Users / Customers Affected</label>
+          <input id="impUsers" type="text" placeholder="e.g. ~4,200 EU users (12%)">
+        </div>
+        <div class="f">
+          <label>Duration of Impact</label>
+          <input id="impDuration" type="text" placeholder="e.g. 2h 17m">
+        </div>
+        <div class="f">
+          <label>Financial / Revenue Impact</label>
+          <input id="impFinancial" type="text" placeholder="e.g. Est. £18k lost transactions">
+        </div>
+        <div class="f">
+          <label>SLA / SLO Breached?</label>
+          <select id="impSla">
+            <option value="">Select…</option>
+            <option>Yes — SLA breached</option>
+            <option>Yes — SLO missed</option>
+            <option>No</option>
+            <option>Under review</option>
+          </select>
+        </div>
+        <div class="f full">
+          <label>Business Impact</label>
+          <textarea id="impBusiness" placeholder="Describe operational, reputational, or customer experience impact…"></textarea>
+        </div>
+        <div class="f full">
+          <label>What Was NOT Affected (Scope Boundary)</label>
+          <textarea id="impScope" placeholder="Clarify what remained working — which regions, user segments, or services were unaffected…" style="min-height:60px"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. INCIDENT TIMELINE -->
+  <div class="sec s3">
+    <div class="sec-head">
+      <div class="sec-icon">⏱️</div>
+      <div>
+        <div class="sec-title">3 · Incident Timeline</div>
+        <div class="sec-desc">Chronological sequence — what happened, when, and who acted</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="tl-list" id="tlList"></div>
+      <button class="add-btn" onclick="addTl()">+ Add Event</button>
+    </div>
+  </div>
+
+  <!-- 4. ROOT CAUSE ANALYSIS — 5 WHYS -->
+  <div class="sec s4">
+    <div class="sec-head">
+      <div class="sec-icon">🔗</div>
+      <div>
+        <div class="sec-title">4 · Root Cause Analysis — 5 Whys</div>
+        <div class="sec-desc">Drill from the visible effect to the structural root cause — ask "why" at each level until you hit something systemic</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="whys">
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge effect">!</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl eff">Effect — What happened?</div>
+            <textarea id="w0" placeholder="Describe the visible symptom that triggered this incident report…" style="min-height:62px"></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge">1</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl">Why did this happen?</div>
+            <textarea id="w1" placeholder="First level — what directly caused the effect?"></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge">2</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl">Why did that happen?</div>
+            <textarea id="w2" placeholder="Second level — why did the cause in step 1 occur?"></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge">3</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl">Why did that happen?</div>
+            <textarea id="w3" placeholder="Third level…"></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge">4</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl">Why did that happen?</div>
+            <textarea id="w4" placeholder="Fourth level…"></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge">5</div><div class="why-conn"></div></div>
+          <div class="why-body">
+            <div class="why-lbl">Why did that happen?</div>
+            <textarea id="w5" placeholder="Fifth level — stop when you reach something systemic. You may not always need all 5."></textarea>
+          </div>
+        </div>
+
+        <div class="why-step">
+          <div class="why-spine"><div class="why-badge root">★</div></div>
+          <div class="why-body">
+            <div class="why-lbl rt">Root Cause Statement</div>
+            <textarea id="wRoot" placeholder="Summarise the root cause in one clear sentence. This is what your action items must address." style="min-height:62px"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. CONTRIBUTING FACTORS -->
+  <div class="sec s5">
+    <div class="sec-head">
+      <div class="sec-icon">🧩</div>
+      <div>
+        <div class="sec-title">5 · Contributing Factors</div>
+        <div class="sec-desc">Secondary conditions that amplified or enabled the incident — add tags, press Enter</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="cf-grid">
+        <div class="cf-cat">
+          <div class="cf-cat-head"><span class="cf-cat-icon">👥</span><span class="cf-cat-title">People</span></div>
+          <div class="cf-tags" id="cf-people"></div>
+          <div class="cf-input-row">
+            <input id="cfi-people" type="text" placeholder="e.g. no on-call escalation path"
+              onkeydown="if(event.key==='Enter'){addCf('people');event.preventDefault()}">
+            <button class="cf-add" onclick="addCf('people')">+</button>
+          </div>
+        </div>
+        <div class="cf-cat">
+          <div class="cf-cat-head"><span class="cf-cat-icon">📋</span><span class="cf-cat-title">Process</span></div>
+          <div class="cf-tags" id="cf-process"></div>
+          <div class="cf-input-row">
+            <input id="cfi-process" type="text" placeholder="e.g. no change freeze during release"
+              onkeydown="if(event.key==='Enter'){addCf('process');event.preventDefault()}">
+            <button class="cf-add" onclick="addCf('process')">+</button>
+          </div>
+        </div>
+        <div class="cf-cat">
+          <div class="cf-cat-head"><span class="cf-cat-icon">⚙️</span><span class="cf-cat-title">Technology</span></div>
+          <div class="cf-tags" id="cf-technology"></div>
+          <div class="cf-input-row">
+            <input id="cfi-technology" type="text" placeholder="e.g. missing circuit breaker"
+              onkeydown="if(event.key==='Enter'){addCf('technology');event.preventDefault()}">
+            <button class="cf-add" onclick="addCf('technology')">+</button>
+          </div>
+        </div>
+        <div class="cf-cat">
+          <div class="cf-cat-head"><span class="cf-cat-icon">🌍</span><span class="cf-cat-title">Environment</span></div>
+          <div class="cf-tags" id="cf-environment"></div>
+          <div class="cf-input-row">
+            <input id="cfi-environment" type="text" placeholder="e.g. third-party API rate limit"
+              onkeydown="if(event.key==='Enter'){addCf('environment');event.preventDefault()}">
+            <button class="cf-add" onclick="addCf('environment')">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. ACTION ITEMS -->
+  <div class="sec s6">
+    <div class="sec-head">
+      <div class="sec-icon">✅</div>
+      <div>
+        <div class="sec-title">6 · Action Items</div>
+        <div class="sec-desc">Corrective and preventive actions — what will change so this doesn't repeat</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="act-list" id="actList"></div>
+      <button class="add-btn" onclick="addAct()">+ Add Action Item</button>
+    </div>
+  </div>
+
+  <!-- 7. LESSONS LEARNED -->
+  <div class="sec s7">
+    <div class="sec-head">
+      <div class="sec-icon">💡</div>
+      <div>
+        <div class="sec-title">7 · Lessons Learned</div>
+        <div class="sec-desc">Insights to carry forward — anchor what worked, fix what didn't</div>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="fg">
+        <div class="f">
+          <label>What Went Well</label>
+          <textarea id="lWell" placeholder="Detection speed, response coordination, communication quality…" style="min-height:90px"></textarea>
+        </div>
+        <div class="f">
+          <label>What Needs to Improve</label>
+          <textarea id="lImprove" placeholder="Monitoring gaps, slow escalation, missing runbooks, unclear ownership…" style="min-height:90px"></textarea>
+        </div>
+        <div class="f full">
+          <label>Key Lesson — one sentence</label>
+          <input id="lKey" type="text" placeholder="The single most important takeaway from this incident…">
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="exportModal" onclick="if(event.target===this)closeExport()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Export RCA Report</h3>
+      <button class="modal-close" onclick="closeExport()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="m-tab on" onclick="switchTab('text',this)">Plain Text</button>
+      <button class="m-tab" onclick="switchTab('md',this)">Markdown</button>
+      <button class="m-tab" onclick="switchTab('json',this)">JSON</button>
+    </div>
+    <div class="modal-body">
+      <pre class="export-pre" id="exportOut"></pre>
+    </div>
+    <div class="modal-foot">
+      <span class="copy-ok" id="copyOk">Copied!</span>
+      <button class="btn btn-outline" onclick="downloadExport()">⬇ Download</button>
+      <button class="btn btn-outline" onclick="closeExport()">Close</button>
+      <button class="btn btn-primary" onclick="copyExport()">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="importModal" onclick="if(event.target===this)closeImport()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Import RCA Report</h3>
+      <button class="modal-close" onclick="closeImport()">✕</button>
+    </div>
+    <div class="imp-body">
+      <label class="imp-drop" id="impDrop" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <input type="file" id="impFile" accept=".json,application/json" onchange="fileChosen(event)">
+        <div class="imp-drop-icon">📂</div>
+        <div class="imp-drop-label">Drop a JSON file here, or click to browse</div>
+        <div class="imp-drop-sub">Accepts .json files exported from this tool</div>
+      </label>
+      <div class="imp-or">or paste JSON below</div>
+      <textarea class="imp-paste" id="impPaste" placeholder='{ "overview": { "title": "..." }, ... }'></textarea>
+      <div class="imp-err" id="impErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-primary" onclick="loadPasted()">Load Report</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let sev = '';
+let cfData = { people:[], process:[], technology:[], environment:[] };
+let exportMode = 'text';
+
+// ── SEVERITY ──────────────────────────────────────────────────────────────
+function setSev(btn, cls) {
+  document.querySelectorAll('.sev-btn').forEach(b => b.className = 'sev-btn');
+  sev = cls.toUpperCase();
+  btn.classList.add(cls);
+}
+
+// ── TIMELINE ──────────────────────────────────────────────────────────────
+function addTl(time, desc, actor) {
+  const id = Date.now() + Math.random();
+  const list = document.getElementById('tlList');
+  const el = document.createElement('div');
+  el.className = 'tl-item'; el.dataset.id = id;
+  el.innerHTML = `
+    <div class="tl-spine"><div class="tl-dot"></div><div class="tl-line"></div></div>
+    <div class="tl-row">
+      <input type="datetime-local" class="tl-time" value="${time||''}" title="Timestamp">
+      <textarea class="tl-desc" placeholder="What happened at this moment…" rows="1">${desc||''}</textarea>
+      <input type="text" class="tl-actor" placeholder="Actor / Team" value="${actor||''}">
+      <button class="tl-rm" onclick="this.closest('.tl-item').remove()" title="Remove">✕</button>
+    </div>`;
+  list.appendChild(el);
+  const ta = el.querySelector('.tl-desc');
+  const grow = () => { ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input', grow);
+  if (desc) grow();
+}
+
+// ── CONTRIBUTING FACTORS ──────────────────────────────────────────────────
+function addCf(cat) {
+  const inp = document.getElementById('cfi-'+cat);
+  const val = inp.value.trim();
+  if (!val) return;
+  cfData[cat].push(val);
+  renderCf(cat);
+  inp.value = '';
+  inp.focus();
+}
+function rmCf(cat, i) { cfData[cat].splice(i,1); renderCf(cat); }
+function renderCf(cat) {
+  document.getElementById('cf-'+cat).innerHTML =
+    cfData[cat].map((f,i) =>
+      `<span class="cf-tag">${f}<button onclick="rmCf('${cat}',${i})" title="Remove">✕</button></span>`
+    ).join('');
+}
+
+// ── ACTION ITEMS ──────────────────────────────────────────────────────────
+function addAct() {
+  const id = Date.now() + Math.random();
+  const list = document.getElementById('actList');
+  const el = document.createElement('div');
+  el.className = 'act-row'; el.dataset.id = id;
+  el.innerHTML = `
+    <div class="act-top">
+      <div class="f" style="gap:5px">
+        <label>Action Description</label>
+        <input type="text" class="a-desc" placeholder="What specifically will be done?">
+      </div>
+      <div class="f" style="gap:5px">
+        <label>Owner</label>
+        <input type="text" class="a-owner" placeholder="Name / Team">
+      </div>
+      <div class="f" style="gap:5px">
+        <label>Due Date</label>
+        <input type="date" class="a-due">
+      </div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:1px">
+        <button class="act-rm" onclick="this.closest('.act-row').remove()" title="Remove">✕</button>
+      </div>
+    </div>
+    <div class="act-bot">
+      <div class="f" style="gap:5px">
+        <label>Layer</label>
+        <select class="a-layer">
+          <option value="">Layer…</option>
+          <option>Prevent</option>
+          <option>Monitor</option>
+          <option>Diagnose</option>
+          <option>Recover</option>
+        </select>
+      </div>
+      <div class="f" style="gap:5px">
+        <label>Priority</label>
+        <select class="a-priority">
+          <option value="">Priority…</option>
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+      <div class="f" style="gap:5px">
+        <label>Status</label>
+        <select class="a-status">
+          <option>Open</option>
+          <option>In Progress</option>
+          <option>Done</option>
+          <option>Blocked</option>
+        </select>
+      </div>
+      <div></div>
+    </div>`;
+  list.appendChild(el);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const g = id => (document.getElementById(id)?.value||'').trim();
+
+function fmtDt(v) {
+  if (!v) return '—';
+  try { return new Date(v).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  catch { return v; }
+}
+
+function getTl() {
+  return [...document.querySelectorAll('.tl-item')].map(el => ({
+    time:  el.querySelector('.tl-time')?.value||'',
+    desc:  el.querySelector('.tl-desc')?.value||'',
+    actor: el.querySelector('.tl-actor')?.value||'',
+  }));
+}
+
+function getActs() {
+  return [...document.querySelectorAll('.act-row')].map(el => ({
+    desc:     el.querySelector('.a-desc')?.value||'',
+    owner:    el.querySelector('.a-owner')?.value||'',
+    due:      el.querySelector('.a-due')?.value||'',
+    layer:    el.querySelector('.a-layer')?.value||'',
+    priority: el.querySelector('.a-priority')?.value||'',
+    status:   el.querySelector('.a-status')?.value||'Open',
+  }));
+}
+
+// ── BUILD PLAIN TEXT ──────────────────────────────────────────────────────
+function buildText() {
+  const S = '─'.repeat(62);
+  const tl = getTl(), acts = getActs();
+  let o = '';
+
+  o += 'ROOT CAUSE ANALYSIS REPORT\n' + S + '\n\n';
+
+  o += '1. INCIDENT OVERVIEW\n' + S + '\n';
+  o += `Title         : ${g('iTitle')||'—'}\n`;
+  o += `Ticket / ID   : ${g('iTicket')||'—'}\n`;
+  o += `Severity      : ${sev||'—'}\n`;
+  o += `Detected      : ${fmtDt(g('iDetected'))}\n`;
+  o += `Resolved      : ${fmtDt(g('iResolved'))}\n`;
+  o += `Reported By   : ${g('iReporter')||'—'}\n`;
+  o += `Systems       : ${g('iSystems')||'—'}\n`;
+  if (g('iDesc')) o += `\nDescription:\n${g('iDesc')}\n`;
+  o += '\n';
+
+  o += '2. IMPACT ASSESSMENT\n' + S + '\n';
+  o += `Users Affected : ${g('impUsers')||'—'}\n`;
+  o += `Duration       : ${g('impDuration')||'—'}\n`;
+  o += `Financial      : ${g('impFinancial')||'—'}\n`;
+  o += `SLA/SLO Breach : ${g('impSla')||'—'}\n`;
+  if (g('impBusiness')) o += `\nBusiness Impact:\n${g('impBusiness')}\n`;
+  if (g('impScope'))    o += `\nScope Boundary (not affected):\n${g('impScope')}\n`;
+  o += '\n';
+
+  o += '3. INCIDENT TIMELINE\n' + S + '\n';
+  if (!tl.length) { o += '(no events recorded)\n'; }
+  else tl.forEach((e,i) => {
+    o += `[${String(i+1).padStart(2,'0')}] ${fmtDt(e.time)}  ${e.actor?'['+e.actor+']':''}\n`;
+    if (e.desc) o += `     ${e.desc}\n`;
+  });
+  o += '\n';
+
+  o += '4. ROOT CAUSE ANALYSIS — 5 WHYS\n' + S + '\n';
+  o += `Effect  : ${g('w0')||'—'}\n`;
+  for (let n=1;n<=5;n++) { const v=g('w'+n); if(v) o += `Why ${n}   : ${v}\n`; }
+  o += `\n★ Root Cause: ${g('wRoot')||'—'}\n\n`;
+
+  o += '5. CONTRIBUTING FACTORS\n' + S + '\n';
+  const cfCats = ['people','process','technology','environment'];
+  const cfLabels = ['People','Process','Technology','Environment'];
+  cfCats.forEach((cat,i) => {
+    if (cfData[cat].length) o += `${cfLabels[i]}: ${cfData[cat].join(' · ')}\n`;
+  });
+  o += '\n';
+
+  o += '6. ACTION ITEMS\n' + S + '\n';
+  if (!acts.length) { o += '(no actions recorded)\n'; }
+  else acts.forEach((a,i) => {
+    o += `[${String(i+1).padStart(2,'0')}] ${a.desc||'—'}\n`;
+    o += `     Owner: ${a.owner||'—'} | Due: ${a.due||'—'} | Layer: ${a.layer||'—'} | Priority: ${a.priority||'—'} | Status: ${a.status}\n`;
+  });
+  o += '\n';
+
+  o += '7. LESSONS LEARNED\n' + S + '\n';
+  o += `What Went Well  : ${g('lWell')||'—'}\n`;
+  o += `Needs Improving : ${g('lImprove')||'—'}\n`;
+  o += `Key Lesson      : ${g('lKey')||'—'}\n\n`;
+
+  o += S + '\n';
+  o += `Generated by QuickTools RCA Builder · ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}\n`;
+  return o;
+}
+
+// ── BUILD MARKDOWN ────────────────────────────────────────────────────────
+function buildMd() {
+  const tl = getTl(), acts = getActs();
+  let o = '';
+
+  const title = g('iTitle') || 'Untitled Incident';
+  o += `# Root Cause Analysis Report\n\n`;
+  o += `> **${title}**  \n`;
+  o += `> Severity: **${sev||'—'}** · Ticket: \`${g('iTicket')||'—'}\`  \n`;
+  o += `> Detected: ${fmtDt(g('iDetected'))} · Resolved: ${fmtDt(g('iResolved'))}\n\n`;
+  o += `---\n\n`;
+
+  o += `## 1. Incident Overview\n\n`;
+  o += `| Field | Value |\n|---|---|\n`;
+  o += `| Title | ${g('iTitle')||'—'} |\n`;
+  o += `| Ticket / ID | ${g('iTicket')||'—'} |\n`;
+  o += `| Severity | **${sev||'—'}** |\n`;
+  o += `| Detected | ${fmtDt(g('iDetected'))} |\n`;
+  o += `| Resolved | ${fmtDt(g('iResolved'))} |\n`;
+  o += `| Reported By | ${g('iReporter')||'—'} |\n`;
+  o += `| Affected Systems | ${g('iSystems')||'—'} |\n\n`;
+  if (g('iDesc')) o += `**Description:** ${g('iDesc')}\n\n`;
+
+  o += `## 2. Impact Assessment\n\n`;
+  o += `| Metric | Value |\n|---|---|\n`;
+  o += `| Users Affected | ${g('impUsers')||'—'} |\n`;
+  o += `| Duration | ${g('impDuration')||'—'} |\n`;
+  o += `| Financial Impact | ${g('impFinancial')||'—'} |\n`;
+  o += `| SLA / SLO Breach | ${g('impSla')||'—'} |\n\n`;
+  if (g('impBusiness')) o += `**Business Impact:** ${g('impBusiness')}\n\n`;
+  if (g('impScope'))    o += `**Scope Boundary (not affected):** ${g('impScope')}\n\n`;
+
+  o += `## 3. Incident Timeline\n\n`;
+  if (!tl.length) {
+    o += `_No events recorded._\n\n`;
+  } else {
+    o += `| # | Timestamp | Actor | Event |\n|---|---|---|---|\n`;
+    tl.forEach((e,i) => {
+      o += `| ${i+1} | ${fmtDt(e.time)} | ${e.actor||'—'} | ${e.desc||'—'} |\n`;
+    });
+    o += '\n';
+  }
+
+  o += `## 4. Root Cause Analysis — 5 Whys\n\n`;
+  o += `> **Effect:** ${g('w0')||'—'}\n\n`;
+  for (let n=1;n<=5;n++) { const v=g('w'+n); if(v) o+=`**Why ${n}:** ${v}\n\n`; }
+  if (g('wRoot')) o += `> ⭐ **Root Cause:** ${g('wRoot')}\n\n`;
+
+  o += `## 5. Contributing Factors\n\n`;
+  const icons = {people:'👥',process:'📋',technology:'⚙️',environment:'🌍'};
+  const labels = {people:'People',process:'Process',technology:'Technology',environment:'Environment'};
+  Object.keys(cfData).forEach(cat => {
+    if (cfData[cat].length) {
+      o += `### ${icons[cat]} ${labels[cat]}\n`;
+      cfData[cat].forEach(f => o += `- ${f}\n`);
+      o += '\n';
+    }
+  });
+
+  o += `## 6. Action Items\n\n`;
+  if (!acts.length) {
+    o += `_No actions recorded._\n\n`;
+  } else {
+    o += `| # | Action | Owner | Due | Layer | Priority | Status |\n|---|---|---|---|---|---|---|\n`;
+    acts.forEach((a,i) => {
+      o += `| ${i+1} | ${a.desc||'—'} | ${a.owner||'—'} | ${a.due||'—'} | ${a.layer||'—'} | ${a.priority||'—'} | ${a.status} |\n`;
+    });
+    o += '\n';
+  }
+
+  o += `## 7. Lessons Learned\n\n`;
+  if (g('lWell'))    o += `**What Went Well:** ${g('lWell')}\n\n`;
+  if (g('lImprove')) o += `**What Needs to Improve:** ${g('lImprove')}\n\n`;
+  if (g('lKey'))     o += `> 💡 **Key Lesson:** ${g('lKey')}\n\n`;
+
+  o += `---\n_Generated by [QuickTools RCA Builder](index.html) · ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}_\n`;
+  return o;
+}
+
+// ── BUILD JSON ────────────────────────────────────────────────────────────
+function buildJson() {
+  const state = {
+    overview: {
+      title:    g('iTitle'),    ticket:   g('iTicket'),
+      severity: sev,            detected: g('iDetected'),
+      resolved: g('iResolved'), reporter: g('iReporter'),
+      systems:  g('iSystems'),  desc:     g('iDesc'),
+    },
+    impact: {
+      users:     g('impUsers'),    duration: g('impDuration'),
+      financial: g('impFinancial'), sla:     g('impSla'),
+      business:  g('impBusiness'), scope:   g('impScope'),
+    },
+    timeline: getTl(),
+    whys: { w0:g('w0'),w1:g('w1'),w2:g('w2'),w3:g('w3'),w4:g('w4'),w5:g('w5'),root:g('wRoot') },
+    factors: JSON.parse(JSON.stringify(cfData)),
+    actions: getActs(),
+    lessons: { well:g('lWell'), improve:g('lImprove'), key:g('lKey') },
+    _meta: { tool:'QuickTools RCA Builder', exported: new Date().toISOString() }
+  };
+  return JSON.stringify(state, null, 2);
+}
+
+// ── LOAD FROM JSON ────────────────────────────────────────────────────────
+function loadFromJson(json) {
+  let d;
+  try { d = JSON.parse(json); } catch(e) { throw new Error('Invalid JSON: ' + e.message); }
+
+  const set = (id, val) => { const el=document.getElementById(id); if(el && val!=null) el.value=val; };
+
+  if (d.overview) {
+    set('iTitle',    d.overview.title);    set('iTicket',   d.overview.ticket);
+    set('iDetected', d.overview.detected); set('iResolved', d.overview.resolved);
+    set('iReporter', d.overview.reporter); set('iSystems',  d.overview.systems);
+    set('iDesc',     d.overview.desc);
+    if (d.overview.severity) {
+      sev = d.overview.severity;
+      document.querySelectorAll('.sev-btn').forEach(b => b.className='sev-btn');
+      const cls = sev.toLowerCase();
+      document.querySelector(`.sev-btn[onclick*="${cls}"]`)?.classList.add(cls);
+    }
+  }
+  if (d.impact) {
+    set('impUsers',    d.impact.users);    set('impDuration',  d.impact.duration);
+    set('impFinancial',d.impact.financial); set('impSla',      d.impact.sla);
+    set('impBusiness', d.impact.business); set('impScope',     d.impact.scope);
+  }
+  if (d.whys) {
+    ['w0','w1','w2','w3','w4','w5'].forEach(k => set(k, d.whys[k]));
+    set('wRoot', d.whys.root);
+  }
+  if (d.factors) {
+    cfData = { people:[], process:[], technology:[], environment:[] };
+    Object.keys(cfData).forEach(cat => {
+      if (Array.isArray(d.factors[cat])) cfData[cat] = [...d.factors[cat]];
+      renderCf(cat);
+    });
+  }
+  document.getElementById('tlList').innerHTML = '';
+  if (Array.isArray(d.timeline)) d.timeline.forEach(e => addTl(e.time, e.desc, e.actor));
+  else addTl();
+
+  document.getElementById('actList').innerHTML = '';
+  if (Array.isArray(d.actions) && d.actions.length) {
+    d.actions.forEach(a => {
+      addAct();
+      const rows = document.querySelectorAll('.act-row');
+      const row = rows[rows.length-1];
+      row.querySelector('.a-desc').value    = a.desc||'';
+      row.querySelector('.a-owner').value   = a.owner||'';
+      row.querySelector('.a-due').value     = a.due||'';
+      row.querySelector('.a-layer').value   = a.layer||'';
+      row.querySelector('.a-priority').value= a.priority||'';
+      row.querySelector('.a-status').value  = a.status||'Open';
+    });
+  } else { addAct(); }
+
+  if (d.lessons) {
+    set('lWell', d.lessons.well); set('lImprove', d.lessons.improve); set('lKey', d.lessons.key);
+  }
+}
+
+// ── EXPORT MODAL ──────────────────────────────────────────────────────────
+function openExport() {
+  exportMode = 'text';
+  document.querySelectorAll('#exportModal .m-tab').forEach((t,i) => t.classList.toggle('on', i===0));
+  document.getElementById('exportOut').textContent = buildText();
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExport() { document.getElementById('exportModal').classList.remove('open'); }
+function switchTab(mode, btn) {
+  exportMode = mode;
+  document.querySelectorAll('#exportModal .m-tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  const content = mode==='text' ? buildText() : mode==='md' ? buildMd() : buildJson();
+  document.getElementById('exportOut').textContent = content;
+}
+function copyExport() {
+  navigator.clipboard.writeText(document.getElementById('exportOut').textContent).then(() => {
+    const el = document.getElementById('copyOk');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  });
+}
+function downloadExport() {
+  const ext   = exportMode==='text' ? 'txt' : exportMode==='md' ? 'md' : 'json';
+  const mime  = exportMode==='json' ? 'application/json' : 'text/plain';
+  const title = (g('iTitle')||'rca-report').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+  const blob  = new Blob([document.getElementById('exportOut').textContent], {type: mime});
+  const a     = Object.assign(document.createElement('a'), {href:URL.createObjectURL(blob), download:`${title}.${ext}`});
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── IMPORT MODAL ──────────────────────────────────────────────────────────
+function openImport() {
+  document.getElementById('impPaste').value = '';
+  document.getElementById('impErr').textContent = '';
+  document.getElementById('impErr').classList.remove('show');
+  document.getElementById('importModal').classList.add('open');
+}
+function closeImport() { document.getElementById('importModal').classList.remove('open'); }
+
+function showImpErr(msg) {
+  const el = document.getElementById('impErr');
+  el.textContent = msg; el.classList.add('show');
+}
+
+function applyImport(json) {
+  try {
+    loadFromJson(json);
+    closeImport();
+  } catch(e) { showImpErr(e.message); }
+}
+
+function loadPasted() {
+  const txt = document.getElementById('impPaste').value.trim();
+  if (!txt) { showImpErr('Paste JSON content above, or drop a file.'); return; }
+  applyImport(txt);
+}
+
+function fileChosen(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => applyImport(ev.target.result);
+  reader.readAsText(file);
+}
+
+function dragOver(e)  { e.preventDefault(); document.getElementById('impDrop').classList.add('drag'); }
+function dragLeave()  { document.getElementById('impDrop').classList.remove('drag'); }
+function dropFile(e)  {
+  e.preventDefault(); dragLeave();
+  const file = e.dataTransfer.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => applyImport(ev.target.result);
+  reader.readAsText(file);
+}
+
+// ── CLEAR ──────────────────────────────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Clear all data in this report?')) return;
+  ['iTitle','iDetected','iResolved','iReporter','iTicket','iSystems','iDesc',
+   'impUsers','impDuration','impFinancial','impBusiness','impScope',
+   'w0','w1','w2','w3','w4','w5','wRoot',
+   'lWell','lImprove','lKey'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('impSla').value = '';
+  document.querySelectorAll('.sev-btn').forEach(b => b.className='sev-btn');
+  sev = '';
+  document.getElementById('tlList').innerHTML = '';
+  document.getElementById('actList').innerHTML = '';
+  cfData = {people:[],process:[],technology:[],environment:[]};
+  Object.keys(cfData).forEach(renderCf);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+addTl();
+addAct();
+</script>
+</body>
+</html>

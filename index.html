@@ -310,6 +310,12 @@ nav {
 .card-22 .card-icon { background: rgba(8,145,178,0.15); }
 .card-22 .card-cta { color: #22d3ee; }
 .card-22 .tag { background: rgba(8,145,178,0.12); color: #22d3ee; border-color: rgba(8,145,178,0.25); }
+.card-23::before { background: linear-gradient(90deg, #be123c, #f43f5e); }
+.card-23:hover   { border-color: #be123c; }
+.card-23 .card-icon { background: rgba(190,18,60,0.13); }
+.card-23 .card-cta { color: #f43f5e; }
+.card-23 .tag { background: rgba(190,18,60,0.10); color: #fb7185; border-color: rgba(190,18,60,0.25); }
+
 .card-16::before { background: linear-gradient(90deg, #1e3a8a, #6366f1); }
 .card-16:hover   { border-color: #2563eb; }
 .card-16 .card-icon { background: rgba(37,99,235,0.15); }
@@ -529,13 +535,13 @@ footer {
       <span class="nav-desc">A diagnostic toolkit for engineering teams. Not a checklist, not a workflow — each tool exists to trace an effect back to its cause, so you act on the root, not the symptom.</span>
     </div>
   </div>
-  <span class="nav-badge">20 tools</span>
+  <span class="nav-badge">21 tools</span>
 </nav>
 
 <div class="tool-bar">
   <div class="search-wrap">
     <span class="s-icon">🔍</span>
-    <input type="text" id="toolSearch" placeholder="Search 20 tools…" autocomplete="off">
+    <input type="text" id="toolSearch" placeholder="Search 21 tools…" autocomplete="off">
     <button class="clear-btn" id="clearSearch" title="Clear">✕</button>
   </div>
   <div class="filter-chips">
@@ -921,6 +927,23 @@ footer {
       <span class="tag">PR Audit</span>
       <span class="tag">Architecture</span>
       <span class="tag">Quality</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-23" href="RCA_Report_Builder.html">
+    <div class="card-icon">🔬</div>
+    <div class="card-meta">
+      <h2>Root Cause Analysis Builder</h2>
+      <p>Structured incident post-mortem with 5-Whys cause chain, timeline, contributing factors (People / Process / Tech / Environment), and action items. Export as plain text or Markdown.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">Diagnose</span>
+      <span class="tag">Incident</span>
+      <span class="tag">RCA</span>
+      <span class="tag">Post-Mortem</span>
     </div>
     <div class="card-cta">
       Open tool <span class="arrow">→</span>
