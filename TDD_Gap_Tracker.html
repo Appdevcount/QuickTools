@@ -216,6 +216,8 @@ tr:hover td{background:#fafcff;}
     <div class="sb-lbl">Analysis</div>
     <button class="sb-btn" data-panel="patterns" onclick="nav('patterns',this)">📊 Pattern Analysis</button>
     <button class="sb-btn" data-panel="report" onclick="nav('report',this)">📑 Weekly Report</button>
+    <div class="sb-lbl">Gap Entry</div>
+    <button class="sb-btn" data-panel="bulkgap" onclick="nav('bulkgap',this)">📝 Log by TDD</button>
   </nav>
 
   <!-- MAIN -->
@@ -307,6 +309,72 @@ tr:hover td{background:#fafcff;}
             </tr></thead>
             <tbody id="gap-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GAP LOG BY TDD ── -->
+    <div class="content panel" id="panel-bulkgap">
+      <div class="ph">
+        <div><h2>Log Gaps by TDD</h2><p>Select a TDD, fill in rows directly across all gap categories and sub-types, then submit once</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-success btn-sm" onclick="submitBulkGaps()">✓ Submit All Gaps</button>
+        </div>
+      </div>
+
+      <div id="bg-success-banner" class="alert-banner" style="display:none;background:var(--green-bg);border-color:#bbf7d0;color:#166534;"></div>
+
+      <!-- TDD Selector -->
+      <div class="card" style="padding:16px;margin-bottom:14px">
+        <div class="fg" style="max-width:720px">
+          <label>Select TDD to Log Gaps Against</label>
+          <select id="bg-tdd" onchange="renderBulkGapTable()" style="font-size:13px;padding:8px 12px">
+            <option value="">— Select a TDD —</option>
+          </select>
+        </div>
+        <div id="bg-tdd-info" style="display:none"></div>
+      </div>
+
+      <!-- Gap Entry Table -->
+      <div id="bg-table-wrap" style="display:none">
+        <div class="card" style="padding:0;overflow:hidden">
+          <!-- Defaults bar -->
+          <div style="padding:9px 14px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;white-space:nowrap">Fill all empty rows:</span>
+            <input type="text" id="bg-def-foundby" placeholder="Found By" style="border:1px solid var(--border);border-radius:5px;padding:5px 9px;font-size:12px;width:130px;font-family:inherit">
+            <input type="text" id="bg-def-assigned" placeholder="Assigned To" style="border:1px solid var(--border);border-radius:5px;padding:5px 9px;font-size:12px;width:130px;font-family:inherit">
+            <input type="date" id="bg-def-date" style="border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px">
+            <button class="btn btn-secondary btn-sm" onclick="applyBulkDefaults()">Apply to Empty Rows</button>
+            <span style="color:var(--muted);font-size:11px">— only fills cells that are currently empty</span>
+          </div>
+          <!-- Table -->
+          <div class="tbl-wrap">
+            <table id="bg-table">
+              <thead style="position:sticky;top:0;z-index:10">
+                <tr>
+                  <th style="width:30px;text-align:center">
+                    <input type="checkbox" id="bg-select-all" title="Select / deselect all" onchange="toggleAllBulkRows(this)" style="accent-color:var(--accent);width:14px;height:14px">
+                  </th>
+                  <th style="width:165px">Category</th>
+                  <th style="width:190px">Sub-type</th>
+                  <th style="min-width:230px">Description — what is missing or wrong</th>
+                  <th style="width:90px">Severity</th>
+                  <th style="width:105px">Impact</th>
+                  <th style="width:68px;text-align:center">Time Lost (h)</th>
+                  <th style="width:90px">Status</th>
+                  <th style="width:95px">Found By</th>
+                  <th style="width:95px">Assigned To</th>
+                  <th style="width:108px">Date Found</th>
+                </tr>
+              </thead>
+              <tbody id="bg-tbody"></tbody>
+            </table>
+          </div>
+          <!-- Submit footer -->
+          <div style="padding:12px 16px;border-top:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#f8fafc;flex-wrap:wrap;gap:8px">
+            <span id="bg-count-info" style="font-size:12px;color:var(--muted);font-weight:600">Check rows and fill descriptions — then submit</span>
+            <button class="btn btn-success" onclick="submitBulkGaps()" style="padding:9px 24px;font-size:13px;font-weight:700">✓ Submit All Gaps</button>
+          </div>
         </div>
       </div>
     </div>
@@ -534,10 +602,19 @@ tr:hover td{background:#fafcff;}
       <button class="modal-close" onclick="closeModal('tdd-report-modal')">×</button>
     </div>
     <div class="modal-body" style="padding:0">
-      <pre id="tdd-report-content" style="padding:18px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;max-height:65vh;overflow-y:auto;color:var(--text);margin:0"></pre>
+      <div style="padding:8px 16px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;gap:7px;align-items:center">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em">View:</span>
+        <button class="btn btn-primary btn-sm" id="tdd-rv-txt" onclick="toggleReportView('txt')">📄 TXT</button>
+        <button class="btn btn-secondary btn-sm" id="tdd-rv-md" onclick="toggleReportView('md')">📝 Markdown</button>
+      </div>
+      <div id="tdd-report-txt-pane">
+        <pre id="tdd-report-content" style="padding:18px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;max-height:58vh;overflow-y:auto;color:var(--text);margin:0"></pre>
+      </div>
+      <div id="tdd-report-md-pane" style="display:none;padding:18px;max-height:58vh;overflow-y:auto;font-family:'Segoe UI',system-ui,sans-serif"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('tdd-report-modal')">Close</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportTDDReportTxt()">⬇ Export TXT</button>
       <button class="btn btn-success btn-sm" id="tdd-report-copy-btn" onclick="copyTDDReport()">⎘ Copy for Email</button>
     </div>
   </div>
@@ -640,7 +717,7 @@ function nav(id, btn) {
   document.getElementById('panel-'+id).classList.add('on');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
-  const renders={tdds:renderTDDs,gaps:renderGaps,patterns:renderPatterns,report:renderReport};
+  const renders={tdds:renderTDDs,gaps:renderGaps,patterns:renderPatterns,report:renderReport,bulkgap:initBulkGapPanel};
   if(renders[id]) renders[id]();
 }
 
@@ -799,7 +876,7 @@ function clearTDDFilters() {
 // GAP LOG
 // ════════════════════════════════════════
 function populateTDDDropdowns() {
-  ['gm-tdd','gf-tdd'].forEach(id=>{
+  ['gm-tdd','gf-tdd','bg-tdd'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     const cur=el.value;
@@ -1605,6 +1682,9 @@ function viewTDDReport(id) {
   document.getElementById('tdd-report-modal-title').textContent = `Gap Report — ${tdd.title}`;
   document.getElementById('tdd-report-content').textContent = generateTDDReportText(id);
   document.getElementById('tdd-report-copy-btn').textContent = '⎘ Copy for Email';
+  const mdPane = document.getElementById('tdd-report-md-pane');
+  if (mdPane) mdPane.innerHTML = '';
+  toggleReportView('txt');
   openModal('tdd-report-modal');
 }
 
@@ -1625,6 +1705,354 @@ function updateGapReportBtn() {
 function reportSelectedTDD() {
   const val = document.getElementById('gf-tdd')?.value;
   if (val) viewTDDReport(parseInt(val));
+}
+
+// ════════════════════════════════════════
+// BULK GAP LOG BY TDD
+// ════════════════════════════════════════
+function initBulkGapPanel() {
+  populateTDDDropdowns();
+  const el = document.getElementById('bg-tdd');
+  if (el && el.value) renderBulkGapTable();
+}
+
+function renderBulkGapTable() {
+  const tddId = parseInt(document.getElementById('bg-tdd')?.value || '0');
+  const infoEl = document.getElementById('bg-tdd-info');
+  const tableWrap = document.getElementById('bg-table-wrap');
+  if (!tddId) {
+    if (infoEl) infoEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'none';
+    return;
+  }
+  const tdd = S.tdds.find(t => t.id === tddId);
+  if (!tdd) return;
+  const existingGaps = gapsForTDD(tddId);
+  const tl = timeLostForTDD(tddId);
+  if (infoEl) {
+    infoEl.style.display = '';
+    infoEl.innerHTML = `
+      <div style="display:flex;gap:20px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);margin-top:12px">
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">Author</div><div style="font-weight:600;font-size:13px">${esc(tdd.author||'—')}</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">Status</div><div style="margin-top:2px">${tddStatusBadge(tdd.status)}</div></div>
+        <div style="flex:1;min-width:200px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">Integration Flow</div><div style="font-size:12px;color:var(--muted)">${esc(tdd.flow||'—')}</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">Existing Gaps</div><div style="font-weight:800;font-size:20px;color:${existingGaps.length?'var(--amber)':'var(--green)'}">${existingGaps.length}</div></div>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)">Time Lost</div><div style="font-weight:800;font-size:20px;color:${tl?'var(--orange)':'var(--muted)'}">${tl||0}h</div></div>
+      </div>`;
+  }
+  if (tableWrap) tableWrap.style.display = '';
+  const today = new Date().toISOString().slice(0, 10);
+  let html = '';
+  let rowIdx = 0;
+  Object.entries(GAP_CATS).forEach(([cat, subtypes]) => {
+    subtypes.forEach((sub, si) => {
+      const rid = `bgr-${rowIdx++}`;
+      const catCell = si === 0
+        ? `<td rowspan="${subtypes.length}" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-light);border-right:2px solid var(--accent);border-top:2px solid var(--border);vertical-align:top;padding:9px 8px;width:165px;line-height:1.4">${esc(cat)}</td>`
+        : '';
+      html += `<tr id="${rid}" data-category="${esc(cat)}" data-subtype="${esc(sub)}">
+        <td style="text-align:center;padding:5px 4px">
+          <input type="checkbox" class="bg-row-cb" data-rid="${rid}" onchange="updateBulkCount()" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+        </td>
+        ${catCell}
+        <td style="font-size:11px;color:var(--text);padding:6px 8px;width:190px">${esc(sub)}</td>
+        <td style="padding:4px 5px">
+          <input type="text" class="bg-desc" placeholder="Describe this gap…"
+            style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;font-family:inherit"
+            oninput="autocheckRow(this,'${rid}')">
+        </td>
+        <td style="padding:4px 5px;width:90px">
+          <select class="bg-sev" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
+            <option value="Critical — blocks development">Critical</option>
+            <option value="High — significant delay" selected>High</option>
+            <option value="Medium — minor rework needed">Medium</option>
+            <option value="Low — clarification only">Low</option>
+          </select>
+        </td>
+        <td style="padding:4px 5px;width:105px">
+          <select class="bg-impact" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
+            <option>Blocked</option><option selected>Delay</option><option>Rework</option><option>Clarification Needed</option>
+          </select>
+        </td>
+        <td style="padding:4px 5px;width:68px">
+          <input type="number" class="bg-time" min="0" step="0.5" placeholder="0"
+            style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:12px">
+        </td>
+        <td style="padding:4px 5px;width:90px">
+          <select class="bg-status" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
+            <option selected>Open</option><option>In Progress</option><option>Resolved</option><option>Waived</option>
+          </select>
+        </td>
+        <td style="padding:4px 5px;width:95px">
+          <input type="text" class="bg-foundby" placeholder="Found by…"
+            style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:11px;font-family:inherit">
+        </td>
+        <td style="padding:4px 5px;width:95px">
+          <input type="text" class="bg-assigned" placeholder="Assigned to…"
+            style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:11px;font-family:inherit">
+        </td>
+        <td style="padding:4px 5px;width:108px">
+          <input type="date" class="bg-date" value="${today}"
+            style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
+        </td>
+      </tr>`;
+    });
+  });
+  document.getElementById('bg-tbody').innerHTML = html;
+  updateBulkCount();
+}
+
+function autocheckRow(input, rid) {
+  const cb = document.querySelector(`input.bg-row-cb[data-rid="${rid}"]`);
+  if (cb) cb.checked = input.value.trim().length > 0;
+  updateBulkCount();
+}
+
+function toggleAllBulkRows(masterCb) {
+  document.querySelectorAll('.bg-row-cb').forEach(cb => cb.checked = masterCb.checked);
+  updateBulkCount();
+}
+
+function updateBulkCount() {
+  const checked = document.querySelectorAll('.bg-row-cb:checked').length;
+  const el = document.getElementById('bg-count-info');
+  if (el) el.textContent = checked > 0
+    ? `${checked} gap${checked !== 1 ? 's' : ''} selected — ready to submit`
+    : 'Fill in descriptions — check rows to include them';
+}
+
+function applyBulkDefaults() {
+  const foundby  = document.getElementById('bg-def-foundby')?.value.trim();
+  const assigned = document.getElementById('bg-def-assigned')?.value.trim();
+  const date     = document.getElementById('bg-def-date')?.value;
+  document.querySelectorAll('#bg-tbody tr').forEach(row => {
+    if (foundby)  { const el = row.querySelector('.bg-foundby');  if (el && !el.value.trim()) el.value = foundby; }
+    if (assigned) { const el = row.querySelector('.bg-assigned'); if (el && !el.value.trim()) el.value = assigned; }
+    if (date)     { const el = row.querySelector('.bg-date');     if (el) el.value = date; }
+  });
+}
+
+function submitBulkGaps() {
+  const tddId = parseInt(document.getElementById('bg-tdd')?.value || '0');
+  if (!tddId) { alert('Please select a TDD first.'); return; }
+  const rows = document.querySelectorAll('#bg-tbody tr');
+  let count = 0;
+  rows.forEach(row => {
+    const cb = row.querySelector('.bg-row-cb');
+    if (!cb || !cb.checked) return;
+    const desc = row.querySelector('.bg-desc')?.value.trim();
+    if (!desc) return;
+    S.gaps.push({
+      id:          gid++,
+      tddId,
+      category:    row.dataset.category,
+      subType:     row.dataset.subtype,
+      description: desc,
+      severity:    row.querySelector('.bg-sev')?.value    || 'High — significant delay',
+      impact:      row.querySelector('.bg-impact')?.value || 'Delay',
+      timeLostH:   parseFloat(row.querySelector('.bg-time')?.value)   || 0,
+      status:      row.querySelector('.bg-status')?.value || 'Open',
+      foundBy:     row.querySelector('.bg-foundby')?.value.trim()  || '',
+      assignedTo:  row.querySelector('.bg-assigned')?.value.trim() || '',
+      dateFound:   row.querySelector('.bg-date')?.value  || new Date().toISOString().slice(0, 10),
+      dateResolved: '',
+      resolutionNotes: ''
+    });
+    count++;
+  });
+  if (!count) { alert('No gaps to submit.\nCheck rows and make sure descriptions are filled in.'); return; }
+  persist(); updateSidebarBadges(); renderTDDs();
+  const banner = document.getElementById('bg-success-banner');
+  if (banner) {
+    banner.style.display = 'flex';
+    banner.textContent = `✅ ${count} gap${count !== 1 ? 's' : ''} logged successfully for TDD #${tddId}!`;
+    setTimeout(() => banner.style.display = 'none', 5000);
+  }
+  renderBulkGapTable();
+}
+
+// ════════════════════════════════════════
+// TDD REPORT — MD VIEW & EXPORT TXT
+// ════════════════════════════════════════
+let _tddReportView = 'txt';
+
+function generateTDDReportMD(id) {
+  const tdd = S.tdds.find(t => t.id === id);
+  if (!tdd) return '';
+  const gaps = gapsForTDD(id);
+  const totalTime = timeLostForTDD(id);
+  const critOpen = gaps.filter(g => sevClean(g.severity) === 'Critical' && (g.status === 'Open' || g.status === 'In Progress'));
+  const now = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const tv = s => String(s || '').replace(/\|/g, '/');
+
+  let md = `# TDD Gap Report — ${tv(tdd.title)}\n\n`;
+  md += `> **Project:** ${tv(S.meta.projectName || '—')} | **Generated:** ${now}\n\n---\n\n`;
+
+  md += `## TDD Details\n\n| Field | Value |\n|---|---|\n`;
+  md += `| Title | ${tv(tdd.title)} |\n`;
+  if (tdd.flow)     md += `| Integration Flow | ${tv(tdd.flow)} |\n`;
+  md += `| Author | ${tv(tdd.author || '—')} |\n`;
+  if (tdd.reviewer) md += `| Reviewer | ${tv(tdd.reviewer)} |\n`;
+  md += `| Status | **${tv(tdd.status)}** |\n`;
+  if (tdd.priority) md += `| Priority | ${tv(tdd.priority)} |\n`;
+  if (tdd.dateReceived) md += `| Date Received | ${fmtDate(tdd.dateReceived)} |\n`;
+  if (tdd.dateApproved) md += `| Date Approved | ${fmtDate(tdd.dateApproved)} |\n`;
+  if (tdd.azureServices && tdd.azureServices.length) md += `| Azure Services | ${tv(tdd.azureServices.join(', '))} |\n`;
+
+  md += `\n## Gap Summary\n\n| Metric | Value |\n|---|---|\n`;
+  md += `| Total Gaps | **${gaps.length}** |\n`;
+  md += `| Open | ${gaps.filter(g => g.status === 'Open').length} |\n`;
+  md += `| In Progress | ${gaps.filter(g => g.status === 'In Progress').length} |\n`;
+  md += `| Resolved | ${gaps.filter(g => g.status === 'Resolved').length} |\n`;
+  md += `| Waived | ${gaps.filter(g => g.status === 'Waived').length} |\n`;
+  md += `| Critical Open | **${critOpen.length}**${critOpen.length > 0 ? ' — ACTION REQUIRED' : ' — None'} |\n`;
+  md += `| Total Time Lost | **${totalTime}h** |\n`;
+
+  if (tdd.notes) md += `\n## Notes\n\n> ${tv(tdd.notes)}\n`;
+
+  const sorted = [...gaps].sort((a, b) => (SEV_ORDER[sevClean(b.severity)] || 0) - (SEV_ORDER[sevClean(a.severity)] || 0));
+  const openGaps     = sorted.filter(g => g.status === 'Open' || g.status === 'In Progress');
+  const resolvedGaps = sorted.filter(g => g.status === 'Resolved');
+  const waivedGaps   = sorted.filter(g => g.status === 'Waived');
+  const SEV_ICON = {Critical:'🔴', High:'🟠', Medium:'🟡', Low:'🟢'};
+
+  if (openGaps.length) {
+    md += `\n## Open Gaps (${openGaps.length}) — Action Required\n\n`;
+    openGaps.forEach(g => {
+      const icon = SEV_ICON[sevClean(g.severity)] || '⚪';
+      md += `### ${icon} [G${g.id}] ${tv(g.subType || g.category)}\n\n`;
+      md += `| Field | Value |\n|---|---|\n`;
+      md += `| Category | ${tv(g.category)} |\n`;
+      if (g.subType) md += `| Sub-type | ${tv(g.subType)} |\n`;
+      md += `| Severity | **${sevClean(g.severity)}** |\n`;
+      md += `| Status | ${g.status} |\n`;
+      md += `| Impact | ${g.impact} |\n`;
+      md += `| Time Lost | ${g.timeLostH || 0}h |\n`;
+      if (g.assignedTo) md += `| Assigned To | **${tv(g.assignedTo)}** |\n`;
+      if (g.foundBy)    md += `| Found By | ${tv(g.foundBy)} |\n`;
+      md += `| Date Found | ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old) |\n`;
+      md += `\n**Description:**\n\n> ${tv(g.description)}\n\n`;
+      if (g.resolutionNotes) md += `**Resolution Notes:**\n\n> ${tv(g.resolutionNotes)}\n\n`;
+      md += `---\n\n`;
+    });
+  }
+
+  if (resolvedGaps.length) {
+    md += `\n## Resolved Gaps (${resolvedGaps.length})\n\n`;
+    resolvedGaps.forEach(g => {
+      md += `### [G${g.id}] ${tv(g.subType || g.category)}\n\n`;
+      md += `**Category:** ${tv(g.category)} | **Severity:** ${sevClean(g.severity)} | **Time Lost:** ${g.timeLostH || 0}h`;
+      if (g.dateResolved) md += ` | **Resolved:** ${fmtDate(g.dateResolved)}`;
+      md += `\n\n> ${tv(g.description)}\n\n`;
+      if (g.resolutionNotes) md += `**Resolution:** ${tv(g.resolutionNotes)}\n\n`;
+      md += `---\n\n`;
+    });
+  }
+
+  if (waivedGaps.length) {
+    md += `\n## Waived Gaps (${waivedGaps.length})\n\n`;
+    waivedGaps.forEach(g => {
+      md += `### [G${g.id}] ${tv(g.subType || g.category)} (Waived)\n\n`;
+      md += `> ${tv(g.description)}\n\n`;
+      if (g.resolutionNotes) md += `**Notes:** ${tv(g.resolutionNotes)}\n\n`;
+      md += `---\n\n`;
+    });
+  }
+
+  if (!gaps.length) md += `\n> No gaps logged for this TDD.\n`;
+  md += `\n---\n\n*Generated by TDD Gap Tracker · ${tv(S.meta.projectName || 'Azure Integration Project')}*\n`;
+  return md;
+}
+
+function mdInline(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>');
+}
+
+function renderMarkdownToHTML(md) {
+  const lines = md.split('\n');
+  let html = '';
+  let inTable = false;
+  let tableRows = [];
+
+  function flushTable() {
+    if (!tableRows.length) { inTable = false; return; }
+    html += '<div style="overflow-x:auto;margin:8px 0"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+    let firstData = true;
+    tableRows.forEach((row, ri) => {
+      const cells = row.split('|').slice(1, -1);
+      if (cells.every(c => /^[-: ]+$/.test(c.trim()))) return; // separator
+      const isHdr = firstData && ri === 0;
+      if (firstData) firstData = false;
+      const tag = isHdr ? 'th' : 'td';
+      const rStyle = isHdr ? 'background:#f8fafc;' : '';
+      html += `<tr style="${rStyle}">` + cells.map(c =>
+        `<${tag} style="padding:6px 10px;border:1px solid var(--border);${isHdr ? 'font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted)' : 'font-size:12px'}">${mdInline(c.trim())}</${tag}>`
+      ).join('') + '</tr>';
+    });
+    html += '</table></div>';
+    tableRows = []; inTable = false;
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('|')) { inTable = true; tableRows.push(line); continue; }
+    if (inTable) flushTable();
+
+    if (line.startsWith('### ')) {
+      html += `<h3 style="font-size:13px;font-weight:700;color:var(--text);margin:16px 0 6px">${mdInline(line.slice(4))}</h3>`;
+    } else if (line.startsWith('## ')) {
+      html += `<h2 style="font-size:15px;font-weight:700;color:var(--accent);margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--border)">${mdInline(line.slice(3))}</h2>`;
+    } else if (line.startsWith('# ')) {
+      html += `<h1 style="font-size:18px;font-weight:800;color:var(--text);margin:0 0 14px">${mdInline(line.slice(2))}</h1>`;
+    } else if (line.startsWith('> ')) {
+      html += `<blockquote style="border-left:3px solid var(--accent);padding:8px 14px;margin:8px 0;background:var(--accent-light);border-radius:0 6px 6px 0;font-size:12px;color:var(--text)">${mdInline(line.slice(2))}</blockquote>`;
+    } else if (line === '---') {
+      html += '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0">';
+    } else if (line.trim() === '') {
+      html += '<div style="height:5px"></div>';
+    } else {
+      html += `<p style="font-size:12px;line-height:1.7;margin:3px 0">${mdInline(line)}</p>`;
+    }
+  }
+  if (inTable) flushTable();
+  return html;
+}
+
+function toggleReportView(mode) {
+  _tddReportView = mode;
+  const txtPane = document.getElementById('tdd-report-txt-pane');
+  const mdPane  = document.getElementById('tdd-report-md-pane');
+  const btnTxt  = document.getElementById('tdd-rv-txt');
+  const btnMd   = document.getElementById('tdd-rv-md');
+  if (mode === 'txt') {
+    if (txtPane) txtPane.style.display = '';
+    if (mdPane)  mdPane.style.display  = 'none';
+    if (btnTxt)  btnTxt.className = 'btn btn-primary btn-sm';
+    if (btnMd)   btnMd.className  = 'btn btn-secondary btn-sm';
+  } else {
+    if (txtPane) txtPane.style.display = 'none';
+    if (mdPane) {
+      mdPane.style.display = '';
+      if (_currentTDDReportId) mdPane.innerHTML = renderMarkdownToHTML(generateTDDReportMD(_currentTDDReportId));
+    }
+    if (btnTxt)  btnTxt.className = 'btn btn-secondary btn-sm';
+    if (btnMd)   btnMd.className  = 'btn btn-primary btn-sm';
+  }
+}
+
+function exportTDDReportTxt() {
+  if (!_currentTDDReportId) return;
+  const tdd = S.tdds.find(t => t.id === _currentTDDReportId);
+  if (!tdd) return;
+  const content = generateTDDReportText(_currentTDDReportId);
+  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TDD_Gap_Report_${(tdd.title || 'report').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40)}_${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click(); URL.revokeObjectURL(a.href);
 }
 
 // ════════════════════════════════════════
