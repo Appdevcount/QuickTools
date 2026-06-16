@@ -407,9 +407,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap">
-            <input type="checkbox" id="export-show-ids" checked> Include IDs
-          </label>
+          <span style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Columns:</span>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-section"> Section</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-id"> ID</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-app"> App Tag</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-sev" checked> Severity</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-status"> Status</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-comment" checked> Comment</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-desc"> Description</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="col-ref"> Reference</label>
+          <div style="width:1px;height:18px;background:rgba(255,255,255,.2)"></div>
           <button class="btn btn-pri" onclick="genReport()"><i class="fas fa-sync"></i> Refresh</button>
           <button class="btn btn-ok" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
           <button class="btn btn-dk" onclick="exportHtml()"><i class="fas fa-download"></i> Export HTML</button>
@@ -3098,20 +3105,33 @@ function genReport() {
       ${SECTIONS.map(s => {
         const visItems = s.groups.flatMap(g => g.items).filter(it => isVisible(it, appType));
         if (!visItems.length) return '';
-        const showIds = true; // always rendered; display toggled at export time
         return `<div style="margin-bottom:12px">
-          <div class="sec-hdr" style="margin-bottom:6px"><i class="${s.icon}" style="color:${s.color}"></i>${s.title}</div>
-          <table class="rpt-tbl"><thead><tr class="rpt-id-col"><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Comment</th></tr></thead>
+          <div class="sec-hdr ec-col-section-hdr" style="margin-bottom:6px"><i class="${s.icon}" style="color:${s.color}"></i>${s.title}</div>
+          <table class="rpt-tbl"><thead><tr>
+            <th class="ec-col-section">${s.title}</th>
+            <th class="ec-col-id">ID</th>
+            <th>Title</th>
+            <th class="ec-col-app">App Tag</th>
+            <th class="ec-col-sev">Severity</th>
+            <th class="ec-col-status">Status</th>
+            <th class="ec-col-comment">Comment</th>
+            <th class="ec-col-desc">Description</th>
+            <th class="ec-col-ref">Reference</th>
+          </tr></thead>
           <tbody>${visItems.map(it => {
             const st = getItemState(it.id);
             const statusColors = {pass:'var(--ok)',fail:'var(--err)',na:'var(--mut)',nr:'var(--inf)'};
             const statusLabels = {pass:'✓ Pass',fail:'✗ Fail',na:'N/A',nr:'Pending'};
             return `<tr data-sev="${it.sev}" data-stat="${st.status}">
-              <td class="rpt-id-col">${it.id}</td>
+              <td class="ec-col-section" style="font-size:10px;color:var(--mut);white-space:nowrap">${s.title}</td>
+              <td class="ec-col-id">${it.id}</td>
               <td>${it.title}</td>
-              <td><span class="sev sev-${it.sev}">${it.sev}</span></td>
-              <td style="font-weight:700;color:${statusColors[st.status]}">${statusLabels[st.status]}</td>
-              <td style="color:var(--mut);font-size:11px">${escHtml(st.comment) || '—'}</td>
+              <td class="ec-col-app"><span class="app-tag">${it.app||'—'}</span></td>
+              <td class="ec-col-sev"><span class="sev sev-${it.sev}">${it.sev}</span></td>
+              <td class="ec-col-status" style="font-weight:700;color:${statusColors[st.status]}">${statusLabels[st.status]}</td>
+              <td class="ec-col-comment" style="color:var(--mut);font-size:11px">${escHtml(st.comment) || '—'}</td>
+              <td class="ec-col-desc" style="color:var(--mut);font-size:11px;max-width:280px;line-height:1.4">${escHtml(it.desc||'')|| '—'}</td>
+              <td class="ec-col-ref" style="color:var(--mut);font-size:11px;white-space:nowrap">${escHtml(it.ref||'')||'—'}</td>
             </tr>`;
           }).join('')}</tbody></table>
         </div>`;
@@ -3158,20 +3178,34 @@ function _getExportItems(appType) {
   });
 }
 
-function _showIds() {
-  const cb = document.getElementById('export-show-ids');
-  return cb ? cb.checked : true;
+function _exportCols() {
+  return {
+    section: !!(document.getElementById('col-section')?.checked),
+    id:      !!(document.getElementById('col-id')?.checked),
+    app:     !!(document.getElementById('col-app')?.checked),
+    sev:     !!(document.getElementById('col-sev')?.checked),
+    status:  !!(document.getElementById('col-status')?.checked),
+    comment: !!(document.getElementById('col-comment')?.checked),
+    desc:    !!(document.getElementById('col-desc')?.checked),
+    ref:     !!(document.getElementById('col-ref')?.checked)
+  };
 }
 
 function exportHtml() {
   genReport();
-  // Apply ID visibility to the exported clone
-  const showIds = _showIds();
-  // Clone current page HTML and strip/include IDs
+  const cols = _exportCols();
   const cloned = document.documentElement.cloneNode(true);
-  if (!showIds) {
-    cloned.querySelectorAll('.rpt-id-col').forEach(el => el.remove());
-  }
+  // Hide unchecked columns by removing their th + td elements
+  const colMap = {
+    section:'ec-col-section', id:'ec-col-id', app:'ec-col-app',
+    sev:'ec-col-sev', status:'ec-col-status', comment:'ec-col-comment',
+    desc:'ec-col-desc', ref:'ec-col-ref'
+  };
+  Object.entries(colMap).forEach(([key, cls]) => {
+    if (!cols[key]) cloned.querySelectorAll('.' + cls).forEach(el => el.remove());
+  });
+  // When Section column is active, the per-section group header is redundant — hide it
+  if (cols.section) cloned.querySelectorAll('.ec-col-section-hdr').forEach(el => el.remove());
   // Remove filter bar & topbar from print
   ['#tb','#sb','.rpt-fbar'].forEach(sel => cloned.querySelectorAll(sel).forEach(el => el.remove()));
   const blob = new Blob(['<!DOCTYPE html>' + cloned.outerHTML], { type: 'text/html' });
@@ -3192,7 +3226,8 @@ function exportTxt() {
   const author = document.getElementById('d-author').value || '—';
   const rtype  = document.getElementById('d-rtype').value;
   const appType = document.getElementById('app-type').value;
-  const showIds = _showIds();
+  const cols = _exportCols();
+  const showIds = cols.id;
 
   const line  = s => s + '\n';
   const ruler = () => '═'.repeat(72) + '\n';
@@ -3242,7 +3277,7 @@ function exportTxt() {
   out += line(` Date        : ${dt}`);
   out += line(` App Type    : ${appType}`);
   out += line(` Review Type : ${rtype}`);
-  out += line(` Show IDs    : ${showIds ? 'Yes' : 'No'}`);
+  out += line(` Columns     : ${['Section','ID','App Tag','Severity','Status','Comment','Description','Reference'].filter((_,i)=>[cols.section,cols.id,cols.app,cols.sev,cols.status,cols.comment,cols.desc,cols.ref][i]).join(', ')||'Title only'}`);
   out += line(` Filter Sev  : ${activeSevs}`);
   out += line(` Filter Stat : ${activeStats}`);
   out += thin();
@@ -3293,10 +3328,14 @@ function exportTxt() {
       out += line(` ${s.title.toUpperCase()}`);
       out += thin();
       vis.forEach(it => {
-        const cmt = getItemState(it.id).comment || '';
-        const idPart = showIds ? `${it.id}  ` : '';
-        out += line(` [${it.sev.padEnd(9)}] ${idPart}${it.title}`);
-        if (cmt) out += line(`            Comment: ${cmt}`);
+        const st  = getItemState(it.id);
+        const idPart  = cols.id  ? `${it.id}  ` : '';
+        const appPart = cols.app ? `[${(it.app||'').padEnd(11)}] ` : '';
+        const sevPart = cols.sev ? `[${it.sev.padEnd(9)}] ` : '';
+        out += line(` ${sevPart}${appPart}${idPart}${it.title}`);
+        if (cols.comment && st.comment) out += line(`            Comment: ${st.comment}`);
+        if (cols.desc    && it.desc)    out += line(`            Desc   : ${it.desc}`);
+        if (cols.ref     && it.ref)     out += line(`            Ref    : ${it.ref}`);
       });
     });
   }
@@ -3310,13 +3349,22 @@ function exportTxt() {
     out += thin();
     out += line(` ${s.title.toUpperCase()}`);
     out += thin();
-    const idCol = showIds ? `${'ID'.padEnd(10)} ` : '';
-    out += ` ${idCol}${'Severity'.padEnd(10)} ${'Status'.padEnd(8)} Title\n`;
+    const idHdr  = cols.id      ? `${'ID'.padEnd(10)} `          : '';
+    const appHdr = cols.app     ? `${'App Tag'.padEnd(13)} `     : '';
+    const sevHdr = cols.sev     ? `${'Severity'.padEnd(10)} `    : '';
+    const stHdr  = cols.status  ? `${'Status'.padEnd(8)} `       : '';
+    out += ` ${idHdr}${appHdr}${sevHdr}${stHdr}Title\n`;
     vis.forEach(it => {
       const st   = getItemState(it.id);
       const lbls = { pass:'PASS', fail:'FAIL', na:'N/A', nr:'PENDING' };
-      const idPart = showIds ? `${it.id.padEnd(10)} ` : '';
-      out += ` ${idPart}${it.sev.padEnd(10)} ${(lbls[st.status]||'?').padEnd(8)} ${it.title}\n`;
+      const idPart  = cols.id     ? `${it.id.padEnd(10)} `                  : '';
+      const appPart = cols.app    ? `${(it.app||'').padEnd(13)} `           : '';
+      const sevPart = cols.sev    ? `${it.sev.padEnd(10)} `                 : '';
+      const stPart  = cols.status ? `${(lbls[st.status]||'?').padEnd(8)} ` : '';
+      out += ` ${idPart}${appPart}${sevPart}${stPart}${it.title}\n`;
+      if (cols.comment && st.comment) out += `   Comment: ${st.comment}\n`;
+      if (cols.desc    && it.desc)    out += `   Desc   : ${it.desc}\n`;
+      if (cols.ref     && it.ref)     out += `   Ref    : ${it.ref}\n`;
     });
   });
 

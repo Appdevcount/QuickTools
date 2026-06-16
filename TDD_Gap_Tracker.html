@@ -318,6 +318,16 @@ tr:hover td{background:#fafcff;}
       <div class="ph">
         <div><h2>Log Gaps by TDD</h2><p>Select a TDD, fill in rows directly across all gap categories and sub-types, then submit once</p></div>
         <div class="ph-actions">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 12px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;white-space:nowrap">Show columns:</span>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-severity" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Severity</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-impact" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Impact</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-time" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Time Lost</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-status" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Status</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-foundby" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Found By</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-assigned" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Assigned To</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="bg-show-date" checked onchange="applyBulkColVisibility()" style="accent-color:var(--accent);width:13px;height:13px"> Date Found</label>
+          </div>
           <button class="btn btn-success btn-sm" onclick="submitBulkGaps()">✓ Submit All Gaps</button>
         </div>
       </div>
@@ -358,13 +368,13 @@ tr:hover td{background:#fafcff;}
                   <th style="width:165px">Category</th>
                   <th style="width:190px">Sub-type</th>
                   <th style="min-width:230px">Description — what is missing or wrong</th>
-                  <th style="width:90px">Severity</th>
-                  <th style="width:105px">Impact</th>
-                  <th style="width:68px;text-align:center">Time Lost (h)</th>
-                  <th style="width:90px">Status</th>
-                  <th style="width:95px">Found By</th>
-                  <th style="width:95px">Assigned To</th>
-                  <th style="width:108px">Date Found</th>
+                  <th class="bg-th-sev" style="width:90px">Severity</th>
+                  <th class="bg-th-impact" style="width:105px">Impact</th>
+                  <th class="bg-th-time" style="width:68px;text-align:center">Time Lost (h)</th>
+                  <th class="bg-th-status" style="width:90px">Status</th>
+                  <th class="bg-th-foundby" style="width:95px">Found By</th>
+                  <th class="bg-th-assigned" style="width:95px">Assigned To</th>
+                  <th class="bg-th-date" style="width:108px">Date Found</th>
                 </tr>
               </thead>
               <tbody id="bg-tbody"></tbody>
@@ -440,6 +450,17 @@ tr:hover td{background:#fafcff;}
       <div class="ph">
         <div><h2>Weekly Report</h2><p>Auto-generated from live data — copy slide by slide or export as TXT</p></div>
         <div class="ph-actions">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 12px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;white-space:nowrap">Slide fields:</span>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-category" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Category</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-subtype" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Sub-type</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-severity" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Severity</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-status" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Status</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-impact" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Impact</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-time" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Time Lost</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-assigned" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Assigned To</label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text)"><input type="checkbox" id="rpt-show-date" checked onchange="renderReport()" style="accent-color:var(--accent);width:13px;height:13px"> Date Found</label>
+          </div>
           <button class="btn btn-secondary btn-sm" onclick="renderReport()">↻ Refresh</button>
           <button class="btn btn-success btn-sm" onclick="exportFullReport()" title="Export human-readable report + full data snapshot — re-importable via Load">📄 Export Full Report</button>
           <button class="btn btn-primary btn-sm" onclick="copyAllSlides()">⎘ Copy All</button>
@@ -1238,23 +1259,87 @@ PATTERN INSIGHT:
 ${topCats[0]?`  The most costly gap category is "${topCats[0][0]}" accounting for ${topCats[0][1]}h of time lost.\n  This suggests TDD templates and review checklists must be strengthened in this area.`:'  Insufficient data to identify patterns. Log more gaps to build analysis.'}
 ${topAuthor&&topAuthor[1]>2?`\n  Author "${topAuthor[0]}" has ${topAuthor[1]} gaps across their TDDs — consider targeted TDD quality coaching.`:''}`,
 
-    4:`SLIDE 4 — CRITICAL OPEN GAPS — IMMEDIATE ACTION REQUIRED
-${L}
-${critOpen.length?critOpen.map(g=>{
-  const tdd=S.tdds.find(t=>t.id===g.tddId);
-  return `  🔴 [G${g.id}] ${tdd?tdd.title:'Unknown TDD'}\n     Category : ${g.category}\n     Sub-type : ${g.subType||'—'}\n     Gap      : ${g.description}\n     Impact   : ${g.impact} | Time Lost So Far: ${g.timeLostH}h\n     Assigned : ${g.assignedTo||'Unassigned'} | Found: ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)`;
-}).join('\n\n'):'  ✅ No critical open gaps — all critical issues resolved or waived.'}`,
-
-    5:`SLIDE 5 — ALL OPEN GAPS BY SEVERITY
-${L}
-${['Critical','High','Medium','Low'].map(sev=>{
-  const sevGaps=gaps.filter(g=>sevClean(g.severity)===sev&&(g.status==='Open'||g.status==='In Progress'));
-  if(!sevGaps.length) return `  [${sev}] — None`;
-  return `  [${sev}] — ${sevGaps.length} open\n`+sevGaps.slice(0,5).map(g=>{
+    4:(()=>{
+  const F = id => document.getElementById(id)?.checked ?? true;
+  const showCategory = F('rpt-show-category');
+  const showSubtype  = F('rpt-show-subtype');
+  const showSeverity = F('rpt-show-severity');
+  const showStatus   = F('rpt-show-status');
+  const showImpact   = F('rpt-show-impact');
+  const showTime     = F('rpt-show-time');
+  const showAssigned = F('rpt-show-assigned');
+  const showDate     = F('rpt-show-date');
+  const SICON={Critical:'🔴',High:'🟠',Medium:'🟡',Low:'🟢'};
+  let s=`SLIDE 4 — CRITICAL OPEN GAPS — IMMEDIATE ACTION REQUIRED\n${L}\n`;
+  if(!critOpen.length) return s+'  ✅ No critical open gaps — all critical issues resolved or waived.';
+  const byTDD=new Map();
+  critOpen.forEach(g=>{
     const tdd=S.tdds.find(t=>t.id===g.tddId);
-    return `  → G${g.id} | ${tdd?'TDD #'+tdd.id:'?'}: ${g.description.slice(0,80)}${g.description.length>80?'…':''}\n     Assigned: ${g.assignedTo||'—'} | ${g.timeLostH}h lost | ${daysSince(g.dateFound)} old`;
-  }).join('\n')+(sevGaps.length>5?`\n  ... and ${sevGaps.length-5} more`:'');
-}).join('\n\n')}`,
+    const key=tdd?tdd.id:0;
+    if(!byTDD.has(key)) byTDD.set(key,{tdd,gaps:[]});
+    byTDD.get(key).gaps.push(g);
+  });
+  [...byTDD.values()].forEach(({tdd,gaps:tg})=>{
+    const tddLine=tdd?`${tdd.title} [${tdd.status}]`:'Unknown TDD';
+    s+=`\nTDD: ${tddLine}\n${'─'.repeat(Math.min(tddLine.length+5,55))}\n`;
+    tg.forEach(g=>{
+      const icon = showSeverity ? (SICON[sevClean(g.severity)]||'🔴')+' ' : '  ';
+      const sevLabel = showSeverity ? ` ${sevClean(g.severity)} —` : '';
+      s+=`\n  ${icon}[G${g.id}]${sevLabel} ${g.subType||g.category}\n`;
+      if(showCategory) s+=`     Category : ${g.category}\n`;
+      if(showSubtype && g.subType) s+=`     Sub-type : ${g.subType}\n`;
+      s+=`     Gap      : ${g.description}\n`;
+      if(showStatus)   s+=`     Status   : ${g.status}\n`;
+      if(showImpact)   s+=`     Impact   : ${g.impact}${showTime?' | Time Lost So Far: '+(g.timeLostH||0)+'h':''}\n`;
+      else if(showTime) s+=`     Time Lost: ${g.timeLostH||0}h\n`;
+      if(showAssigned) s+=`     Assigned : ${g.assignedTo||'Unassigned'}${showDate?' | Found: '+fmtDate(g.dateFound)+' ('+daysSince(g.dateFound)+' old)':''}\n`;
+      else if(showDate) s+=`     Found    : ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)\n`;
+    });
+  });
+  return s;
+})(),
+
+    5:(()=>{
+  const F = id => document.getElementById(id)?.checked ?? true;
+  const showCategory = F('rpt-show-category');
+  const showSubtype  = F('rpt-show-subtype');
+  const showSeverity = F('rpt-show-severity');
+  const showStatus   = F('rpt-show-status');
+  const showImpact   = F('rpt-show-impact');
+  const showTime     = F('rpt-show-time');
+  const showAssigned = F('rpt-show-assigned');
+  const showDate     = F('rpt-show-date');
+  const SICON={Critical:'🔴',High:'🟠',Medium:'🟡',Low:'🟢'};
+  const openGaps=gaps.filter(g=>g.status==='Open'||g.status==='In Progress');
+  let s=`SLIDE 5 — ALL OPEN GAPS BY TDD\n${L}\n`;
+  if(!openGaps.length) return s+'  ✅ No open gaps — all resolved or waived.';
+  const byTDD=new Map();
+  openGaps.forEach(g=>{
+    const tdd=S.tdds.find(t=>t.id===g.tddId);
+    const key=tdd?tdd.id:0;
+    if(!byTDD.has(key)) byTDD.set(key,{tdd,gaps:[]});
+    byTDD.get(key).gaps.push(g);
+  });
+  [...byTDD.values()].forEach(({tdd,gaps:tg})=>{
+    const tddLine=tdd?tdd.title:'Unknown TDD';
+    s+=`\nTDD: ${tddLine}\n${'─'.repeat(Math.min(tddLine.length+5,55))}\n`;
+    const sorted=[...tg].sort((a,b)=>(SEV_ORDER[sevClean(b.severity)]||0)-(SEV_ORDER[sevClean(a.severity)]||0));
+    sorted.forEach(g=>{
+      const icon = showSeverity ? (SICON[sevClean(g.severity)]||'⚪')+' ' : '  ';
+      const sevLabel = showSeverity ? ` ${sevClean(g.severity)} —` : '';
+      s+=`\n  ${icon}[G${g.id}]${sevLabel} ${g.subType||g.category}\n`;
+      if(showCategory) s+=`     Category : ${g.category}\n`;
+      if(showSubtype && g.subType) s+=`     Sub-type : ${g.subType}\n`;
+      s+=`     Gap      : ${g.description}\n`;
+      if(showStatus)   s+=`     Status   : ${g.status}\n`;
+      if(showImpact)   s+=`     Impact   : ${g.impact}${showTime?' | Time Lost So Far: '+(g.timeLostH||0)+'h':''}\n`;
+      else if(showTime) s+=`     Time Lost: ${g.timeLostH||0}h\n`;
+      if(showAssigned) s+=`     Assigned : ${g.assignedTo||'Unassigned'}${showDate?' | Found: '+fmtDate(g.dateFound)+' ('+daysSince(g.dateFound)+' old)':''}\n`;
+      else if(showDate) s+=`     Found    : ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)\n`;
+    });
+  });
+  return s;
+})(),
 
     6:`SLIDE 6 — RECOMMENDATIONS
 ${L}
@@ -1274,7 +1359,7 @@ ${critOpen.length>0?`3. ESCALATE ${critOpen.length} CRITICAL OPEN GAP${critOpen.
 }
 
 function renderReport() {
-  const titles=['','Executive Summary','TDD Status Overview','Top Gap Patterns','Critical Open Gaps','All Open Gaps','Recommendations'];
+  const titles=['','Executive Summary','TDD Status Overview','Top Gap Patterns','Critical Open Gaps','All Open Gaps by TDD','Recommendations'];
   let html='';
   for(let i=1;i<=6;i++) {
     html+=`<div class="slide">
@@ -1755,13 +1840,13 @@ function renderBulkGapTable() {
           <input type="checkbox" class="bg-row-cb" data-rid="${rid}" onchange="updateBulkCount()" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         </td>
         ${catCell}
-        <td style="font-size:11px;color:var(--text);padding:6px 8px;width:190px">${esc(sub)}</td>
+        <td class="bg-subtype-cell" style="font-size:11px;color:var(--text);padding:6px 8px;width:190px">${esc(sub)}</td>
         <td style="padding:4px 5px">
           <input type="text" class="bg-desc" placeholder="Describe this gap…"
             style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;font-family:inherit"
             oninput="autocheckRow(this,'${rid}')">
         </td>
-        <td style="padding:4px 5px;width:90px">
+        <td class="bg-col-sev" style="padding:4px 5px;width:90px">
           <select class="bg-sev" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
             <option value="Critical — blocks development">Critical</option>
             <option value="High — significant delay" selected>High</option>
@@ -1769,29 +1854,29 @@ function renderBulkGapTable() {
             <option value="Low — clarification only">Low</option>
           </select>
         </td>
-        <td style="padding:4px 5px;width:105px">
+        <td class="bg-col-impact" style="padding:4px 5px;width:105px">
           <select class="bg-impact" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
             <option>Blocked</option><option selected>Delay</option><option>Rework</option><option>Clarification Needed</option>
           </select>
         </td>
-        <td style="padding:4px 5px;width:68px">
+        <td class="bg-col-time" style="padding:4px 5px;width:68px">
           <input type="number" class="bg-time" min="0" step="0.5" placeholder="0"
             style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:12px">
         </td>
-        <td style="padding:4px 5px;width:90px">
+        <td class="bg-col-status" style="padding:4px 5px;width:90px">
           <select class="bg-status" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
             <option selected>Open</option><option>In Progress</option><option>Resolved</option><option>Waived</option>
           </select>
         </td>
-        <td style="padding:4px 5px;width:95px">
+        <td class="bg-col-foundby" style="padding:4px 5px;width:95px">
           <input type="text" class="bg-foundby" placeholder="Found by…"
             style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:11px;font-family:inherit">
         </td>
-        <td style="padding:4px 5px;width:95px">
+        <td class="bg-col-assigned" style="padding:4px 5px;width:95px">
           <input type="text" class="bg-assigned" placeholder="Assigned to…"
             style="width:100%;border:1px solid var(--border);border-radius:5px;padding:5px 6px;font-size:11px;font-family:inherit">
         </td>
-        <td style="padding:4px 5px;width:108px">
+        <td class="bg-col-date" style="padding:4px 5px;width:108px">
           <input type="date" class="bg-date" value="${today}"
             style="width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px">
         </td>
@@ -1799,7 +1884,63 @@ function renderBulkGapTable() {
     });
   });
   document.getElementById('bg-tbody').innerHTML = html;
+
+  // Pre-fill rows for gaps already logged against this TDD
+  const loggedGaps = gapsForTDD(tddId);
+  if (loggedGaps.length) {
+    const byKey = {};
+    loggedGaps.forEach(g => {
+      const k = `${g.category}|||${g.subType||''}`;
+      if (!byKey[k]) byKey[k] = [];
+      byKey[k].push(g);
+    });
+    document.querySelectorAll('#bg-tbody tr').forEach(row => {
+      const k = `${row.dataset.category}|||${row.dataset.subtype||''}`;
+      const existing = byKey[k];
+      if (!existing || !existing.length) return;
+      const g = existing[0];
+      const set = (sel, val) => { const el = row.querySelector(sel); if (el && val !== undefined && val !== null) el.value = val; };
+      set('.bg-desc', g.description);
+      set('.bg-sev', g.severity);
+      set('.bg-impact', g.impact);
+      set('.bg-time', g.timeLostH || '');
+      set('.bg-status', g.status);
+      set('.bg-foundby', g.foundBy || '');
+      set('.bg-assigned', g.assignedTo || '');
+      if (g.dateFound) set('.bg-date', g.dateFound);
+      // Visual indicator — green tint, left border
+      row.style.background = '#f0fdf4';
+      row.style.borderLeft = '3px solid #16a34a';
+      row.setAttribute('data-existing-gid', g.id);
+      // Badge in subtype cell
+      const sub = row.querySelector('.bg-subtype-cell');
+      if (sub) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'font-size:9px;font-weight:700;color:#16a34a;margin-top:3px';
+        badge.textContent = existing.length === 1
+          ? `G${g.id} — already logged`
+          : `${existing.length} gaps logged`;
+        sub.appendChild(badge);
+      }
+    });
+  }
+  applyBulkColVisibility();
   updateBulkCount();
+}
+
+function applyBulkColVisibility() {
+  const show = id => document.getElementById(id)?.checked ?? true;
+  const d = (visible, ...sels) => {
+    const v = visible ? '' : 'none';
+    sels.forEach(s => document.querySelectorAll(s).forEach(el => el.style.display = v));
+  };
+  d(show('bg-show-severity'), '.bg-th-sev',      '.bg-col-sev');
+  d(show('bg-show-impact'),   '.bg-th-impact',   '.bg-col-impact');
+  d(show('bg-show-time'),     '.bg-th-time',     '.bg-col-time');
+  d(show('bg-show-status'),   '.bg-th-status',   '.bg-col-status');
+  d(show('bg-show-foundby'),  '.bg-th-foundby',  '.bg-col-foundby');
+  d(show('bg-show-assigned'), '.bg-th-assigned', '.bg-col-assigned');
+  d(show('bg-show-date'),     '.bg-th-date',     '.bg-col-date');
 }
 
 function autocheckRow(input, rid) {

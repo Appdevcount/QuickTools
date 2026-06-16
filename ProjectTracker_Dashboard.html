@@ -325,6 +325,20 @@ tr.done-row td{opacity:.65;}
 .retro-hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);}
 .retro-hist-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:#f8fafc;}
 .retro-hist-body{padding:12px 16px;font-size:12px;}
+
+/* ── REPORT FIELD SELECTORS ── */
+.rfs-chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:#f8fafc;transition:all .15s;user-select:none;}
+.rfs-chk:hover{background:var(--accent-light);border-color:var(--accent);}
+.rfs-chk input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:pointer;}
+.rfs-chk input[type=checkbox]:checked + span{color:var(--accent);}
+.rfs-group-lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.06em;margin-bottom:7px;}
+.rfs-group{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.rfs-group:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+.rfs-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.rfs-hd{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.rfs-hd-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.rfs-hd-actions{display:flex;gap:6px;}
+.rfs-body{padding-top:12px;}
 </style>
 </head>
 <body>
@@ -617,6 +631,60 @@ tr.done-row td{opacity:.65;}
           <button class="btn btn-primary btn-sm" onclick="copyAll()">⎘ Copy All</button>
         </div>
       </div>
+      <!-- ── REPORT FIELD SELECTORS ── -->
+      <div class="card" id="report-field-panel" style="padding:13px;margin-bottom:14px">
+        <div class="rfs-hd" onclick="toggleFieldSelectors()">
+          <div class="rfs-hd-title">📋 Report Field Settings <span id="rfs-toggle-icon" style="font-size:12px;color:var(--muted)">▼</span></div>
+          <div class="rfs-hd-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-secondary btn-xs" onclick="rfsSelectAll(true)">All On</button>
+            <button class="btn btn-secondary btn-xs" onclick="rfsSelectAll(false)">All Off</button>
+          </div>
+        </div>
+        <div id="rfs-body" class="rfs-body">
+          <!-- Task Fields -->
+          <div class="rfs-group">
+            <div class="rfs-group-lbl">Task Fields — Slides 2, 3, 4, 7</div>
+            <div class="rfs-chips">
+              <label class="rfs-chk"><input type="checkbox" id="rf-feature"     onchange="renderReport()"><span>Feature / Module</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-priority"    onchange="renderReport()" checked><span>Priority</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-assignee"    onchange="renderReport()" checked><span>Assignee</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-eta"         onchange="renderReport()" checked><span>ETA</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-delivery"    onchange="renderReport()" checked><span>Delivery Date</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-effort"      onchange="renderReport()"><span>Effort (h)</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-hlstatus"    onchange="renderReport()" checked><span>HL Status</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-detailed"    onchange="renderReport()" checked><span>Detailed Status</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-blocker"     onchange="renderReport()" checked><span>Blocker</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-dependency"  onchange="renderReport()" checked><span>Dependency</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-comments"    onchange="renderReport()"><span>Comments</span></label>
+            </div>
+          </div>
+          <!-- Risk Fields -->
+          <div class="rfs-group">
+            <div class="rfs-group-lbl">Risk Fields — Slide 5</div>
+            <div class="rfs-chips">
+              <label class="rfs-chk"><input type="checkbox" id="rf-rcat"          onchange="renderReport()" checked><span>Category</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-rimpact"       onchange="renderReport()" checked><span>Impact</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-rlikelihood"   onchange="renderReport()" checked><span>Likelihood</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-rowner"        onchange="renderReport()" checked><span>Owner</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-rmitigation"   onchange="renderReport()" checked><span>Mitigation Plan</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-rstatus"       onchange="renderReport()" checked><span>Risk Status</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-reta"          onchange="renderReport()" checked><span>Review ETA</span></label>
+            </div>
+          </div>
+          <!-- Team / Capacity Fields -->
+          <div class="rfs-group">
+            <div class="rfs-group-lbl">Team / Capacity Fields — Slide 6</div>
+            <div class="rfs-chips">
+              <label class="rfs-chk"><input type="checkbox" id="rf-role"    onchange="renderReport()" checked><span>Role</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-avail"   onchange="renderReport()" checked><span>Available Capacity</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-alloc"   onchange="renderReport()" checked><span>Allocated Hours</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-util"    onchange="renderReport()" checked><span>Utilization %</span></label>
+              <label class="rfs-chk"><input type="checkbox" id="rf-tcount"  onchange="renderReport()" checked><span>Task Count</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="report-slides"></div>
     </div>
 
@@ -1877,6 +1945,73 @@ function renderRisks() {
 }
 
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// REPORT FIELD SELECTORS
+// ════════════════════════════════════════
+function rf(id) { const el = document.getElementById(id); return !el || el.checked; }
+
+function toggleFieldSelectors() {
+  const body = document.getElementById('rfs-body');
+  const icon = document.getElementById('rfs-toggle-icon');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (icon) icon.textContent = hidden ? '▼' : '▶';
+}
+
+function rfsSelectAll(checked) {
+  document.querySelectorAll('#rfs-body input[type=checkbox]').forEach(el => { el.checked = checked; });
+  renderReport();
+}
+
+function _taskLine(t, icon) {
+  const feat    = rf('rf-feature')    && t.feature        ? `\n     Feature   : ${t.feature}` : '';
+  const prio    = rf('rf-priority')                       ? `[${t.priority}] `               : '';
+  const meta    = [];
+  if (rf('rf-assignee'))                                    meta.push(`Assignee  : ${t.assignee||'Unassigned'}`);
+  if (rf('rf-eta')      && t.eta)                           meta.push(`ETA       : ${fmtDate(t.eta)}`);
+  if (rf('rf-delivery') && t.deliveryDate)                  meta.push(`Delivered : ${fmtDate(t.deliveryDate)}`);
+  if (rf('rf-effort')   && t.effort)                        meta.push(`Effort    : ${t.effort}h`);
+  if (rf('rf-hlstatus'))                                    meta.push(`Status    : ${t.hlStatus}`);
+  const metaStr  = meta.length ? '\n     ' + meta.join(' | ') : '';
+  const detail   = rf('rf-detailed')   && t.detailedStatus ? `\n     Update    : ${t.detailedStatus}` : '';
+  const blocker  = rf('rf-blocker')    && t.blocker        ? `\n     Blocker   : ${t.blocker}`        : '';
+  const dep      = rf('rf-dependency') && t.dependency     ? `\n     Depends on: ${t.dependency}`     : '';
+  const comments = rf('rf-comments')   && t.comments       ? `\n     Comments  : ${t.comments}`       : '';
+  return `  ${icon} ${prio}${t.name}${feat}${metaStr}${detail}${blocker}${dep}${comments}`;
+}
+
+function _riskLine(r) {
+  const parts = [];
+  if (rf('rf-rcat'))                    parts.push(`Category  : ${r.category}`);
+  if (rf('rf-rimpact'))                 parts.push(`Impact    : ${r.impact}`);
+  if (rf('rf-rlikelihood'))             parts.push(`Likelihood: ${r.likelihood}`);
+  if (rf('rf-rowner'))                  parts.push(`Owner     : ${r.owner||'Unassigned'}`);
+  if (rf('rf-rmitigation'))             parts.push(`Mitigation: ${r.mitigation||'TBD'}`);
+  if (rf('rf-rstatus'))                 parts.push(`Status    : ${r.status}`);
+  if (rf('rf-reta') && r.eta)           parts.push(`Review by : ${fmtDate(r.eta)}`);
+  return `  ⚠ [${r.score} RISK] ${r.description}${parts.length ? '\n     ' + parts.join('\n     ') : ''}`;
+}
+
+function _teamLine(mb) {
+  const alloc = allocatedFor(mb.name);
+  const avail = daysToH(mb.days || 20);
+  const pctU  = Math.round(alloc / avail * 100);
+  const over  = alloc > avail;
+  const status = over ? '🔥 OVER-BURN' : pctU > 85 ? '⚠ High Load' : pctU < 40 ? '⬇ Under-utilized' : '✓ Balanced';
+  let line = `  ${mb.name}`;
+  if (rf('rf-role') && mb.role) line += ` (${mb.role})`;
+  const parts = [];
+  if (rf('rf-avail'))  parts.push(`Available : ${mb.days||20}d (${avail}h @ ${hpd()}h/d)`);
+  if (rf('rf-alloc'))  parts.push(`Allocated : ${alloc}h (≈${hToDays(alloc)}d)`);
+  if (rf('rf-util'))   parts.push(`Utilized  : ${pctU}% [${status}]`);
+  if (rf('rf-tcount')) parts.push(`Tasks     : ${S.tasks.filter(t => t.assignee === mb.name).length}`);
+  if (parts.length) line += '\n  ' + parts.join(' | ');
+  if (over) line += `\n  ⚠ Over-allocated by ${Math.abs(avail - alloc)}h (${hToDays(Math.abs(avail - alloc))}d)`;
+  return line;
+}
+
+// ════════════════════════════════════════
 // WEEKLY REPORT
 // ════════════════════════════════════════
 function slideText(n) {
@@ -1934,26 +2069,31 @@ SUMMARY
   Not Started    : ${tasks.filter(t=>t.hlStatus==='Not Started').length}
 
 COMPLETED (delivered this reporting week):
-${doneThisWeek.length?doneThisWeek.map(t=>`  ✅ [${t.priority}] ${t.name} — ${t.assignee||'Unassigned'}${t.deliveryDate?' | Delivered: '+fmtDate(t.deliveryDate):''}`).join('\n'):'  • No tasks delivered during this reporting week'}
+${doneThisWeek.length?doneThisWeek.map(t=>_taskLine(t,'✅')).join('\n'):'  • No tasks delivered during this reporting week'}
 
 IN PROGRESS:
-${inprog.length?inprog.map(t=>`  → [${t.priority}] ${t.name}\n     Assignee: ${t.assignee||'Unassigned'} | ETA: ${fmtDate(t.eta)} | Status: ${t.hlStatus}\n     ${t.detailedStatus?'Update: '+t.detailedStatus:''}`).join('\n'):'  • No tasks currently in progress'}`,
+${inprog.length?inprog.map(t=>_taskLine(t,'→')).join('\n'):'  • No tasks currently in progress'}`,
 
     3:`SLIDE 3 — KEY DELIVERABLES & MILESTONES
 ${L}
 DUE THIS WEEK:
-${dueThisWeek.length?dueThisWeek.map(t=>`  📌 [${t.priority}] ${t.name}\n     Assignee : ${t.assignee||'Unassigned'}\n     ETA      : ${fmtDate(t.eta)}\n     Status   : ${t.hlStatus}\n     ${t.detailedStatus?'Update   : '+t.detailedStatus:''}`).join('\n\n'):'  • No deliverables due this reporting week'}
+${dueThisWeek.length?dueThisWeek.map(t=>_taskLine(t,'📌')).join('\n\n'):'  • No deliverables due this reporting week'}
 
 OVERDUE ITEMS:
-${overdueTasks.length?overdueTasks.map(t=>`  ⚠ [${t.priority}] ${t.name}\n     Assignee : ${t.assignee||'Unassigned'}\n     Was Due  : ${fmtDate(t.eta)}\n     Status   : ${t.hlStatus}`).join('\n\n'):'  ✅ No overdue items'}`,
+${overdueTasks.length?overdueTasks.map(t=>_taskLine(t,'⚠')).join('\n\n'):'  ✅ No overdue items'}`,
 
     4:`SLIDE 4 — BLOCKERS & DEPENDENCIES
 ${L}
 ACTIVE BLOCKERS (${blocked.length}):
-${blocked.length?blocked.map(t=>`  🚫 ${t.name} [${t.priority}]\n     Assignee  : ${t.assignee||'Unassigned'}\n     Blocker   : ${t.blocker}\n     Comments  : ${t.comments||'—'}`).join('\n\n'):'  ✅ No active blockers'}
+${blocked.length?blocked.map(t=>_taskLine(t,'🚫')).join('\n\n'):'  ✅ No active blockers'}
 
 KEY DEPENDENCIES:
-${tasks.filter(t=>t.dependency&&t.dependency.trim()).map(t=>`  🔗 [${t.hlStatus}] ${t.name}\n     Depends on: ${t.dependency}`).join('\n\n')||'  • No cross-task dependencies recorded'}`,
+${tasks.filter(t=>t.dependency&&t.dependency.trim()).map(t=>{
+  const prio = rf('rf-priority') ? `[${t.hlStatus}] ` : '';
+  const feat  = rf('rf-feature') && t.feature ? ` [${t.feature}]` : '';
+  const comments = rf('rf-comments') && t.comments ? `\n     Comments  : ${t.comments}` : '';
+  return `  🔗 ${prio}${t.name}${feat}\n     Depends on: ${t.dependency}${comments}`;
+}).join('\n\n')||'  • No cross-task dependencies recorded'}`,
 
     5:`SLIDE 5 — RISK REGISTER SUMMARY
 ${L}
@@ -1966,18 +2106,11 @@ RISK COUNTS
   High Score   : ${highR.length}
 
 TOP OPEN/ESCALATED RISKS:
-${openR.length?openR.sort((a,b)=>({High:3,Medium:2,Low:1}[b.score]||0)-({High:3,Medium:2,Low:1}[a.score]||0)).slice(0,6).map(r=>
-  `  ⚠ [${r.score} RISK] ${r.description}\n     Category  : ${r.category}\n     Impact    : ${r.impact} | Likelihood: ${r.likelihood}\n     Owner     : ${r.owner||'Unassigned'}\n     Mitigation: ${r.mitigation||'TBD'}\n     Status    : ${r.status}${r.eta?' | Review by: '+fmtDate(r.eta):''}`
-).join('\n\n'):'  ✅ No open risks'}`,
+${openR.length?openR.sort((a,b)=>({High:3,Medium:2,Low:1}[b.score]||0)-({High:3,Medium:2,Low:1}[a.score]||0)).slice(0,6).map(r=>_riskLine(r)).join('\n\n'):'  ✅ No open risks'}`,
 
     6:`SLIDE 6 — TEAM CAPACITY & UTILIZATION
 ${L}
-${team.length?team.map(mb=>{
-  const alloc=allocatedFor(mb.name), avail=daysToH(mb.days||20);
-  const pctU=Math.round(alloc/avail*100), over=alloc>avail;
-  const status=over?'🔥 OVER-BURN':pctU>85?'⚠ High Load':pctU<40?'⬇ Under-utilized':'✓ Balanced';
-  return `  ${mb.name} (${mb.role||'Team Member'})\n  Available : ${mb.days||20}d (${avail}h @ ${hpd()}h/d) | Allocated: ${alloc}h (≈${hToDays(alloc)}d) | Utilized: ${pctU}% [${status}]${over?'\n  ⚠ Over-allocated by '+Math.abs(avail-alloc)+'h ('+hToDays(Math.abs(avail-alloc))+'d)':''}\n  Tasks: ${S.tasks.filter(t=>t.assignee===mb.name).length} assigned`;
-}).join('\n\n'):'  • No team members configured — add members in Capacity Planner'}
+${team.length?team.map(mb=>_teamLine(mb)).join('\n\n'):'  • No team members configured — add members in Capacity Planner'}
 
 ${overburn.length?`\nOVER-BURN ALERT:\n${overburn.map(mb=>`  🔥 ${mb.name} over-allocated by ${allocatedFor(mb.name)-(daysToH(mb.days||20))}h`).join('\n')}`:'✅ No over-burn detected'}`,
 
@@ -1988,15 +2121,23 @@ ${(()=>{
   const nxt=new Date(); nxt.setDate(nxt.getDate()+7);
   const upcoming=tasks.filter(t=>t.hlStatus!=='Done'&&t.eta&&new Date(t.eta+'T00:00:00')>=today&&new Date(t.eta+'T00:00:00')<=nxt);
   return upcoming.length
-    ?upcoming.sort((a,b)=>new Date(a.eta)-new Date(b.eta)).map(t=>`  📋 [${t.priority}] ${t.name}\n     Assignee: ${t.assignee||'Unassigned'} | ETA: ${fmtDate(t.eta)} | Status: ${t.hlStatus}`).join('\n')
+    ?upcoming.sort((a,b)=>new Date(a.eta)-new Date(b.eta)).map(t=>_taskLine(t,'📋')).join('\n')
     :'  • No tasks due within next 7 days';
 })()}
 
 BLOCKER RESOLUTION ACTIONS:
-${blocked.length?blocked.map(t=>`  → Resolve: ${t.name}\n     Action needed: ${t.blocker}`).join('\n'):'  ✅ No blockers to resolve'}
+${blocked.length?blocked.map(t=>{
+  const prio = rf('rf-priority') ? ` [${t.priority}]` : '';
+  const blk  = rf('rf-blocker') && t.blocker ? `\n     Action needed: ${t.blocker}` : '';
+  return `  → Resolve: ${t.name}${prio}${blk}`;
+}).join('\n'):'  ✅ No blockers to resolve'}
 
 RISKS TO MONITOR NEXT WEEK:
-${openR.filter(r=>r.score==='High'||r.status==='Escalated').slice(0,4).map(r=>`  ⚠ [${r.score}] ${r.description}\n     Owner: ${r.owner||'TBD'} | ${r.eta?'Review by: '+fmtDate(r.eta):''}`).join('\n')||'  • No high-priority risks to monitor next week'}`
+${openR.filter(r=>r.score==='High'||r.status==='Escalated').slice(0,4).map(r=>{
+  const owner = rf('rf-rowner') ? ` | Owner: ${r.owner||'TBD'}` : '';
+  const eta   = rf('rf-reta') && r.eta ? ` | Review by: ${fmtDate(r.eta)}` : '';
+  return `  ⚠ [${r.score}] ${r.description}${owner}${eta}`;
+}).join('\n')||'  • No high-priority risks to monitor next week'}`
   };
   return slides[n]||'';
 }
