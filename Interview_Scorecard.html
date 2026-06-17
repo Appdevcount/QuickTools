@@ -509,6 +509,9 @@
       <span id="preset-sel-count" style="font-size:12px;color:var(--muted);font-weight:600;"></span>
       <button class="btn-outline" style="font-size:11px;padding:4px 10px;" onclick="presetSelectAll(true)">Select All</button>
       <button class="btn-outline" style="font-size:11px;padding:4px 10px;" onclick="presetSelectAll(false)">Deselect All</button>
+      <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
+      <button class="btn-outline" style="font-size:11px;padding:4px 13px;background:#eff6ff;border-color:#2563eb;color:#2563eb;font-weight:700;" onclick="loadRoundPreset(0)" title="50 mixed-level questions — C# Basics, .NET (Intermediate+Expert), Azure, Real World, Testing, Perf/DevOps">⏱ Round 1 — 50 Qs</button>
+      <button class="btn-outline" style="font-size:11px;padding:4px 13px;background:#f5f3ff;border-color:#7c3aed;color:#7c3aed;font-weight:700;" onclick="loadRoundPreset(1)" title="50 expert questions — Expert .NET/Azure, Production, System Design, SOLID, Microservices, Architecture, API, Containers">⏱ Round 2 — 50 Qs</button>
     </div>
     <div class="preset-modal-body" id="preset-modal-body"></div>
     <div class="preset-modal-footer">
@@ -7442,6 +7445,70 @@ const PRESET_BANK = [
   { section:'20. .NET & Azure — Performance & Production Issues', level:'Expert',
     codes:['PP-1','PP-4','PP-5','PP-7','PP-8','PP-10','PP-11','PP-12','PP-13','PP-15'] },
 ];
+
+// ── Round preset quick-loaders — 1-hour interview sets (25 Qs, 5 per section group) ──
+const ROUND_PRESETS = [
+  {
+    label:'Round 1 — 1 hr Mixed All Levels',
+    codes:[
+      // C# Language Fundamentals (5)
+      'CF-3','CF-4','CF-7','CF-9','CF-16',
+      // .NET Intermediate → Early Expert (5)
+      'Q1','Q3','Q4','Q7','Q8',
+      // Expert .NET (5)
+      'Q9','Q10','Q12','Q13','Q14',
+      // Intermediate Azure (5)
+      'AZ-I1','AZ-I7','AZ-I11','AZ-I18','AZ-BLOB1',
+      // Expert Azure (5)
+      'AZ-E1','AZ-E3','AZ-E5','AZSB-1','AZCOS-1',
+      // Real World .NET + API Design (5)
+      'RNET-1','RNET-3','APIQ-2','API-4','API-6',
+      // Real World Azure (5)
+      'RAZ-1','RAZ-3','AZRQ-1','AZRQ-6','AZRQ-11',
+      // OOP Reasoning + Logical (5)
+      'OC-1','OC-4','OC-5','LG-3','LG-7',
+      // Unit & Integration Testing (5)
+      'UT-1','UT-2','UT-4','UT-5','UT-6',
+      // Performance + DevOps (5)
+      'PP-1','PP-4','PP-7','DV-1','DV-4',
+    ]
+  },
+  {
+    label:'Round 2 — 1 hr Expert + Architecture',
+    codes:[
+      // Expert .NET / C# (5)
+      'Q15','Q18','Q21','Q23','QX-1',
+      // Expert Azure — advanced services (5)
+      'AZ-E4','AZ-E6','AZ-E7','AZF-2','AZLA-1',
+      // Azure Production Scenarios (5)
+      'AZP-1','AZP-4','AZP-6','AZP-8','AZP-10',
+      // System Design (5)
+      'SYS-3','SYS-7','SYSQ-2','SYSQ-8','SYSQ-13',
+      // SOLID Principles + GOF Patterns (5)
+      'SG-5','SG-8','SG-11','SG-15','SG-18',
+      // Microservices + Cloud Design Patterns (5)
+      'MP-1','MP-4','MP-5','CP-1','CP-3',
+      // Architecture Level (5)
+      'ARCH-1','ARCH-6','ARCH-11','ARCHR-1','ARCHR-6',
+      // API Design (5)
+      'API-7','API-8','API-9','API-10','API-12',
+      // Containerization + DevOps (5)
+      'CT-1','CT-2','CT-3','DV-5','DV-9',
+      // Performance + Production Issues (5)
+      'PP-5','PP-8','PP-10','PP-11','PP-13',
+    ]
+  },
+];
+
+function loadRoundPreset(idx){
+  const preset = ROUND_PRESETS[idx];
+  if(!preset) return;
+  const codeSet = new Set(preset.codes);
+  document.querySelectorAll('.preset-cb').forEach(cb => { cb.checked = codeSet.has(cb.dataset.code); });
+  _updatePresetCount();
+  const matched = [...document.querySelectorAll('.preset-cb:checked')].length;
+  showToast('⏱ ' + preset.label + ' — ' + matched + ' questions selected');
+}
 
 function _presetCodeMap(){
   const m = {};
