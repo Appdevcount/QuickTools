@@ -339,6 +339,19 @@ tr.done-row td{opacity:.65;}
 .rfs-hd-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
 .rfs-hd-actions{display:flex;gap:6px;}
 .rfs-body{padding-top:12px;}
+
+/* ── FEATURES ── */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:18px;}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;}
+.feat-card-hd{display:flex;align-items:center;gap:9px;}
+.feat-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.feat-name{font-size:13px;font-weight:700;flex:1;}
+.feat-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.feat-stats{display:flex;gap:8px;flex-wrap:wrap;}
+.feat-stat{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:var(--bg);border:1px solid var(--border);}
+.feat-group-row td{background:#f1f5f9;font-size:11px;font-weight:700;padding:5px 10px;border-top:2px solid var(--border);letter-spacing:.03em;color:var(--text);}
+.feat-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s;}
+.feat-swatch.active,.feat-swatch:hover{border-color:var(--text);transform:scale(1.15);}
 </style>
 </head>
 <body>
@@ -371,6 +384,7 @@ tr.done-row td{opacity:.65;}
     <div class="sb-lbl">Dashboard</div>
     <button class="sb-btn on" data-panel="overview" onclick="nav('overview',this)">📊 Overview <span class="sb-badge green" id="sb-health">OK</span></button>
     <div class="sb-lbl">Tracking</div>
+    <button class="sb-btn" data-panel="features" onclick="nav('features',this)">🗂 Features <span class="sb-badge" id="sb-features">0</span></button>
     <button class="sb-btn" data-panel="tasks" onclick="nav('tasks',this)">📋 Task Tracker <span class="sb-badge" id="sb-tasks">0</span></button>
     <button class="sb-btn" data-panel="capacity" onclick="nav('capacity',this)">👥 Capacity Planner <span class="sb-badge amber" id="sb-overburn" style="display:none">!</span></button>
     <button class="sb-btn" data-panel="workload" onclick="nav('workload',this)">⚖ Workload Analyzer</button>
@@ -406,6 +420,18 @@ tr.done-row td{opacity:.65;}
       </div>
     </div>
 
+    <!-- ── FEATURES ── -->
+    <div class="content panel" id="panel-features">
+      <div class="ph">
+        <div><h2>Feature Tracker</h2><p>Define features for this sprint — tasks must be linked to a feature</p></div>
+        <div class="ph-actions">
+          <button class="btn btn-primary btn-sm" onclick="openFeatureModal()">+ Add Feature</button>
+        </div>
+      </div>
+      <div id="feat-empty" class="empty" style="display:none;padding:48px"><div class="empty-icon">🗂</div>No features yet. Add a feature to start organising tasks.</div>
+      <div class="feat-grid" id="feat-grid"></div>
+    </div>
+
     <!-- ── TASK TRACKER ── -->
     <div class="content panel" id="panel-tasks">
       <div class="ph">
@@ -428,6 +454,7 @@ tr.done-row td{opacity:.65;}
             <option value="">All Priorities</option>
             <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
           </select>
+          <select id="f-feature" onchange="renderTasks()"><option value="">All Features</option></select>
           <button class="btn btn-secondary btn-sm" onclick="clearTaskFilters()">✕ Clear</button>
         </div>
         <div class="tbl-wrap">
@@ -763,7 +790,7 @@ tr.done-row td{opacity:.65;}
       <input type="hidden" id="t-id">
       <div class="modal-grid">
         <div class="fg span2"><label>Task Name *</label><input type="text" id="t-name" placeholder="e.g. Implement login API"></div>
-        <div class="fg span2"><label>Feature / Module <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(optional — groups tasks by feature)</span></label><input type="text" id="t-feature" placeholder="e.g. Authentication, Payment Gateway, Dashboard UI…"></div>
+        <div class="fg span2"><label>Feature <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(tasks are grouped by feature in the tracker)</span></label><select id="t-feature"><option value="">— No Feature —</option></select></div>
         <div class="fg"><label>Assignee</label><select id="t-assignee"><option value="">Unassigned</option></select></div>
         <div class="fg"><label>Priority</label>
           <select id="t-priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
@@ -817,6 +844,29 @@ tr.done-row td{opacity:.65;}
     <div class="modal-footer">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('member-modal')">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FEATURE MODAL ══ -->
+<div class="modal-overlay" id="feature-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><h3 id="feature-modal-title">Add Feature</h3><button class="modal-close" onclick="closeModal('feature-modal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ft-id">
+      <div style="display:flex;flex-direction:column;gap:13px">
+        <div class="fg"><label>Feature Name *</label><input type="text" id="ft-name" placeholder="e.g. Authentication, Payment Gateway, Dashboard UI"></div>
+        <div class="fg"><label>Description <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(optional)</span></label><input type="text" id="ft-desc" placeholder="Brief description of this feature"></div>
+        <div class="fg">
+          <label>Color</label>
+          <div id="ft-swatches" style="display:flex;gap:8px;margin-top:5px"></div>
+          <input type="hidden" id="ft-color" value="#6366f1">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('feature-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveFeature()">Save Feature</button>
     </div>
   </div>
 </div>
@@ -1119,18 +1169,19 @@ tr.done-row td{opacity:.65;}
 // ════════════════════════════════════════
 let S = {
   meta: { projectName: 'My Project', sprint: 'Sprint 1', wStart: '', wEnd: '', hoursPerDay: 8 },
+  features: [],// {id,name,description,color}
   team: [],   // {id,name,role,days}  — days = working days available this month
-  tasks: [],  // {id,name,assignee,priority,startDate,eta,deliveryDate,hlStatus,detailedStatus,blocker,dependency,riskFlag,comments,effort}
+  tasks: [],  // {id,name,assignee,priority,startDate,eta,deliveryDate,hlStatus,detailedStatus,blocker,dependency,riskFlag,comments,effort,featureId}
   risks: [],  // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
   standups: [],// {id,date,member,yesterday,today,blockers,helpNeeded,mood,sprint,linkedTaskIds,notes}
   retros: []  // {id,sprint,startDate,endDate,format,items:[{id,category,text,votes}],actionItems:[{id,text,owner,dueDate,status}],notes}
 };
-let tid = 1, mid = 1, rid = 1, sid = 1, retId = 1;
+let tid = 1, mid = 1, rid = 1, sid = 1, retId = 1, fid = 1;
 let _isDirty = false, _ptInit = false;
 
 function persist() {
   localStorage.setItem('pt2_s', JSON.stringify(S));
-  localStorage.setItem('pt2_ids', JSON.stringify({t:tid,m:mid,r:rid,s:sid,retId}));
+  localStorage.setItem('pt2_ids', JSON.stringify({t:tid,m:mid,r:rid,s:sid,retId,fid}));
   if (_ptInit) _isDirty = true;
   const ind = document.getElementById('hdr-save-ind');
   if (ind) {
@@ -1158,11 +1209,12 @@ function hydrate() {
       });
       if (!S.meta.hoursPerDay) S.meta.hoursPerDay = 8;
     }
+    if (!S.features) S.features = [];
     if (!S.standups) S.standups = [];
     S.standups = S.standups.map(migrateStandupEntry);
     if (!S.retros) S.retros = [];
     const ids = localStorage.getItem('pt2_ids');
-    if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; sid=p.s||1; retId=p.retId||1; }
+    if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; sid=p.s||1; retId=p.retId||1; fid=p.fid||1; }
   } catch(e) {}
 }
 
@@ -1174,7 +1226,7 @@ function nav(id, btn) {
   document.getElementById('panel-' + id).classList.add('on');
   document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
-  const renders = { overview: renderOverview, tasks: renderTasks, capacity: renderCapacity, workload: renderWorkload, risks: renderRisks, report: renderReport, standup: renderStandup, retro: renderRetro };
+  const renders = { overview: renderOverview, features: renderFeatures, tasks: renderTasks, capacity: renderCapacity, workload: renderWorkload, risks: renderRisks, report: renderReport, standup: renderStandup, retro: renderRetro };
   if (renders[id]) renders[id]();
 }
 
@@ -1234,6 +1286,16 @@ function fillAssignees(ids) {
     if (cur) el.value = cur;
   });
 }
+function fillFeatures(ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    while (el.options.length > 1) el.remove(1);
+    S.features.forEach(f => { const o=document.createElement('option'); o.value=String(f.id); o.text=f.name; el.appendChild(o); });
+    if (cur) el.value = cur;
+  });
+}
 function fillTaskDropdown() {
   const el = document.getElementById('r-task');
   if (!el) return;
@@ -1243,6 +1305,7 @@ function fillTaskDropdown() {
 
 function badges() {
   const tasks = S.tasks;
+  document.getElementById('sb-features').textContent = S.features.length;
   document.getElementById('sb-tasks').textContent = tasks.length;
   const openR = S.risks.filter(r=>r.status==='Open'||r.status==='Escalated').length;
   const sbr = document.getElementById('sb-risks');
@@ -1392,18 +1455,127 @@ function renderOverview() {
 // Track which expand rows are open (survives filter changes)
 const _expanded = new Set();
 
+function _buildTaskRows(t, today, statusCls, priCls) {
+  const overdue  = t.hlStatus!=='Done' && t.eta && new Date(t.eta+'T00:00:00') < today;
+  const rowCls   = t.hlStatus==='Blocked'?'blocked-row':t.hlStatus==='At Risk'?'atrisk-row':t.hlStatus==='Done'?'done-row':'';
+  const expCls   = t.hlStatus==='Blocked'?'blocked-expand':t.hlStatus==='At Risk'?'atrisk-expand':'';
+  const isOpen   = _expanded.has(t.id);
+  const aOpts = `<option value="">Unassigned</option>`+S.team.map(m=>`<option value="${esc(m.name)}"${m.name===t.assignee?' selected':''}>${esc(m.name)}</option>`).join('');
+  const main = `<tr class="${rowCls}" data-tid="${t.id}">
+    <td style="color:var(--muted);font-size:10px;text-align:center;width:38px">${t.id}</td>
+    <td style="min-width:220px">
+      <div class="edit-name" contenteditable="true"
+        onblur="quickSave(${t.id},'name',this.innerText.trim()||'Unnamed')"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+      >${esc(t.name||'Unnamed')}</div>
+    </td>
+    <td style="width:145px">
+      <select class="tbl-sel" onchange="quickSave(${t.id},'assignee',this.value)">${aOpts}</select>
+    </td>
+    <td style="width:108px">
+      <select class="tbl-sel ${priCls[t.priority]||'sel-low'}" id="pri-${t.id}"
+        onchange="quickSave(${t.id},'priority',this.value);this.className='tbl-sel '+({Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'}[this.value]||'sel-low')">
+        ${['Critical','High','Medium','Low'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('')}
+      </select>
+    </td>
+    <td style="width:135px">
+      <select class="tbl-sel ${statusCls[t.hlStatus]||'sel-ns'}" id="st-${t.id}"
+        onchange="quickSave(${t.id},'hlStatus',this.value);applyRowStyle(${t.id},this.value)">
+        ${['Not Started','In Progress','At Risk','Blocked','Done'].map(s=>`<option${s===t.hlStatus?' selected':''}>${s}</option>`).join('')}
+      </select>
+    </td>
+    <td style="width:128px">
+      <input type="date" class="tbl-inp" value="${t.eta||''}" id="eta-${t.id}"
+        style="${overdue?'color:var(--red);font-weight:700;border-color:#fecaca':''}"
+        onchange="quickSave(${t.id},'eta',this.value);refreshOverdueStyle(${t.id})">
+      ${overdue?'<div style="font-size:9px;color:var(--red);font-weight:700;margin-top:2px">OVERDUE</div>':''}
+    </td>
+    <td style="width:76px">
+      <input type="number" class="tbl-inp" value="${t.effort||''}" min="0" step="0.5"
+        placeholder="h" style="text-align:center;width:58px"
+        onchange="quickSave(${t.id},'effort',parseFloat(this.value)||0)">
+    </td>
+    <td style="min-width:220px">
+      <input type="text" class="tbl-inp" id="blk-${t.id}" value="${esc(t.blocker||'')}"
+        placeholder="No blocker"
+        style="${t.blocker?'background:#fef2f2;border-color:#fecaca;color:#991b1b;':''}"
+        onblur="quickSave(${t.id},'blocker',this.value);this.style=this.value?'background:#fef2f2;border-color:#fecaca;color:#991b1b':''"
+        onkeydown="if(event.key==='Enter')this.blur()">
+    </td>
+    <td style="width:44px;text-align:center">
+      <input type="checkbox" ${t.riskFlag?'checked':''} title="Flag as risk"
+        style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer"
+        onchange="quickSave(${t.id},'riskFlag',this.checked)">
+    </td>
+    <td style="width:92px;white-space:nowrap">
+      <button class="btn btn-secondary btn-xs" id="expbtn-${t.id}"
+        onclick="toggleExpand(${t.id})"
+        style="width:100%;margin-bottom:3px;font-size:11px"
+        title="Edit Detailed Status, Comments, dates, dependency"
+      >${isOpen?'▲ Less':'▼ Details'}</button>
+      <button class="btn btn-danger btn-xs" onclick="delTask(${t.id})" style="width:100%">✕ Del</button>
+    </td>
+  </tr>`;
+  const detail = `<tr id="exp-${t.id}" class="expand-row ${expCls}" style="display:${isOpen?'table-row':'none'}">
+    <td colspan="10">
+      <div class="expand-content">
+        <div class="expand-meta">
+          <div>
+            <div class="expand-label">Start Date</div>
+            <input type="date" class="expand-inp" value="${t.startDate||''}"
+              onchange="quickSave(${t.id},'startDate',this.value)">
+          </div>
+          <div>
+            <div class="expand-label">ETA</div>
+            <input type="date" class="expand-inp" value="${t.eta||''}"
+              onchange="quickSave(${t.id},'eta',this.value);document.getElementById('eta-${t.id}').value=this.value;refreshOverdueStyle(${t.id})">
+          </div>
+          <div>
+            <div class="expand-label">Delivery Date</div>
+            <input type="date" class="expand-inp" value="${t.deliveryDate||''}"
+              onchange="quickSave(${t.id},'deliveryDate',this.value)">
+          </div>
+          <div>
+            <div class="expand-label">Dependency</div>
+            <input type="text" class="expand-inp" value="${esc(t.dependency||'')}"
+              placeholder="e.g. Depends on Task #3, waiting for API spec"
+              onblur="quickSave(${t.id},'dependency',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur()">
+          </div>
+        </div>
+        <div>
+          <div class="expand-label">Detailed Status <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— what is done, what is in progress, decisions needed</span></div>
+          <textarea class="expand-ta"
+            placeholder="Describe current progress in detail — what's complete, what's in flight, any blockers or decisions needed…"
+            onblur="quickSave(${t.id},'detailedStatus',this.value)">${esc(t.detailedStatus||'')}</textarea>
+        </div>
+        <div>
+          <div class="expand-label">Comments &amp; Decisions <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— notes, meeting outcomes, stakeholder actions</span></div>
+          <textarea class="expand-ta"
+            placeholder="Notes, decisions, context, meeting outcomes, risks flagged, stakeholder actions required…"
+            onblur="quickSave(${t.id},'comments',this.value)">${esc(t.comments||'')}</textarea>
+        </div>
+      </div>
+    </td>
+  </tr>`;
+  return [main, detail];
+}
+
 function renderTasks() {
   fillAssignees(['f-assignee','t-assignee']);
+  fillFeatures(['f-feature','t-feature']);
   const search = (document.getElementById('f-search')?.value||'').toLowerCase();
   const fA = document.getElementById('f-assignee')?.value||'';
   const fS = document.getElementById('f-status')?.value||'';
   const fP = document.getElementById('f-priority')?.value||'';
+  const fF = document.getElementById('f-feature')?.value||'';
   const today = new Date(); today.setHours(0,0,0,0);
 
   const list = S.tasks.filter(t=>{
     if(fA && t.assignee!==fA) return false;
     if(fS && t.hlStatus!==fS) return false;
     if(fP && t.priority!==fP) return false;
+    if(fF && String(t.featureId||'')!==fF) return false;
     if(search && !(t.name||'').toLowerCase().includes(search) && !(t.blocker||'').toLowerCase().includes(search) && !(t.comments||'').toLowerCase().includes(search)) return false;
     return true;
   });
@@ -1417,116 +1589,40 @@ function renderTasks() {
   const statusCls = {'Not Started':'sel-ns','In Progress':'sel-ip','At Risk':'sel-ar','Blocked':'sel-bl','Done':'sel-dn'};
   const priCls    = {Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'};
 
-  tbody.innerHTML = list.flatMap(t => {
-    const overdue  = t.hlStatus!=='Done' && t.eta && new Date(t.eta+'T00:00:00') < today;
-    const rowCls   = t.hlStatus==='Blocked'?'blocked-row':t.hlStatus==='At Risk'?'atrisk-row':t.hlStatus==='Done'?'done-row':'';
-    const expCls   = t.hlStatus==='Blocked'?'blocked-expand':t.hlStatus==='At Risk'?'atrisk-expand':'';
-    const isOpen   = _expanded.has(t.id);
+  // Group tasks by featureId
+  const byFeat = new Map();
+  const noFeat = [];
+  for (const t of list) {
+    if (t.featureId) {
+      if (!byFeat.has(t.featureId)) byFeat.set(t.featureId, []);
+      byFeat.get(t.featureId).push(t);
+    } else {
+      noFeat.push(t);
+    }
+  }
 
-    const aOpts = `<option value="">Unassigned</option>`+S.team.map(m=>`<option value="${esc(m.name)}"${m.name===t.assignee?' selected':''}>${esc(m.name)}</option>`).join('');
-
-    const main = `<tr class="${rowCls}" data-tid="${t.id}">
-      <td style="color:var(--muted);font-size:10px;text-align:center;width:38px">${t.id}</td>
-      <td style="min-width:220px">
-        <div class="edit-name" contenteditable="true"
-          onblur="quickSave(${t.id},'name',this.innerText.trim()||'Unnamed')"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-        >${esc(t.name||'Unnamed')}</div>
-        ${t.feature?`<span style="display:inline-block;margin-top:3px;font-size:10px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:3px;border:1px solid var(--border)">${esc(t.feature)}</span>`:''}
-      </td>
-      <td style="width:145px">
-        <select class="tbl-sel" onchange="quickSave(${t.id},'assignee',this.value)">${aOpts}</select>
-      </td>
-      <td style="width:108px">
-        <select class="tbl-sel ${priCls[t.priority]||'sel-low'}" id="pri-${t.id}"
-          onchange="quickSave(${t.id},'priority',this.value);this.className='tbl-sel '+({Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'}[this.value]||'sel-low')">
-          ${['Critical','High','Medium','Low'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('')}
-        </select>
-      </td>
-      <td style="width:135px">
-        <select class="tbl-sel ${statusCls[t.hlStatus]||'sel-ns'}" id="st-${t.id}"
-          onchange="quickSave(${t.id},'hlStatus',this.value);applyRowStyle(${t.id},this.value)">
-          ${['Not Started','In Progress','At Risk','Blocked','Done'].map(s=>`<option${s===t.hlStatus?' selected':''}>${s}</option>`).join('')}
-        </select>
-      </td>
-      <td style="width:128px">
-        <input type="date" class="tbl-inp" value="${t.eta||''}" id="eta-${t.id}"
-          style="${overdue?'color:var(--red);font-weight:700;border-color:#fecaca':''}"
-          onchange="quickSave(${t.id},'eta',this.value);refreshOverdueStyle(${t.id})">
-        ${overdue?'<div style="font-size:9px;color:var(--red);font-weight:700;margin-top:2px">OVERDUE</div>':''}
-      </td>
-      <td style="width:76px">
-        <input type="number" class="tbl-inp" value="${t.effort||''}" min="0" step="0.5"
-          placeholder="h" style="text-align:center;width:58px"
-          onchange="quickSave(${t.id},'effort',parseFloat(this.value)||0)">
-      </td>
-      <td style="min-width:220px">
-        <input type="text" class="tbl-inp" id="blk-${t.id}" value="${esc(t.blocker||'')}"
-          placeholder="No blocker"
-          style="${t.blocker?'background:#fef2f2;border-color:#fecaca;color:#991b1b;':''}"
-          onblur="quickSave(${t.id},'blocker',this.value);this.style=this.value?'background:#fef2f2;border-color:#fecaca;color:#991b1b':''"
-          onkeydown="if(event.key==='Enter')this.blur()">
-      </td>
-      <td style="width:44px;text-align:center">
-        <input type="checkbox" ${t.riskFlag?'checked':''} title="Flag as risk"
-          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer"
-          onchange="quickSave(${t.id},'riskFlag',this.checked)">
-      </td>
-      <td style="width:92px;white-space:nowrap">
-        <button class="btn btn-secondary btn-xs" id="expbtn-${t.id}"
-          onclick="toggleExpand(${t.id})"
-          style="width:100%;margin-bottom:3px;font-size:11px"
-          title="Edit Detailed Status, Comments, dates, dependency"
-        >${isOpen?'▲ Less':'▼ Details'}</button>
-        <button class="btn btn-danger btn-xs" onclick="delTask(${t.id})" style="width:100%">✕ Del</button>
-      </td>
-    </tr>`;
-
-    const detail = `<tr id="exp-${t.id}" class="expand-row ${expCls}" style="display:${isOpen?'table-row':'none'}">
-      <td colspan="10">
-        <div class="expand-content">
-          <div class="expand-meta">
-            <div>
-              <div class="expand-label">Start Date</div>
-              <input type="date" class="expand-inp" value="${t.startDate||''}"
-                onchange="quickSave(${t.id},'startDate',this.value)">
-            </div>
-            <div>
-              <div class="expand-label">ETA</div>
-              <input type="date" class="expand-inp" value="${t.eta||''}"
-                onchange="quickSave(${t.id},'eta',this.value);document.getElementById('eta-${t.id}').value=this.value;refreshOverdueStyle(${t.id})">
-            </div>
-            <div>
-              <div class="expand-label">Delivery Date</div>
-              <input type="date" class="expand-inp" value="${t.deliveryDate||''}"
-                onchange="quickSave(${t.id},'deliveryDate',this.value)">
-            </div>
-            <div>
-              <div class="expand-label">Dependency</div>
-              <input type="text" class="expand-inp" value="${esc(t.dependency||'')}"
-                placeholder="e.g. Depends on Task #3, waiting for API spec"
-                onblur="quickSave(${t.id},'dependency',this.value)"
-                onkeydown="if(event.key==='Enter')this.blur()">
-            </div>
-          </div>
-          <div>
-            <div class="expand-label">Detailed Status <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— what is done, what is in progress, decisions needed</span></div>
-            <textarea class="expand-ta"
-              placeholder="Describe current progress in detail — what's complete, what's in flight, any blockers or decisions needed…"
-              onblur="quickSave(${t.id},'detailedStatus',this.value)">${esc(t.detailedStatus||'')}</textarea>
-          </div>
-          <div>
-            <div class="expand-label">Comments &amp; Decisions <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">— notes, meeting outcomes, stakeholder actions</span></div>
-            <textarea class="expand-ta"
-              placeholder="Notes, decisions, context, meeting outcomes, risks flagged, stakeholder actions required…"
-              onblur="quickSave(${t.id},'comments',this.value)">${esc(t.comments||'')}</textarea>
-          </div>
-        </div>
-      </td>
-    </tr>`;
-
-    return [main, detail];
-  }).join('');
+  const rows = [];
+  for (const f of S.features) {
+    const ft = byFeat.get(f.id);
+    if (!ft?.length) continue;
+    const done = ft.filter(t=>t.hlStatus==='Done').length;
+    const blk  = ft.filter(t=>t.hlStatus==='Blocked').length;
+    rows.push(`<tr class="feat-group-row"><td colspan="10" style="padding-left:12px">
+      <span class="feat-dot" style="background:${f.color||'#6366f1'};display:inline-block;vertical-align:middle;margin-right:6px"></span>
+      <strong>${esc(f.name)}</strong>
+      <span style="margin-left:10px;font-size:10px;color:var(--muted);font-weight:400">${ft.length} task${ft.length!==1?'s':''} · ${done} done${blk?' · <span style="color:var(--red)">'+blk+' blocked</span>':''}</span>
+    </td></tr>`);
+    for (const t of ft) rows.push(..._buildTaskRows(t, today, statusCls, priCls));
+  }
+  if (noFeat.length) {
+    rows.push(`<tr class="feat-group-row"><td colspan="10" style="padding-left:12px">
+      <span class="feat-dot" style="background:#94a3b8;display:inline-block;vertical-align:middle;margin-right:6px"></span>
+      <strong style="color:var(--muted)">No Feature</strong>
+      <span style="margin-left:10px;font-size:10px;color:var(--muted);font-weight:400">${noFeat.length} task${noFeat.length!==1?'s':''}</span>
+    </td></tr>`);
+    for (const t of noFeat) rows.push(..._buildTaskRows(t, today, statusCls, priCls));
+  }
+  tbody.innerHTML = rows.join('');
 }
 
 // Inline save — updates state + persists without re-rendering the whole table
@@ -1580,12 +1676,13 @@ function refreshOverdueStyle(id) {
 }
 
 function clearTaskFilters() {
-  ['f-search','f-assignee','f-status','f-priority'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['f-search','f-assignee','f-status','f-priority','f-feature'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   renderTasks();
 }
 
 function openTaskModal(id) {
   fillAssignees(['t-assignee']);
+  fillFeatures(['t-feature']);
   document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Add Task';
   const t = id ? S.tasks.find(x=>x.id===id) : null;
   document.getElementById('t-id').value = id||'';
@@ -1598,7 +1695,7 @@ function openTaskModal(id) {
   document.getElementById('t-effort').value = t?.effort||'';
   document.getElementById('t-hlstatus').value = t?.hlStatus||'Not Started';
   document.getElementById('t-detailed').value = t?.detailedStatus||'';
-  document.getElementById('t-feature').value = t?.feature||'';
+  document.getElementById('t-feature').value = t?.featureId ? String(t.featureId) : '';
   document.getElementById('t-blocker').value = t?.blocker||'';
   document.getElementById('t-dep').value = t?.dependency||'';
   document.getElementById('t-comments').value = t?.comments||'';
@@ -1620,7 +1717,8 @@ function saveTask() {
     effort: parseFloat(document.getElementById('t-effort').value)||0,
     hlStatus: document.getElementById('t-hlstatus').value,
     detailedStatus: document.getElementById('t-detailed').value,
-    feature: document.getElementById('t-feature').value.trim(),
+    featureId: parseInt(document.getElementById('t-feature').value)||null,
+    feature: (()=>{ const fv=document.getElementById('t-feature').value; return fv ? (S.features.find(f=>f.id===parseInt(fv))?.name||'') : ''; })(),
     blocker: document.getElementById('t-blocker').value,
     dependency: document.getElementById('t-dep').value,
     comments: document.getElementById('t-comments').value,
@@ -1644,6 +1742,100 @@ function delTask(id) {
   if (!confirm('Delete this task?')) return;
   S.tasks = S.tasks.filter(t=>t.id!==id);
   persist(); renderTasks(); badges();
+}
+
+// ════════════════════════════════════════
+// FEATURES
+// ════════════════════════════════════════
+const FEAT_COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#64748b'];
+
+function renderFeatures() {
+  const grid = document.getElementById('feat-grid');
+  const empty = document.getElementById('feat-empty');
+  if (!S.features.length) { grid.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  grid.innerHTML = S.features.map(f => {
+    const ft = S.tasks.filter(t=>t.featureId===f.id);
+    const done = ft.filter(t=>t.hlStatus==='Done').length;
+    const blk  = ft.filter(t=>t.hlStatus==='Blocked').length;
+    const ip   = ft.filter(t=>t.hlStatus==='In Progress').length;
+    const effort = ft.reduce((s,t)=>s+(parseFloat(t.effort)||0),0);
+    return `<div class="feat-card">
+      <div class="feat-card-hd">
+        <span class="feat-dot" style="background:${f.color||'#6366f1'}"></span>
+        <span class="feat-name">${esc(f.name)}</span>
+        <button class="btn btn-secondary btn-xs" onclick="openFeatureModal(${f.id})">✏</button>
+        <button class="btn btn-danger btn-xs" onclick="delFeature(${f.id})">✕</button>
+      </div>
+      ${f.description?`<div class="feat-desc">${esc(f.description)}</div>`:''}
+      <div class="feat-stats">
+        <span class="feat-stat">${ft.length} task${ft.length!==1?'s':''}</span>
+        ${done?`<span class="feat-stat" style="color:#16a34a;border-color:#bbf7d0">✓ ${done} done</span>`:''}
+        ${ip?`<span class="feat-stat" style="color:#2563eb;border-color:#bfdbfe">${ip} in progress</span>`:''}
+        ${blk?`<span class="feat-stat" style="color:var(--red);border-color:#fecaca">⛔ ${blk} blocked</span>`:''}
+        ${effort?`<span class="feat-stat">${effort.toFixed(1)}h total</span>`:''}
+      </div>
+      <div class="feat-actions">
+        <button class="btn btn-secondary btn-xs" style="font-size:11px"
+          onclick="nav('tasks',document.querySelector('[data-panel=tasks]'));setTimeout(()=>{document.getElementById('f-feature').value='${f.id}';renderTasks();},80)">
+          View Tasks →
+        </button>
+        <button class="btn btn-primary btn-xs" style="font-size:11px"
+          onclick="nav('tasks',document.querySelector('[data-panel=tasks]'));setTimeout(()=>openTaskModal(),80)">
+          + Add Task
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openFeatureModal(id) {
+  const f = id ? S.features.find(x=>x.id===id) : null;
+  document.getElementById('feature-modal-title').textContent = id ? 'Edit Feature' : 'Add Feature';
+  document.getElementById('ft-id').value   = id||'';
+  document.getElementById('ft-name').value = f?.name||'';
+  document.getElementById('ft-desc').value = f?.description||'';
+  const curColor = f?.color || FEAT_COLORS[0];
+  document.getElementById('ft-color').value = curColor;
+  const sw = document.getElementById('ft-swatches');
+  sw.innerHTML = FEAT_COLORS.map(c=>`<span class="feat-swatch${c===curColor?' active':''}" style="background:${c}"
+    onclick="document.getElementById('ft-color').value='${c}';this.parentNode.querySelectorAll('.feat-swatch').forEach(s=>s.classList.remove('active'));this.classList.add('active')"></span>`).join('');
+  openModal('feature-modal');
+}
+
+function saveFeature() {
+  const name = document.getElementById('ft-name').value.trim();
+  if (!name) { alert('Feature name is required.'); return; }
+  const id   = document.getElementById('ft-id').value;
+  const feat = {
+    id: id ? parseInt(id) : fid++,
+    name,
+    description: document.getElementById('ft-desc').value.trim(),
+    color: document.getElementById('ft-color').value || FEAT_COLORS[0]
+  };
+  if (id) {
+    const idx = S.features.findIndex(f=>f.id===parseInt(id));
+    if (idx>=0) {
+      S.features[idx] = feat;
+      // keep feature name in sync on tasks
+      S.tasks.forEach(t=>{ if(t.featureId===feat.id) t.feature=feat.name; });
+    }
+  } else {
+    S.features.push(feat);
+  }
+  persist(); renderFeatures(); badges(); closeModal('feature-modal');
+}
+
+function delFeature(id) {
+  const f = S.features.find(x=>x.id===id);
+  const taskCount = S.tasks.filter(t=>t.featureId===id).length;
+  const msg = taskCount
+    ? `Delete feature "${f?.name}"? ${taskCount} task${taskCount!==1?'s':''} will be moved to "No Feature".`
+    : `Delete feature "${f?.name}"?`;
+  if (!confirm(msg)) return;
+  S.features = S.features.filter(f=>f.id!==id);
+  S.tasks.forEach(t=>{ if(t.featureId===id){ t.featureId=null; t.feature=''; } });
+  persist(); renderFeatures(); badges();
 }
 
 // ════════════════════════════════════════
@@ -2521,10 +2713,18 @@ function confirmImport() {
       // Assignee: use only if name matches team roster
       const assignee = teamNames.has(t.assignee) ? t.assignee : '';
 
+      // Find or create a feature for this module
+      let impFeat = S.features.find(f=>f.name===feature.module);
+      if (!impFeat) {
+        impFeat = { id: fid++, name: feature.module, description: '', color: FEAT_COLORS[(S.features.length) % FEAT_COLORS.length] };
+        S.features.push(impFeat);
+      }
+
       S.tasks.push({
         id: tid++,
         name: t.name,
-        feature: feature.module,
+        featureId: impFeat.id,
+        feature: impFeat.name,
         assignee,
         priority,
         startDate: '', eta: '', deliveryDate: '',
@@ -2604,10 +2804,21 @@ function loadSampleData() {
   ];
   mid = 7;
 
+  S.features = [
+    { id:1, name:'Authentication & Security',  description:'Login, MFA, session management, GDPR compliance', color:'#6366f1' },
+    { id:2, name:'Backend & API',               description:'API gateway, database, error handling, logging',   color:'#3b82f6' },
+    { id:3, name:'Dashboard & UI',              description:'Frontend redesign, analytics charts, mobile fixes', color:'#10b981' },
+    { id:4, name:'Payments & Integrations',     description:'Stripe gateway, Mixpanel analytics integration',   color:'#f59e0b' },
+    { id:5, name:'Infrastructure & DevOps',     description:'CI/CD pipeline, load testing, go-live deployment', color:'#8b5cf6' },
+    { id:6, name:'QA & Testing',                description:'UAT authoring, security and regression testing',   color:'#ec4899' },
+    { id:7, name:'Product & Documentation',     description:'Stakeholder demo, release notes, changelogs',      color:'#14b8a6' },
+  ];
+  fid = 8;
+
   S.tasks = [
     // ── DONE ──────────────────────────────────────────────────────────────
     {
-      id:1, name:'CI/CD Pipeline Setup', assignee:"Tom O'Brien",
+      id:1, name:'CI/CD Pipeline Setup', assignee:"Tom O'Brien", featureId:5, feature:'Infrastructure & DevOps',
       priority:'High', startDate:'2026-05-12', eta:'2026-05-23', deliveryDate:'2026-05-22',
       hlStatus:'Done', effort:20, riskFlag:false, dependency:'',
       detailedStatus:'Jenkins pipeline configured with automated build, test, and deployment stages. Blue/green deployment enabled for zero-downtime releases.',
@@ -2615,7 +2826,7 @@ function loadSampleData() {
       comments:'Completed 1 day ahead of schedule. Automated rollback tested and verified successfully.'
     },
     {
-      id:2, name:'User Authentication Module (OAuth 2.0 + MFA)', assignee:'Raj Patel',
+      id:2, name:'User Authentication Module (OAuth 2.0 + MFA)', assignee:'Raj Patel', featureId:1, feature:'Authentication & Security',
       priority:'Critical', startDate:'2026-05-12', eta:'2026-05-30', deliveryDate:'2026-05-29',
       hlStatus:'Done', effort:30, riskFlag:false, dependency:'',
       detailedStatus:'OAuth 2.0 + JWT implemented. MFA via OTP validated across iOS, Android, and desktop. Session token expiry and refresh logic verified. Security review passed.',
@@ -2623,7 +2834,7 @@ function loadSampleData() {
       comments:'Pen test for auth module scheduled for week of June 9. Minor hardening items logged as tech debt.'
     },
     {
-      id:3, name:'Database Schema Design & Architecture Review', assignee:'Sarah Chen',
+      id:3, name:'Database Schema Design & Architecture Review', assignee:'Sarah Chen', featureId:2, feature:'Backend & API',
       priority:'High', startDate:'2026-05-12', eta:'2026-05-28', deliveryDate:'2026-05-30',
       hlStatus:'Done', effort:24, riskFlag:false, dependency:'',
       detailedStatus:'Final schema approved by architecture board after 2 rounds of review. Versioned migration scripts created for all 17 table changes. ERD updated and published.',
@@ -2632,7 +2843,7 @@ function loadSampleData() {
     },
     // ── IN PROGRESS ───────────────────────────────────────────────────────
     {
-      id:4, name:'API Gateway Configuration & Route Mapping', assignee:'Sarah Chen',
+      id:4, name:'API Gateway Configuration & Route Mapping', assignee:'Sarah Chen', featureId:2, feature:'Backend & API',
       priority:'Critical', startDate:'2026-05-26', eta:'2026-06-09', deliveryDate:'',
       hlStatus:'In Progress', effort:40, riskFlag:false,
       dependency:'Database Schema Design & Architecture Review',
@@ -2641,7 +2852,7 @@ function loadSampleData() {
       comments:'On track for June 9. Need 1 day buffer for QA smoke test before marking complete. See Risk R5 re: legacy API schema issues.'
     },
     {
-      id:5, name:'Error Handling & Centralised Logging Framework', assignee:'Raj Patel',
+      id:5, name:'Error Handling & Centralised Logging Framework', assignee:'Raj Patel', featureId:2, feature:'Backend & API',
       priority:'Medium', startDate:'2026-06-01', eta:'2026-06-10', deliveryDate:'',
       hlStatus:'In Progress', effort:25, riskFlag:false,
       dependency:'API Gateway Configuration & Route Mapping',
@@ -2650,7 +2861,7 @@ function loadSampleData() {
       comments:'Will complete ELK dashboards once API Gateway routes are finalised so log schemas can be aligned with actual payloads.'
     },
     {
-      id:6, name:'Dashboard UI Redesign (Analytics & Charts)', assignee:'Priya Kumar',
+      id:6, name:'Dashboard UI Redesign (Analytics & Charts)', assignee:'Priya Kumar', featureId:3, feature:'Dashboard & UI',
       priority:'High', startDate:'2026-05-19', eta:'2026-06-07', deliveryDate:'',
       hlStatus:'In Progress', effort:50, riskFlag:true,
       dependency:'API Gateway Configuration & Route Mapping',
@@ -2659,7 +2870,7 @@ function loadSampleData() {
       comments:'ETA is tight. If API Gateway /reports endpoint not ready by June 7, charts slip to Sprint 5. Scope has grown ~30% since Sprint 2 planning — see Risk R6.'
     },
     {
-      id:7, name:'UAT Test Case Authoring & Execution', assignee:'Marcus Williams',
+      id:7, name:'UAT Test Case Authoring & Execution', assignee:'Marcus Williams', featureId:6, feature:'QA & Testing',
       priority:'High', startDate:'2026-06-01', eta:'2026-06-16', deliveryDate:'',
       hlStatus:'In Progress', effort:35, riskFlag:false,
       dependency:'User Authentication Module, API Gateway Configuration & Route Mapping',
@@ -2668,7 +2879,7 @@ function loadSampleData() {
       comments:'Targeting execution start June 10 once API Gateway complete. Minimum 3 business days needed for full run. Blocking go/no-go decision for June 17 go-live.'
     },
     {
-      id:8, name:'Mobile Responsive UI Fixes (iOS/Android)', assignee:'Priya Kumar',
+      id:8, name:'Mobile Responsive UI Fixes (iOS/Android)', assignee:'Priya Kumar', featureId:3, feature:'Dashboard & UI',
       priority:'Medium', startDate:'2026-06-02', eta:'2026-06-11', deliveryDate:'',
       hlStatus:'In Progress', effort:20, riskFlag:false,
       dependency:'Dashboard UI Redesign (Analytics & Charts)',
@@ -2678,7 +2889,7 @@ function loadSampleData() {
     },
     // ── AT RISK ───────────────────────────────────────────────────────────
     {
-      id:9, name:'Session Management & Concurrent Session Enforcement', assignee:'Sarah Chen',
+      id:9, name:'Session Management & Concurrent Session Enforcement', assignee:'Sarah Chen', featureId:1, feature:'Authentication & Security',
       priority:'High', startDate:'2026-05-26', eta:'2026-06-05', deliveryDate:'',
       hlStatus:'At Risk', effort:30, riskFlag:true,
       dependency:'User Authentication Module (OAuth 2.0 + MFA)',
@@ -2687,7 +2898,7 @@ function loadSampleData() {
       comments:'ETA was today (June 5) — will miss by 3 days. Requesting extension to June 8. Architecture decision needed by June 6 morning. See Risk R1.'
     },
     {
-      id:10, name:'Stakeholder C-Suite Demo Preparation', assignee:'Aisha Johnson',
+      id:10, name:'Stakeholder C-Suite Demo Preparation', assignee:'Aisha Johnson', featureId:7, feature:'Product & Documentation',
       priority:'Critical', startDate:'2026-06-02', eta:'2026-06-06', deliveryDate:'',
       hlStatus:'At Risk', effort:25, riskFlag:true,
       dependency:'API Gateway Configuration & Route Mapping, Dashboard UI Redesign (Analytics & Charts)',
@@ -2696,7 +2907,7 @@ function loadSampleData() {
       comments:'C-Suite demo is June 6 at 10am. If environment not stable by 8am June 6, will proceed with screen recording. Brief stakeholders on contingency by 9am. See Risk R8.'
     },
     {
-      id:11, name:'Load Testing Infrastructure & Execution', assignee:"Tom O'Brien",
+      id:11, name:'Load Testing Infrastructure & Execution', assignee:"Tom O'Brien", featureId:5, feature:'Infrastructure & DevOps',
       priority:'High', startDate:'2026-06-01', eta:'2026-06-09', deliveryDate:'',
       hlStatus:'At Risk', effort:35, riskFlag:true,
       dependency:'CI/CD Pipeline Setup',
@@ -2706,7 +2917,7 @@ function loadSampleData() {
     },
     // ── BLOCKED ───────────────────────────────────────────────────────────
     {
-      id:12, name:'Database Migration Script — Production Execution', assignee:'Raj Patel',
+      id:12, name:'Database Migration Script — Production Execution', assignee:'Raj Patel', featureId:2, feature:'Backend & API',
       priority:'Critical', startDate:'2026-05-26', eta:'2026-06-06', deliveryDate:'',
       hlStatus:'Blocked', effort:45, riskFlag:true,
       dependency:'Database Schema Design & Architecture Review',
@@ -2715,7 +2926,7 @@ function loadSampleData() {
       comments:'If DBA sign-off arrives June 9, migration can run June 10 during 4-hour maintenance window (00:00–04:00). June 17 go-live still achievable on this path. See Risk R7 re: staging vs production schema drift.'
     },
     {
-      id:13, name:'Third-party Analytics Integration (Mixpanel)', assignee:'Priya Kumar',
+      id:13, name:'Third-party Analytics Integration (Mixpanel)', assignee:'Priya Kumar', featureId:4, feature:'Payments & Integrations',
       priority:'Medium', startDate:'2026-06-02', eta:'2026-06-13', deliveryDate:'',
       hlStatus:'Blocked', effort:25, riskFlag:false,
       dependency:'Dashboard UI Redesign (Analytics & Charts)',
@@ -2724,7 +2935,7 @@ function loadSampleData() {
       comments:'Non-critical for MVP go-live. Will ship without Mixpanel analytics and add in patch release if key not received by June 13. Not blocking release.'
     },
     {
-      id:14, name:'GDPR & Data Privacy Legal Compliance Sign-off', assignee:'Aisha Johnson',
+      id:14, name:'GDPR & Data Privacy Legal Compliance Sign-off', assignee:'Aisha Johnson', featureId:1, feature:'Authentication & Security',
       priority:'Critical', startDate:'2026-05-19', eta:'2026-06-06', deliveryDate:'',
       hlStatus:'Blocked', effort:30, riskFlag:true,
       dependency:'',
@@ -2734,7 +2945,7 @@ function loadSampleData() {
     },
     // ── NOT STARTED ───────────────────────────────────────────────────────
     {
-      id:15, name:'Payment Gateway Integration (Stripe)', assignee:'Raj Patel',
+      id:15, name:'Payment Gateway Integration (Stripe)', assignee:'Raj Patel', featureId:4, feature:'Payments & Integrations',
       priority:'Critical', startDate:'2026-06-09', eta:'2026-06-18', deliveryDate:'',
       hlStatus:'Not Started', effort:60, riskFlag:true,
       dependency:'API Gateway Configuration & Route Mapping, Database Migration Script — Production Execution',
@@ -2743,7 +2954,7 @@ function loadSampleData() {
       comments:'Cannot start until API Gateway complete (June 9). 7-day estimate is aggressive given scope. If DB migration blocker not cleared by June 9, start date shifts and go-live is at risk. See Risk R2 re: incomplete vendor specs.'
     },
     {
-      id:16, name:'Security & Performance Regression Testing', assignee:'Marcus Williams',
+      id:16, name:'Security & Performance Regression Testing', assignee:'Marcus Williams', featureId:6, feature:'QA & Testing',
       priority:'High', startDate:'2026-06-10', eta:'2026-06-17', deliveryDate:'',
       hlStatus:'Not Started', effort:40, riskFlag:false,
       dependency:'Load Testing Infrastructure & Execution, UAT Test Case Authoring & Execution',
@@ -2752,7 +2963,7 @@ function loadSampleData() {
       comments:'Marcus has available capacity from June 10 onwards. Depends on Load Testing infrastructure being ready. Results needed before go/no-go decision June 17.'
     },
     {
-      id:17, name:'Production Go-Live Runbook & Deployment', assignee:"Tom O'Brien",
+      id:17, name:'Production Go-Live Runbook & Deployment', assignee:"Tom O'Brien", featureId:5, feature:'Infrastructure & DevOps',
       priority:'High', startDate:'2026-06-12', eta:'2026-06-17', deliveryDate:'',
       hlStatus:'Not Started', effort:40, riskFlag:true,
       dependency:'Database Migration Script — Production Execution, Load Testing Infrastructure & Execution, GDPR & Data Privacy Legal Compliance Sign-off',
@@ -2761,7 +2972,7 @@ function loadSampleData() {
       comments:'Tom at 119% capacity. THREE hard dependencies must clear before this can start. If any slip, runbook authoring and dry run cannot happen. Strongly recommend engaging second DevOps resource for this task.'
     },
     {
-      id:18, name:'Release Notes, Changelog & User Documentation', assignee:'Aisha Johnson',
+      id:18, name:'Release Notes, Changelog & User Documentation', assignee:'Aisha Johnson', featureId:7, feature:'Product & Documentation',
       priority:'Low', startDate:'2026-06-09', eta:'2026-06-16', deliveryDate:'',
       hlStatus:'Not Started', effort:15, riskFlag:false,
       dependency:'All feature tasks',
@@ -4161,6 +4372,7 @@ if (!S.tasks.length && !S.team.length) loadSampleData();
 updateHeader();
 renderOverview();
 fillAssignees(['f-assignee','t-assignee','r-owner']);
+fillFeatures(['f-feature','t-feature']);
 setTimeout(() => { _ptInit = true; }, 0);
 
 // ── Panel TXT Exports ──────────────────────────────────────

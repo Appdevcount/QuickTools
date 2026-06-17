@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ta" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>தஜ்வீத் கற்றல் கருவி | أداة تعلم التجويد</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --primary: #1a5276;
+      --secondary: #117a65;
+      --accent: #d4ac0d;
+      --bg: #f8f5f0;
+      --card: #ffffff;
+      --text: #1c1c1c;
+      --muted: #6b7280;
+      --border: #e5e0d8;
+
+      /* Tajweed colors */
+      --idhar: #1a5276;
+      --idgham-ghunnah: #1e8449;
+      --idgham-bila: #2471a3;
+      --iqlab: #7d3c98;
+      --ikhfa: #d35400;
+      --qalqala: #c0392b;
+      --madd: #148f77;
+      --ghunnah: #1a5276;
+      --waqf: #6d4c41;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans Tamil', 'Noto Naskh Arabic', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #0d2137 0%, #1a5276 60%, #117a65 100%);
+      color: white;
+      padding: 24px 20px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .header-arabic {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      direction: rtl;
+      letter-spacing: 0;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .header-tamil {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .header-sub {
+      font-size: 0.85rem;
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+
+    /* ===== COLOR LEGEND ===== */
+    .legend-bar {
+      background: #0d2137;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.72rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; color: #cdd5dc; }
+    .legend-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ===== TABS ===== */
+    .tab-nav {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 13px 18px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--primary); background: #f0f4f8; }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: #eef4fb;
+    }
+
+    /* ===== CONTENT ===== */
+    .content { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+    .tab-panel { display: none; animation: fadeIn 0.25s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .section-title-ar {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      direction: rtl;
+      color: var(--primary);
+      line-height: 1.3;
+    }
+    .section-title-ta { font-size: 0.95rem; color: var(--muted); margin-top: 2px; }
+    .section-intro {
+      background: linear-gradient(135deg, #eef4fb, #e8f5f1);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: #2c3e50;
+    }
+
+    /* ===== RULE CARD ===== */
+    .rule-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s;
+    }
+    .rule-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .rule-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      gap: 10px;
+    }
+    .rule-header-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+    .rule-color-badge {
+      width: 8px; min-width: 8px; height: 44px;
+      border-radius: 4px;
+    }
+    .rule-name-ar {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      direction: rtl;
+      line-height: 1.3;
+    }
+    .rule-name-ta { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .rule-toggle {
+      font-size: 1.2rem;
+      color: var(--muted);
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .rule-card.open .rule-toggle { transform: rotate(180deg); }
+    .rule-body {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .rule-card.open .rule-body { display: block; }
+
+    .rule-def {
+      padding: 12px 0 14px;
+      font-size: 0.88rem;
+      line-height: 1.9;
+      color: #34495e;
+    }
+    .rule-def strong { color: var(--primary); }
+
+    /* Letters grid */
+    .letters-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .letters-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      direction: rtl;
+    }
+    .letter-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      border: 2px solid currentColor;
+      opacity: 0.9;
+      min-width: 46px;
+    }
+
+    /* Example block */
+    .examples-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+    }
+    .example-item {
+      background: #f8f5f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+    }
+    .example-arabic {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.6rem;
+      direction: rtl;
+      text-align: right;
+      line-height: 1.8;
+      margin-bottom: 6px;
+    }
+    .example-tamil {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+      direction: rtl;
+    }
+    .example-explanation {
+      font-size: 0.75rem;
+      color: #5d6d7e;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* ===== HIGHLIGHTED ARABIC TEXT ===== */
+    .t-idhar { color: var(--idhar); font-weight: 700; }
+    .t-idgham { color: var(--idgham-ghunnah); font-weight: 700; }
+    .t-idgham-bila { color: var(--idgham-bila); font-weight: 700; }
+    .t-iqlab { color: var(--iqlab); font-weight: 700; }
+    .t-ikhfa { color: var(--ikhfa); font-weight: 700; }
+    .t-qalqala { color: var(--qalqala); font-weight: 700; }
+    .t-madd { color: var(--madd); font-weight: 700; }
+    .t-ghunnah { color: #1a5276; font-weight: 700; }
+    .t-highlight { background: #fff3cd; border-radius: 3px; padding: 1px 3px; }
+
+    /* ===== PRACTICE SECTION ===== */
+    .practice-box {
+      background: linear-gradient(135deg, #0d2137, #1a5276);
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .practice-box h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.7;
+      margin-bottom: 14px;
+    }
+    .practice-verse {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.55rem;
+      direction: rtl;
+      text-align: right;
+      line-height: 2.2;
+      margin-bottom: 10px;
+    }
+    .practice-translation {
+      font-size: 0.8rem;
+      opacity: 0.65;
+      text-align: right;
+      direction: rtl;
+      line-height: 1.6;
+    }
+
+    /* ===== QUICK REFERENCE TABLE ===== */
+    .ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .ref-table th {
+      background: var(--primary);
+      color: white;
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .ref-table th:last-child,
+    .ref-table td:last-child { text-align: right; direction: rtl; }
+    .ref-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .ref-table tr:last-child td { border-bottom: none; }
+    .ref-table tr:nth-child(even) td { background: #f8f5f0; }
+    .ref-table tr:hover td { background: #eef4fb; }
+    .ar-cell {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.1rem;
+      direction: rtl;
+    }
+
+    /* ===== MADD TABLE ===== */
+    .madd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .madd-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid;
+    }
+    .madd-card-title-ar {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      direction: rtl;
+      margin-bottom: 4px;
+    }
+    .madd-card-title-ta { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+    .madd-duration {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .madd-def { font-size: 0.82rem; line-height: 1.7; color: #34495e; }
+    .madd-example-ar {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1.5rem;
+      direction: rtl;
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    /* ===== WAQF SECTION ===== */
+    .waqf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .waqf-item {
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      background: white;
+      text-align: center;
+    }
+    .waqf-symbol {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 2.2rem;
+      direction: rtl;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .waqf-name-ar {
+      font-family: 'Noto Naskh Arabic', serif;
+      font-size: 1rem;
+      direction: rtl;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .waqf-name-ta { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+    .waqf-desc { font-size: 0.76rem; color: #5d6d7e; line-height: 1.5; }
+
+    /* ===== ABOUT PANEL ===== */
+    .about-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .about-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    .about-card p { font-size: 0.87rem; line-height: 1.9; color: #34495e; margin-bottom: 10px; }
+    .about-card ul { padding-left: 18px; }
+    .about-card li { font-size: 0.85rem; line-height: 1.8; color: #34495e; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .header-arabic { font-size: 1.5rem; }
+      .header-tamil { font-size: 1.1rem; }
+      .examples-grid { grid-template-columns: 1fr; }
+      .madd-grid { grid-template-columns: 1fr; }
+      .waqf-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-arabic">أداة تعلم أحكام التجويد</div>
+  <div class="header-tamil">தஜ்வீத் விதிகள் கற்றல் கருவி</div>
+  <div class="header-sub">Quran Recitation Rules · குர்ஆன் ஓதும் விதிகள்</div>
+</header>
+
+<!-- ===== LEGEND ===== -->
+<div class="legend-bar">
+  <span style="color:#cdd5dc;font-size:0.72rem;font-weight:600;">நிற குறியீடுகள்:</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--idhar)"></span>இழ்ஹார்</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--idgham-ghunnah)"></span>இத்ஃகாம் (குன்னா)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--idgham-bila)"></span>இத்ஃகாம் (பிலா)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--iqlab)"></span>இக்லாப்</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--ikhfa)"></span>இக்ஃபா</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--qalqala)"></span>கல்கலா</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--madd)"></span>மத்து</span>
+</div>
+
+<!-- ===== TABS ===== -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('noon')">நூன் / தன்வீன்</button>
+  <button class="tab-btn" onclick="switchTab('meem')">மீம் சாகினா</button>
+  <button class="tab-btn" onclick="switchTab('madd')">மத்து</button>
+  <button class="tab-btn" onclick="switchTab('qalqala')">கல்கலா</button>
+  <button class="tab-btn" onclick="switchTab('waqf')">வக்ஃப்</button>
+  <button class="tab-btn" onclick="switchTab('reference')">விரைவு அட்டவணை</button>
+  <button class="tab-btn" onclick="switchTab('about')">பற்றி</button>
+</nav>
+
+<div class="content">
+
+  <!-- ============================
+       TAB 1: NOON SAKINAH
+  ============================= -->
+  <div class="tab-panel active" id="tab-noon">
+    <div class="section-header">
+      <div class="section-icon" style="background:#eef4fb;">📖</div>
+      <div>
+        <div class="section-title-ar">أحكام النون الساكنة والتنوين</div>
+        <div class="section-title-ta">நூன் சாகினா மற்றும் தன்வீன் விதிகள்</div>
+      </div>
+    </div>
+    <div class="section-intro">
+      <strong>நூன் சாகினா (نْ)</strong> என்பது சுக்கூன் கொண்ட நூன் எழுத்து. <strong>தன்வீன்</strong> (ً ٍ ٌ) என்பது இரட்டை ஹரகாத். இவை இரண்டும் வரும்போது அடுத்து வரும் எழுத்தைப் பொறுத்து நான்கு விதிகள் பயன்படுத்தப்படும்.
+    </div>
+
+    <!-- IDHAR -->
+    <div class="rule-card open">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--idhar)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--idhar)">الإظهار الحلقي</div>
+            <div class="rule-name-ta">இழ்ஹார் ஹல்கீ — தெளிவான உச்சரிப்பு</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          நூன் சாகினா அல்லது தன்வீனுக்கு பிறகு <strong>தொண்டை எழுத்துக்கள் (حروف الحلق)</strong> வந்தால், நூன் <strong>தெளிவாக, குன்னா இல்லாமல்</strong> ஓதப்படும். இதை <strong>இழ்ஹார்</strong> என்பர்.
+        </div>
+        <div class="letters-label">தொண்டை எழுத்துக்கள் (6)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--idhar)">ء</span>
+          <span class="letter-chip" style="color:var(--idhar)">ه</span>
+          <span class="letter-chip" style="color:var(--idhar)">ع</span>
+          <span class="letter-chip" style="color:var(--idhar)">ح</span>
+          <span class="letter-chip" style="color:var(--idhar)">غ</span>
+          <span class="letter-chip" style="color:var(--idhar)">خ</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idhar">مِنْ</span> عِلْمٍ</div>
+            <div class="example-explanation">நூன் சாகினா + ع → இழ்ஹார்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idhar">مَنْ</span> هَاجَرَ</div>
+            <div class="example-explanation">நூன் சாகினா + ه → இழ்ஹார்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">عَلِيمٌ <span class="t-idhar">حَكِيمٌ</span></div>
+            <div class="example-explanation">தன்வீன் + ح → இழ்ஹார்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idhar">مِنْ</span> خَيْرٍ</div>
+            <div class="example-explanation">நூன் சாகினா + خ → இழ்ஹார்</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDGHAM WITH GHUNNAH -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--idgham-ghunnah)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--idgham-ghunnah)">الإدغام بغنة</div>
+            <div class="rule-name-ta">இத்ஃகாம் பில்குன்னா — குன்னாவுடன் சேர்த்தல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          நூன் சாகினா அல்லது தன்வீனுக்கு பிறகு <strong>ي ن م و</strong> ஆகிய எழுத்துக்கள் வந்தால், நூன் அந்த எழுத்தில் <strong>குன்னாவுடன்</strong> சேர்த்து ஓதப்படும். ஆனால் ஒரே வார்த்தையில் ஒரு நூன் பிறகு ي அல்லது و வந்தால் இது பொருந்தாது (எ.கா: صِنْوَانٌ, دُنْيَا).
+        </div>
+        <div class="letters-label">யர்மலூன் எழுத்துக்கள் (4)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--idgham-ghunnah)">ي</span>
+          <span class="letter-chip" style="color:var(--idgham-ghunnah)">ن</span>
+          <span class="letter-chip" style="color:var(--idgham-ghunnah)">م</span>
+          <span class="letter-chip" style="color:var(--idgham-ghunnah)">و</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham">مِنْ يَّوْمٍ</span></div>
+            <div class="example-explanation">நூன் + ي → "மிய்யவ்மின்" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham">مِنْ نَّبَإٍ</span></div>
+            <div class="example-explanation">நூன் + ن → "மின்னபயின்" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">رَحِيمٌ <span class="t-idgham">وَّدُودٌ</span></div>
+            <div class="example-explanation">தன்வீன் + و → குன்னாவுடன் சேர்க்கும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham">مِنْ مَّاءٍ</span></div>
+            <div class="example-explanation">நூன் + م → "மிம்மாயின்" என ஓதப்படும்</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDGHAM WITHOUT GHUNNAH -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--idgham-bila)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--idgham-bila)">الإدغام بلا غنة</div>
+            <div class="rule-name-ta">இத்ஃகாம் பிலா குன்னா — குன்னா இல்லாமல் சேர்த்தல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          நூன் சாகினா அல்லது தன்வீனுக்கு பிறகு <strong>ل</strong> அல்லது <strong>ر</strong> வந்தால், நூன் குன்னா இல்லாமல் அந்த எழுத்தில் சேர்த்து ஓதப்படும்.
+        </div>
+        <div class="letters-label">எழுத்துக்கள் (2)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--idgham-bila)">ل</span>
+          <span class="letter-chip" style="color:var(--idgham-bila)">ر</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham-bila">مِنْ لَّدُنَّهُ</span></div>
+            <div class="example-explanation">நூன் + ل → "மில்லதுன்னஹூ" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham-bila">مِنْ رَّبِّكَ</span></div>
+            <div class="example-explanation">நூன் + ر → "மிர்றப்பிக" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">غَفُورٌ <span class="t-idgham-bila">رَّحِيمٌ</span></div>
+            <div class="example-explanation">தன்வீன் + ر → குன்னா இல்லாமல் சேர்க்கும்</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IQLAB -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--iqlab)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--iqlab)">الإقلاب</div>
+            <div class="rule-name-ta">இக்லாப் — மாற்றுதல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          நூன் சாகினா அல்லது தன்வீனுக்கு பிறகு <strong>ب</strong> வந்தால், நூன் <strong>மீம்</strong> ஆக மாற்றி, குன்னாவுடன் ஓதப்படும். ஓலைகளில் சிலவற்றில் نூன் மீது <strong>صـ</strong> அல்லது <strong>م</strong> என்ற அடையாளம் இருக்கும்.
+        </div>
+        <div class="letters-label">எழுத்து (1)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--iqlab)">ب</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-iqlab">مِنْ بَعْدِ</span></div>
+            <div class="example-explanation">நூன் + ب → "மிம்பஃதி" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">سَمِيعٌ <span class="t-iqlab">بَصِيرٌ</span></div>
+            <div class="example-explanation">தன்வீன் + ب → "சமீயும்பஸீர்" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-iqlab">أَنبِئْهُمْ</span></div>
+            <div class="example-explanation">ن + ب (ஒரே வார்த்தை) → இக்லாப்</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IKHFA -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--ikhfa)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--ikhfa)">الإخفاء الحقيقي</div>
+            <div class="rule-name-ta">இக்ஃபா ஹகீகீ — மறைத்தல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          நூன் சாகினா அல்லது தன்வீனுக்கு பிறகு மேலே சொன்ன விதிகளில் உள்ள எழுத்துக்கள் அல்லாத <strong>மீதமுள்ள 15 எழுத்துக்கள்</strong> வந்தால், நூன் <strong>குன்னாவுடன் மறைத்து</strong> ஓதப்படும். முழுமையாக ஒலிக்காமல், முழுமையாக சேர்க்காமல் நடுநிலையில் ஓதப்படும்.
+        </div>
+        <div class="letters-label">இக்ஃபா எழுத்துக்கள் (15)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--ikhfa)">ت</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ث</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ج</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">د</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ذ</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ز</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">س</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ش</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ص</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ض</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ط</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ظ</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ف</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ق</span>
+          <span class="letter-chip" style="color:var(--ikhfa)">ك</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-ikhfa">مِنْ تَحْتِهَا</span></div>
+            <div class="example-explanation">நூன் + ت → இக்ஃபா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-ikhfa">أَنتُمْ</span></div>
+            <div class="example-explanation">ن + ت (ஒரே வார்த்தை) → இக்ஃபா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">عَلِيمٌ <span class="t-ikhfa">خَبِيرٌ</span></div>
+            <div class="example-explanation">தன்வீன் + خ → இக்ஃபா (ஆனால் சில அறிஞர்கள் இழ்ஹார் என்பர்)</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-ikhfa">مَنْ كَفَرَ</span></div>
+            <div class="example-explanation">நூன் + ك → இக்ஃபா</div>
+          </div>
+        </div>
+
+        <div class="practice-box" style="margin-top:16px;">
+          <h4>பயிற்சி வசனம் — سورة البقرة 2:255 (ஆயத்துல் குர்சி)</h4>
+          <div class="practice-verse">
+            <span class="t-idhar">اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ</span> الْحَيُّ الْقَيُّومُ ۚ
+            <span class="t-ikhfa">لَا تَأْخُذُهُ</span> سِنَةٌ وَلَا نَوْمٌ ۚ
+            لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ
+          </div>
+          <div class="practice-translation">அல்லாஹ் — அவனைத் தவிர வேறு நாயன் இல்லை; அவன் என்றும் உயிருடன் இருப்பவன், யாவற்றையும் நிலைநிறுத்துபவன்.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 2: MEEM SAKINAH
+  ============================= -->
+  <div class="tab-panel" id="tab-meem">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0e8f7;">🔤</div>
+      <div>
+        <div class="section-title-ar">أحكام الميم الساكنة</div>
+        <div class="section-title-ta">மீம் சாகினா விதிகள்</div>
+      </div>
+    </div>
+    <div class="section-intro">
+      <strong>மீம் சாகினா (مْ)</strong> — சுக்கூன் கொண்ட மீம் வரும்போது அடுத்து வரும் எழுத்தைப் பொறுத்து மூன்று விதிகள் பயன்படுத்தப்படும்.
+    </div>
+
+    <!-- IKHFA SHAFAWI -->
+    <div class="rule-card open">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--ikhfa)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--ikhfa)">الإخفاء الشفوي</div>
+            <div class="rule-name-ta">இக்ஃபா ஷஃபவீ — உதட்டு மறைத்தல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          மீம் சாகினாவுக்கு பிறகு <strong>ب</strong> வந்தால், மீம் குன்னாவுடன் <strong>மெல்ல மறைத்து</strong> ஓதப்படும். உதடுகளை அடைத்து, மூக்கில் ஒலி தொடர்கிறது.
+        </div>
+        <div class="letters-label">எழுத்து (1)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--ikhfa)">ب</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic">وَهُمْ <span class="t-ikhfa">بِالْآخِرَةِ</span></div>
+            <div class="example-explanation">مْ + ب → இக்ஃபா ஷஃபவீ</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">أَعْلَمُ <span class="t-ikhfa">بِمَا</span></div>
+            <div class="example-explanation">مْ + ب → உதட்டு மறைப்பு</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDGHAM SHAFAWI -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--idgham-ghunnah)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--idgham-ghunnah)">الإدغام الشفوي</div>
+            <div class="rule-name-ta">இத்ஃகாம் ஷஃபவீ — உதட்டு சேர்த்தல்</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          மீம் சாகினாவுக்கு பிறகு <strong>م</strong> வந்தால், மீம் குன்னாவுடன் அடுத்த மீமில் <strong>முழுமையாக சேர்த்து</strong> ஓதப்படும்.
+        </div>
+        <div class="letters-label">எழுத்து (1)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--idgham-ghunnah)">م</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idgham">لَهُمْ مَّا</span></div>
+            <div class="example-explanation">مْ + م → "லஹும்மா" என ஓதப்படும்</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">كُنتُمْ <span class="t-idgham">مُّؤْمِنِينَ</span></div>
+            <div class="example-explanation">مْ + م → இத்ஃகாம் ஷஃபவீ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDHAR SHAFAWI -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--idhar)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--idhar)">الإظهار الشفوي</div>
+            <div class="rule-name-ta">இழ்ஹார் ஷஃபவீ — உதட்டு தெளிவான உச்சரிப்பு</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          மீம் சாகினாவுக்கு பிறகு <strong>ب</strong> மற்றும் <strong>م</strong> தவிர வேறு எந்த எழுத்தும் வந்தால், மீம் <strong>தெளிவாக குன்னா இல்லாமல்</strong> ஓதப்படும். குறிப்பாக <strong>و</strong> மற்றும் <strong>ف</strong> வரும்போது சிறப்பு கவனம் தேவை.
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள்</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic"><span class="t-idhar">أَنعَمتَ عَلَيهِمْ</span></div>
+            <div class="example-explanation">مْ + غ → இழ்ஹார் ஷஃபவீ</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">لَهُمْ <span class="t-idhar">فِيهَا</span></div>
+            <div class="example-explanation">مْ + ف → தெளிவான மீம், ف-ஐ கவனமாக பிரிக்க</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">عَلَيهِمْ <span class="t-idhar">وَلَا</span></div>
+            <div class="example-explanation">مْ + و → தெளிவாக மீம் ஒலிக்க வேண்டும்</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 3: MADD
+  ============================= -->
+  <div class="tab-panel" id="tab-madd">
+    <div class="section-header">
+      <div class="section-icon" style="background:#e8f5f1;">〰️</div>
+      <div>
+        <div class="section-title-ar">أحكام المدود</div>
+        <div class="section-title-ta">மத்து விதிகள் — நீட்டி ஓதுதல்</div>
+      </div>
+    </div>
+    <div class="section-intro">
+      <strong>மத்து (المد)</strong> என்பது குர்ஆனில் சில எழுத்துக்களை <strong>நீட்டி ஓதுவது</strong>. நீட்டும் அளவை <strong>ஹரகாத்</strong> (حركات) என்ற அலகால் அளவிடுவர். ஒரு ஹரகாத் என்பது ஒரு விரலை மடக்கும் நேரம்.
+      <br><br>
+      மூன்று அடிப்படை மத்து எழுத்துக்கள்: <span style="font-family:'Noto Naskh Arabic',serif;font-size:1.3rem;color:var(--madd);font-weight:700;direction:rtl;"> ا  و  ي </span>
+    </div>
+
+    <div class="madd-grid">
+      <!-- TABIEE -->
+      <div class="madd-card" style="border-color:var(--madd);background:#eafaf5;">
+        <div class="madd-card-title-ar" style="color:var(--madd)">المد الطبيعي</div>
+        <div class="madd-card-title-ta">மத்துல் தபீஈ — இயல்பு மத்து</div>
+        <span class="madd-duration" style="background:var(--madd);color:white;">2 ஹரகாத்</span>
+        <div class="madd-def">
+          மத்து எழுத்துக்களுக்கு முன்பு அல்லது பின்பு ஹம்ஸா அல்லது சுக்கூன் இல்லாமல் வந்தால் இயல்பாக 2 ஹரகாத் நீட்டப்படும்.
+        </div>
+        <div class="madd-example-ar" style="color:var(--madd)">
+          قَالَ · يَقُولُ · قِيلَ
+        </div>
+      </div>
+
+      <!-- MUTTASIL -->
+      <div class="madd-card" style="border-color:#2471a3;background:#eaf2fb;">
+        <div class="madd-card-title-ar" style="color:#2471a3">المد المتصل</div>
+        <div class="madd-card-title-ta">மத்துல் முத்தஸில் — இணைந்த மத்து</div>
+        <span class="madd-duration" style="background:#2471a3;color:white;">4–5 ஹரகாத்</span>
+        <div class="madd-def">
+          மத்து எழுத்துக்கு <strong>உடனடியாக அதே வார்த்தையில்</strong> ஹம்ஸா (ء) வந்தால் 4 அல்லது 5 ஹரகாத் நீட்டப்படும்.
+        </div>
+        <div class="madd-example-ar" style="color:#2471a3">
+          جَاءَ · سُوءَ · شَيْءٍ · جِيءَ
+        </div>
+      </div>
+
+      <!-- MUNFASIL -->
+      <div class="madd-card" style="border-color:#7d3c98;background:#f4ecf7;">
+        <div class="madd-card-title-ar" style="color:#7d3c98">المد المنفصل</div>
+        <div class="madd-card-title-ta">மத்துல் முன்ஃபஸில் — பிரிந்த மத்து</div>
+        <span class="madd-duration" style="background:#7d3c98;color:white;">4–5 ஹரகாத்</span>
+        <div class="madd-def">
+          ஒரு வார்த்தை மத்து எழுத்தில் முடிந்து, அடுத்த வார்த்தை ஹம்ஸாவில் தொடங்கினால் 4 அல்லது 5 ஹரகாத் நீட்டப்படும்.
+        </div>
+        <div class="madd-example-ar" style="color:#7d3c98">
+          إِنَّا أَعْطَيْنَاكَ · بِمَا أُنزِلَ
+        </div>
+      </div>
+
+      <!-- LAZIM -->
+      <div class="madd-card" style="border-color:#922b21;background:#fdedec;">
+        <div class="madd-card-title-ar" style="color:#922b21">المد اللازم</div>
+        <div class="madd-card-title-ta">மத்துல் லாஸிம் — கட்டாய மத்து</div>
+        <span class="madd-duration" style="background:#922b21;color:white;">6 ஹரகாத்</span>
+        <div class="madd-def">
+          மத்து எழுத்துக்கு பிறகு <strong>கட்டாயமான சுக்கூன்</strong> (சட்டத்தால் நிர்ணயிக்கப்பட்ட) வந்தால் 6 ஹரகாத் கட்டாயமாக நீட்டப்படும்.
+        </div>
+        <div class="madd-example-ar" style="color:#922b21">
+          الم · الر · حم · طسم
+        </div>
+      </div>
+
+      <!-- ARID LISUKON -->
+      <div class="madd-card" style="border-color:#d35400;background:#fef5e7;">
+        <div class="madd-card-title-ar" style="color:#d35400">المد العارض للسكون</div>
+        <div class="madd-card-title-ta">மத்து ஆரிழ் லிஸ்ஸுக்கூன் — நிறுத்தம் மத்து</div>
+        <span class="madd-duration" style="background:#d35400;color:white;">2, 4 அல்லது 6 ஹரகாத்</span>
+        <div class="madd-def">
+          வசன முடிவில் நிறுத்தும்போது (வக்ஃப்) மத்து எழுத்துக்கு பிறகு சுக்கூன் ஏற்படும்போது 2, 4, அல்லது 6 ஹரகாத் நீட்டலாம்.
+        </div>
+        <div class="madd-example-ar" style="color:#d35400">
+          نَسْتَعِينُ ۝ · الرَّحِيمِ ۝
+        </div>
+      </div>
+
+      <!-- LIN -->
+      <div class="madd-card" style="border-color:#1e8449;background:#eafaf1;">
+        <div class="madd-card-title-ar" style="color:#1e8449">مد اللين</div>
+        <div class="madd-card-title-ta">மத்துல் லீன் — மென்மை மத்து</div>
+        <span class="madd-duration" style="background:#1e8449;color:white;">2, 4 அல்லது 6 ஹரகாத்</span>
+        <div class="madd-def">
+          ஃபத்ஹாவுக்கு பிறகு <strong>سَوْ</strong> அல்லது <strong>سَيْ</strong> போன்று و அல்லது ي வரும்போது வக்ஃப் செய்தால் 2-6 ஹரகாத் வரை நீட்டலாம்.
+        </div>
+        <div class="madd-example-ar" style="color:#1e8449">
+          خَوْفٌ · بَيْتٌ · قُرَيْشٍ
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 4: QALQALA
+  ============================= -->
+  <div class="tab-panel" id="tab-qalqala">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fde8e8;">🔔</div>
+      <div>
+        <div class="section-title-ar">القلقلة</div>
+        <div class="section-title-ta">கல்கலா — அதிர்வு ஒலி</div>
+      </div>
+    </div>
+    <div class="section-intro">
+      <strong>கல்கலா (القلقلة)</strong> என்பது சுக்கூன் அல்லது வக்ஃபின்போது சில எழுத்துக்களில் ஏற்படும் <strong>இயல்பான அதிர்வு / எதிரொலி ஒலி</strong>. இந்த ஐந்து எழுத்துக்களை <strong>قُطْبُ جَدٍّ</strong> என்ற வாக்கியத்தால் நினைவில் வைக்கலாம்.
+    </div>
+
+    <div class="rule-card open">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:var(--qalqala)"></div>
+          <div>
+            <div class="rule-name-ar" style="color:var(--qalqala)">حروف القلقلة</div>
+            <div class="rule-name-ta">கல்கலா எழுத்துக்கள் — قُطْبُ جَدٍّ</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          கல்கலா <strong>இரண்டு நிலைகளில்</strong> வரும்:<br>
+          1. <strong>கல்கலா ஸுஃக்ரா (சிறிய)</strong> — வார்த்தையின் நடுவில் சுக்கூன் வரும்போது, சிறிய அதிர்வு.<br>
+          2. <strong>கல்கலா குப்ரா (பெரிய)</strong> — வசன முடிவில் நிறுத்தும்போது (வக்ஃப்), பெரிய அதிர்வு.
+        </div>
+        <div class="letters-label">கல்கலா எழுத்துக்கள் (5)</div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:var(--qalqala)">ق</span>
+          <span class="letter-chip" style="color:var(--qalqala)">ط</span>
+          <span class="letter-chip" style="color:var(--qalqala)">ب</span>
+          <span class="letter-chip" style="color:var(--qalqala)">ج</span>
+          <span class="letter-chip" style="color:var(--qalqala)">د</span>
+        </div>
+        <div class="examples-label">எடுத்துக்காட்டுகள் — கல்கலா ஸுஃக்ரா (நடுவில்)</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic">يَ<span class="t-qalqala">ق</span>ُولُ</div>
+            <div class="example-explanation">ق சுக்கூன் — சிறிய கல்கலா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">يَ<span class="t-qalqala">ب</span>ْتَغُونَ</div>
+            <div class="example-explanation">ب சுக்கூன் — சிறிய கல்கலா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">وَأَ<span class="t-qalqala">ج</span>ْمَعِينَ</div>
+            <div class="example-explanation">ج சுக்கூன் — சிறிய கல்கலா</div>
+          </div>
+        </div>
+        <div class="examples-label" style="margin-top:16px;">கல்கலா குப்ரா (வசன முடிவில்)</div>
+        <div class="examples-grid">
+          <div class="example-item">
+            <div class="example-arabic">الْفَلَ<span class="t-qalqala">ق</span>ْ ۝</div>
+            <div class="example-explanation">سورة الفلق — பெரிய கல்கலா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">وَمَا وَلَ<span class="t-qalqala">د</span>ْ ۝</div>
+            <div class="example-explanation">سورة البلد — பெரிய கல்கலா</div>
+          </div>
+          <div class="example-item">
+            <div class="example-arabic">مِن وَرَاءِ حِجَا<span class="t-qalqala">ب</span>ْ ۝</div>
+            <div class="example-explanation">ب வக்ஃப் — பெரிய கல்கலா</div>
+          </div>
+        </div>
+
+        <div class="practice-box" style="margin-top:16px;">
+          <h4>பயிற்சி — سورة الإخلاص (நான்கு கல்கலா)</h4>
+          <div class="practice-verse">
+            قُلْ هُوَ اللَّهُ أَحَ<span class="t-qalqala">دٌ</span> ۝
+            اللَّهُ الصَّمَ<span class="t-qalqala">دُ</span> ۝
+            لَمْ يَلِ<span class="t-qalqala">دْ</span> وَلَمْ يُولَ<span class="t-qalqala">دْ</span> ۝
+            وَلَمْ يَكُن لَّهُ كُفُوًا أَحَ<span class="t-qalqala">دٌ</span> ۝
+          </div>
+          <div class="practice-translation">சொல்: அவன் அல்லாஹ் — ஒருவன். அல்லாஹ் — எல்லாம் சார்ந்தவன். அவன் பெறவுமில்லை, பெற்றெடுக்கவுமில்லை. அவனுக்கு நிகரானவர் யாரும் இல்லை.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAFKHIM AND TARQIQ note -->
+    <div class="rule-card">
+      <div class="rule-header" onclick="toggleCard(this)">
+        <div class="rule-header-left">
+          <div class="rule-color-badge" style="background:#8e44ad"></div>
+          <div>
+            <div class="rule-name-ar" style="color:#8e44ad">التفخيم والترقيق</div>
+            <div class="rule-name-ta">தஃப்கீம் & தர்கீக் — கனமான & மெல்லிய உச்சரிப்பு</div>
+          </div>
+        </div>
+        <span class="rule-toggle">▼</span>
+      </div>
+      <div class="rule-body">
+        <div class="rule-def">
+          <strong>தஃப்கீம் (التفخيم)</strong> — கனமான/பருத்த ஒலி. எழுத்து ஓதும்போது நாக்கு பின்னோக்கி செல்கிறது.
+          <br><br>
+          <strong>தர்கீக் (الترقيق)</strong> — மெல்லிய/நேர்த்தியான ஒலி. நாக்கு முன்னோக்கி இருக்கிறது.
+          <br><br>
+          <strong>எப்போதும் கனமான எழுத்துக்கள்:</strong>
+        </div>
+        <div class="letters-grid">
+          <span class="letter-chip" style="color:#8e44ad">خ</span>
+          <span class="letter-chip" style="color:#8e44ad">ص</span>
+          <span class="letter-chip" style="color:#8e44ad">ض</span>
+          <span class="letter-chip" style="color:#8e44ad">ط</span>
+          <span class="letter-chip" style="color:#8e44ad">ظ</span>
+          <span class="letter-chip" style="color:#8e44ad">غ</span>
+          <span class="letter-chip" style="color:#8e44ad">ق</span>
+        </div>
+        <div class="rule-def" style="margin-top:12px;">
+          <strong>ر</strong> எழுத்து சில நிலைகளில் கனமாகவும், சில நிலைகளில் மெல்லியதாகவும் ஓதப்படும் — இது தனி விதிகளைப் பின்பற்றும்.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 5: WAQF
+  ============================= -->
+  <div class="tab-panel" id="tab-waqf">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0ebe5;">⏸️</div>
+      <div>
+        <div class="section-title-ar">علامات الوقف</div>
+        <div class="section-title-ta">வக்ஃப் அடையாளங்கள் — நிறுத்தும் குறியீடுகள்</div>
+      </div>
+    </div>
+    <div class="section-intro">
+      குர்ஆனில் ஓதும்போது <strong>எங்கு நிறுத்தலாம், நிறுத்தக்கூடாது</strong> என்பதை இந்த குறியீடுகள் காட்டும். சரியான வக்ஃப் அர்த்தம் மாறுவதை தடுக்கும்.
+    </div>
+
+    <div class="waqf-grid">
+      <div class="waqf-item">
+        <div class="waqf-symbol">م</div>
+        <div class="waqf-name-ar">الوقف اللازم</div>
+        <div class="waqf-name-ta">வாஜிப் வக்ஃப்</div>
+        <div class="waqf-desc">கட்டாய நிறுத்தம். இங்கு நிறுத்தாவிட்டால் அர்த்தம் மாறும்.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">لا</div>
+        <div class="waqf-name-ar">لا وقف</div>
+        <div class="waqf-name-ta">நிறுத்தக்கூடாது</div>
+        <div class="waqf-desc">இங்கு நிறுத்தாமல் தொடர வேண்டும். நிறுத்தினால் அர்த்தம் மாறும்.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">ج</div>
+        <div class="waqf-name-ar">الوقف الجائز</div>
+        <div class="waqf-name-ta">ஜாயிஸ் வக்ஃப்</div>
+        <div class="waqf-desc">நிறுத்தலாம் அல்லது தொடரலாம். இரண்டும் சரி.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">ز</div>
+        <div class="waqf-name-ar">وقف مُجوَّز</div>
+        <div class="waqf-name-ta">அனுமதிக்கப்பட்டது</div>
+        <div class="waqf-desc">நிறுத்துவது தொடர்வதைவிட சற்று சிறந்தது.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">ص</div>
+        <div class="waqf-name-ar">الوقف المرخص</div>
+        <div class="waqf-name-ta">ருக்சா வக்ஃப்</div>
+        <div class="waqf-desc">சுவாசம் தேவைப்பட்டால் மட்டும் நிறுத்தலாம். தொடர்வது சிறந்தது.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">ط</div>
+        <div class="waqf-name-ar">الوقف المطلق</div>
+        <div class="waqf-name-ta">முத்லக் வக்ஃப்</div>
+        <div class="waqf-desc">நிறுத்துவது சிறந்தது, தொடர்வதும் ஆகும்.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">قلى</div>
+        <div class="waqf-name-ar">القلى — الأولى الوقف</div>
+        <div class="waqf-name-ta">நிறுத்துவது சிறந்தது</div>
+        <div class="waqf-desc">நிறுத்துவது தொடர்வதைவிட சிறந்தது.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">صلى</div>
+        <div class="waqf-name-ar">الصلة — الأولى الوصل</div>
+        <div class="waqf-name-ta">தொடர்வது சிறந்தது</div>
+        <div class="waqf-desc">தொடர்ந்து ஓதுவது நிறுத்துவதைவிட சிறந்தது.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">∴ · ∴</div>
+        <div class="waqf-name-ar">المعانقة</div>
+        <div class="waqf-name-ta">முஆனகா — இரண்டு இடங்கள்</div>
+        <div class="waqf-desc">இரண்டு இடங்களில் ஒரே நிறுத்த குறி. ஒரு இடத்தில் மட்டும் நிறுத்த வேண்டும்.</div>
+      </div>
+      <div class="waqf-item">
+        <div class="waqf-symbol">۝</div>
+        <div class="waqf-name-ar">نهاية الآية</div>
+        <div class="waqf-name-ta">வசன முடிவு</div>
+        <div class="waqf-desc">வசனம் முடிகிறது. இங்கு நிறுத்துவது சுன்னத்.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 6: QUICK REFERENCE
+  ============================= -->
+  <div class="tab-panel" id="tab-reference">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0f4f8;">📋</div>
+      <div>
+        <div class="section-title-ar">جدول المراجع السريع</div>
+        <div class="section-title-ta">விரைவு மேற்கோள் அட்டவணை</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <h3 style="font-size:0.9rem;font-weight:700;color:var(--primary);margin-bottom:12px;">நூன் சாகினா / தன்வீன் விதிகள்</h3>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>விதி (Tamil)</th>
+            <th>قاعدة (Arabic)</th>
+            <th>எழுத்துக்கள்</th>
+            <th>எண்</th>
+            <th>அடையாளம்</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:var(--idhar);font-weight:700;">இழ்ஹார்</span></td>
+            <td><span class="ar-cell" style="color:var(--idhar);">الإظهار</span></td>
+            <td><span class="ar-cell">ء ه ع ح غ خ</span></td>
+            <td>6</td>
+            <td>தெளிவாக ஓது</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--idgham-ghunnah);font-weight:700;">இத்ஃகாம் (குன்னா)</span></td>
+            <td><span class="ar-cell" style="color:var(--idgham-ghunnah);">الإدغام بغنة</span></td>
+            <td><span class="ar-cell">ي ن م و</span></td>
+            <td>4</td>
+            <td>குன்னாவுடன் சேர்</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--idgham-bila);font-weight:700;">இத்ஃகாம் (பிலா)</span></td>
+            <td><span class="ar-cell" style="color:var(--idgham-bila);">الإدغام بلا غنة</span></td>
+            <td><span class="ar-cell">ل ر</span></td>
+            <td>2</td>
+            <td>குன்னா இல்லாமல் சேர்</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--iqlab);font-weight:700;">இக்லாப்</span></td>
+            <td><span class="ar-cell" style="color:var(--iqlab);">الإقلاب</span></td>
+            <td><span class="ar-cell">ب</span></td>
+            <td>1</td>
+            <td>م ஆக மாற்றி குன்னா</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--ikhfa);font-weight:700;">இக்ஃபா</span></td>
+            <td><span class="ar-cell" style="color:var(--ikhfa);">الإخفاء</span></td>
+            <td><span class="ar-cell" style="font-size:0.85rem;">ت ث ج د ذ ز س ش ص ض ط ظ ف ق ك</span></td>
+            <td>15</td>
+            <td>குன்னாவுடன் மறை</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <h3 style="font-size:0.9rem;font-weight:700;color:var(--primary);margin-bottom:12px;">மீம் சாகினா விதிகள்</h3>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>விதி (Tamil)</th>
+            <th>قاعدة (Arabic)</th>
+            <th>எழுத்து</th>
+            <th>விளக்கம்</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:var(--ikhfa);font-weight:700;">இக்ஃபா ஷஃபவீ</span></td>
+            <td><span class="ar-cell" style="color:var(--ikhfa);">الإخفاء الشفوي</span></td>
+            <td><span class="ar-cell">ب</span></td>
+            <td>உதட்டு மறைப்பு + குன்னா</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--idgham-ghunnah);font-weight:700;">இத்ஃகாம் ஷஃபவீ</span></td>
+            <td><span class="ar-cell" style="color:var(--idgham-ghunnah);">الإدغام الشفوي</span></td>
+            <td><span class="ar-cell">م</span></td>
+            <td>உதட்டு சேர்த்தல் + குன்னா</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--idhar);font-weight:700;">இழ்ஹார் ஷஃபவீ</span></td>
+            <td><span class="ar-cell" style="color:var(--idhar);">الإظهار الشفوي</span></td>
+            <td><span class="ar-cell">باقي الحروف</span></td>
+            <td>மீதமுள்ள எல்லா எழுத்துக்கள்</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <h3 style="font-size:0.9rem;font-weight:700;color:var(--primary);margin-bottom:12px;">மத்து விதிகள்</h3>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>வகை (Tamil)</th>
+            <th>نوع (Arabic)</th>
+            <th>ஹரகாத்</th>
+            <th>நிபந்தனை</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:var(--madd);font-weight:700;">தபீஈ</span></td>
+            <td><span class="ar-cell" style="color:var(--madd);">طبيعي</span></td>
+            <td>2</td>
+            <td>ஹம்ஸா / சுக்கூன் இல்லாமல்</td>
+          </tr>
+          <tr>
+            <td><span style="color:#2471a3;font-weight:700;">முத்தஸில்</span></td>
+            <td><span class="ar-cell" style="color:#2471a3;">متصل</span></td>
+            <td>4–5</td>
+            <td>அதே வார்த்தையில் ஹம்ஸா</td>
+          </tr>
+          <tr>
+            <td><span style="color:#7d3c98;font-weight:700;">முன்ஃபஸில்</span></td>
+            <td><span class="ar-cell" style="color:#7d3c98;">منفصل</span></td>
+            <td>4–5</td>
+            <td>அடுத்த வார்த்தை ஹம்ஸாவில் தொடங்கும்</td>
+          </tr>
+          <tr>
+            <td><span style="color:#922b21;font-weight:700;">லாஸிம்</span></td>
+            <td><span class="ar-cell" style="color:#922b21;">لازم</span></td>
+            <td>6</td>
+            <td>கட்டாய சுக்கூன்</td>
+          </tr>
+          <tr>
+            <td><span style="color:#d35400;font-weight:700;">ஆரிழ்</span></td>
+            <td><span class="ar-cell" style="color:#d35400;">عارض للسكون</span></td>
+            <td>2, 4, 6</td>
+            <td>வக்ஃபில் சுக்கூன்</td>
+          </tr>
+          <tr>
+            <td><span style="color:#1e8449;font-weight:700;">லீன்</span></td>
+            <td><span class="ar-cell" style="color:#1e8449;">لين</span></td>
+            <td>2, 4, 6</td>
+            <td>فتحة + و/ي + வக்ஃப்</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================
+       TAB 7: ABOUT
+  ============================= -->
+  <div class="tab-panel" id="tab-about">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0f4f8;">ℹ️</div>
+      <div>
+        <div class="section-title-ar">حول هذه الأداة</div>
+        <div class="section-title-ta">இந்த கருவி பற்றி</div>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <h3>தஜ்வீத் என்றால் என்ன?</h3>
+      <p>
+        <strong>தஜ்வீத் (التجويد)</strong> என்பது அரபு வார்த்தை, அர்த்தம் "சரியாக செய்வது" அல்லது "அழகுபடுத்துவது". குர்ஆன் ஓதும் விதிகளின் அறிவியலை இது குறிக்கிறது.
+      </p>
+      <p>
+        குர்ஆனை அது இறக்கப்பட்டதைப் போலவே, நபி (ஸல்) அவர்கள் ஓதியது போலவே ஓதுவது தஜ்வீதின் நோக்கம். ஒவ்வொரு எழுத்தையும் அதன் சரியான இடத்திலிருந்து (மக்ரஜ்) சரியான பண்புகளுடன் (ஸிஃபாத்) ஓதுவது கட்டாயம்.
+      </p>
+    </div>
+
+    <div class="about-card">
+      <h3>இந்த கருவியில் உள்ளவை</h3>
+      <ul>
+        <li>நூன் சாகினா மற்றும் தன்வீன் விதிகள் (5 விதிகள்)</li>
+        <li>மீம் சாகினா விதிகள் (3 விதிகள்)</li>
+        <li>மத்து / நீட்டி ஓதும் விதிகள் (6 வகைகள்)</li>
+        <li>கல்கலா — அதிர்வு ஒலி விதிகள்</li>
+        <li>வக்ஃப் / நிறுத்தும் குறியீடுகள் (10 வகைகள்)</li>
+        <li>விரைவு மேற்கோள் அட்டவணைகள்</li>
+        <li>நிற குறியீட்டுடன் ஒவ்வொரு விதிக்கும் குர்ஆன் எடுத்துக்காட்டுகள்</li>
+      </ul>
+    </div>
+
+    <div class="about-card">
+      <h3>பயன்படுத்தும் முறை</h3>
+      <p>
+        மேலே உள்ள தாவல்களை கிளிக் செய்து வெவ்வேறு விதிகளை பாருங்கள். ஒவ்வொரு விதியின் அட்டையிலும் கிளிக் செய்தால் விரிவான விளக்கம் மற்றும் எடுத்துக்காட்டுகள் காட்டப்படும்.
+      </p>
+      <p>
+        <strong>நிற குறியீடு:</strong> ஒவ்வொரு விதிக்கும் ஒரு நிறம் ஒதுக்கப்பட்டுள்ளது. அரபி எடுத்துக்காட்டுகளில் அந்த நிறத்தில் உள்ள எழுத்துக்களில் அந்த விதி பயன்படுத்தப்படும்.
+      </p>
+    </div>
+
+    <div class="about-card">
+      <h3>குறிப்பு</h3>
+      <p>
+        இந்த கருவி கற்றலுக்கு உதவும் வகையில் தயாரிக்கப்பட்டுள்ளது. தஜ்வீதை முழுமையாக கற்க <strong>தகுதிவாய்ந்த ஆசிரியரிடம்</strong> கற்றுக்கொள்வது அவசியம். புத்தகங்கள் மற்றும் கருவிகள் உதவியாளர்கள் மட்டுமே.
+      </p>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function toggleCard(header) {
+    const card = header.closest('.rule-card');
+    card.classList.toggle('open');
+  }
+
+  // Open first card of active tab on load
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab-panel.active .rule-card:first-child').forEach(c => c.classList.add('open'));
+  });
+</script>
+</body>
+</html>
