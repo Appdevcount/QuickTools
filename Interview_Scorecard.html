@@ -260,6 +260,48 @@
   .fb-tag.yellow.checked{background:var(--yellow-light);border-color:var(--yellow);color:var(--yellow);}
   .fb-tag-group-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);width:100%;margin-top:10px;}
 
+  /* ── Competency Capabilities Assessment ─────────────────────────────────── */
+  .comp-legend-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:14px 0 12px;padding:10px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;}
+  .comp-pill{font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1.5px solid;white-space:nowrap;}
+  .comp-p1{background:#dcfce7;border-color:#16a34a;color:#15803d;}
+  .comp-p2{background:#d1fae5;border-color:#059669;color:#065f46;}
+  .comp-p3{background:#fef9c3;border-color:#ca8a04;color:#854d0e;}
+  .comp-p4{background:#fed7aa;border-color:#ea580c;color:#9a3412;}
+  .comp-p5{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
+  .comp-pna{background:#f1f5f9;border-color:#94a3b8;color:#64748b;}
+  .comp-block{margin-bottom:22px;}
+  .comp-block-title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding:6px 10px;background:var(--accent-light);border-radius:6px;}
+  .comp-subtitle{font-size:11px;color:var(--muted);margin:3px 0 8px;font-style:italic;}
+  .comp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
+  .comp-table th{background:#eff6ff;color:#2563eb;font-weight:700;font-size:10.5px;padding:7px 8px;border:1px solid #bfdbfe;text-align:center;white-space:nowrap;}
+  .comp-table th.comp-th-crit{text-align:left;min-width:180px;}
+  .comp-table th.comp-th-rem{text-align:left;min-width:140px;}
+  .comp-table td{padding:6px 8px;border:1px solid var(--border);vertical-align:middle;font-size:12px;}
+  .comp-table tbody tr:nth-child(even) td{background:#f8fafc;}
+  .comp-table tbody tr:hover td{background:#eff6ff;}
+  .comp-td-r{text-align:center;width:34px;}
+  .comp-td-rem{min-width:150px;}
+  input.comp-r{appearance:none;-webkit-appearance:none;width:18px;height:18px;border:2px solid #cbd5e1;border-radius:50%;cursor:pointer;transition:all .15s;display:block;margin:0 auto;background:#fff;}
+  input.comp-r:hover{border-color:var(--accent);}
+  input.comp-r:checked{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 3px #fff;}
+  input.comp-r.comp-r-na:checked{background:#94a3b8;border-color:#94a3b8;}
+  input.comp-rem-in{width:100%;border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:11px;background:var(--bg);font-family:inherit;}
+  input.comp-rem-in:focus{outline:none;border-color:var(--accent);}
+  .comp-dec-row{display:flex;gap:12px;margin:12px 0 14px;flex-wrap:wrap;}
+  .comp-dec-btn{padding:9px 26px;border-radius:8px;border:2px solid;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;background:#fff;}
+  .comp-dec-btn.reject{border-color:var(--red);color:var(--red);}
+  .comp-dec-btn.reject:hover,.comp-dec-btn.reject.active{background:var(--red);color:#fff;}
+  .comp-dec-btn.hold{border-color:#f59e0b;color:#b45309;}
+  .comp-dec-btn.hold:hover,.comp-dec-btn.hold.active{background:#f59e0b;color:#fff;}
+  .comp-dec-btn.select{border-color:var(--green);color:var(--green);}
+  .comp-dec-btn.select:hover,.comp-dec-btn.select.active{background:var(--green);color:#fff;}
+  .comp-reason-block{margin-top:10px;padding:12px 16px;border-radius:8px;display:none;}
+  .comp-reason-block.reject-block{background:#fef2f2;border:1px solid #fecaca;}
+  .comp-reason-block.hold-block{background:#fffbeb;border:1px solid #fde68a;}
+  .comp-reason-block label{font-size:12px;font-weight:700;display:block;margin-bottom:6px;}
+  .comp-reason-ta{width:100%;min-height:80px;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;font-family:inherit;resize:vertical;background:#fff;}
+  .comp-reason-ta:focus{outline:none;border-color:var(--accent);}
+
   /* ── Candidate Profile section ────────────────────────────────────────── */
   .profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
   .profile-card h3{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;}
@@ -532,6 +574,13 @@ function ansHtml(q){
   }
   return `<div class="ans-block"><div class="ans-label">Expected Answer</div><ul class="ans-bullets">${bullets}</ul>${codeHtml}${rfHtml}</div>`;
 }
+
+// ── Competency table row / header helpers ────────────────────────────────────
+function _cr(name,grp){
+  var radios=[1,2,3,4,5].map(function(v){return '<td class="comp-td-r"><input type="radio" name="'+grp+'" value="'+v+'" class="comp-r"></td>';}).join('');
+  return '<tr><td>'+name+'</td>'+radios+'<td class="comp-td-r"><input type="radio" name="'+grp+'" value="na" class="comp-r comp-r-na"></td><td class="comp-td-rem"><input type="text" class="comp-rem-in" placeholder="remarks…"></td></tr>';
+}
+const _compTh='<thead><tr><th class="comp-th-crit">Competency Criteria</th><th class="comp-th-num">1</th><th class="comp-th-num">2</th><th class="comp-th-num">3</th><th class="comp-th-num">4</th><th class="comp-th-num">5</th><th class="comp-th-num">NA</th><th class="comp-th-rem">Remarks</th></tr></thead>';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -5526,6 +5575,122 @@ const SECTIONS = [
     <label class="fb-tag red"><input type="checkbox" class="fb-tag-cb" data-label="RED FLAG: Resistance to feedback or correction" /><span>🚩 Resistance to feedback or correction</span></label>
     <label class="fb-tag red"><input type="checkbox" class="fb-tag-cb" data-label="RED FLAG: Resume/experience mismatch detected" /><span>🚩 Resume/experience mismatch detected</span></label>
   </div>
+
+  <!-- ── Competency Capabilities Assessment ──────────────────────────────── -->
+  <div style="margin-top:28px;">
+    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--accent-light);">Competency Capabilities Assessment <span style="font-weight:400;font-size:11px;color:var(--muted);">— tick wherever applicable</span></div>
+
+    <div class="comp-legend-bar">
+      <span style="font-size:11px;font-weight:700;color:#475569;margin-right:6px;white-space:nowrap;">Rating Scale:</span>
+      <span class="comp-pill comp-p1">1 — Significantly Exceeds</span>
+      <span class="comp-pill comp-p2">2 — Exceeds</span>
+      <span class="comp-pill comp-p3">3 — Meets</span>
+      <span class="comp-pill comp-p4">4 — Meets Some</span>
+      <span class="comp-pill comp-p5">5 — Below</span>
+      <span class="comp-pill comp-pna">NA — Not Applicable</span>
+    </div>
+
+    <!-- ★ Talent Standards Capabilities -->
+    <div class="comp-block">
+      <div class="comp-block-title">★ Talent Standards Capabilities</div>
+      <table class="comp-table">
+        ${_compTh}
+        <tbody>
+          ${_cr('Professional ethics &amp; integrity','ts-1')}
+          ${_cr('Continuous learning &amp; development','ts-2')}
+          ${_cr('Collaboration &amp; teamwork','ts-3')}
+          ${_cr('Client service orientation','ts-4')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ★ Leadership Capabilities -->
+    <div class="comp-block">
+      <div class="comp-block-title">★ Leadership Capabilities</div>
+      <div class="comp-subtitle">Capabilities · Living our Purpose · Talent Development · Performance Drive · Influence · Strategic Direction</div>
+      <table class="comp-table">
+        ${_compTh}
+        <tbody>
+          ${_cr('Living our Purpose','lc-1')}
+          ${_cr('Talent Development','lc-2')}
+          ${_cr('Performance Drive','lc-3')}
+          ${_cr('Influence','lc-4')}
+          ${_cr('Strategic Direction','lc-5')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ★ Service Line Capabilities -->
+    <div class="comp-block">
+      <div class="comp-block-title">★ Service Line Capabilities <span style="font-size:11px;font-weight:400;color:#64748b;">(applicable for Sr.Con level)</span></div>
+      <div class="comp-subtitle">Capabilities · Functional expertise · Delivery expertise</div>
+      <table class="comp-table">
+        ${_compTh}
+        <tbody>
+          ${_cr('Functional expertise','sl-1')}
+          ${_cr('Delivery expertise','sl-2')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ★ Technical Capabilities -->
+    <div class="comp-block">
+      <div class="comp-block-title">★ Technical Capabilities</div>
+      <table class="comp-table">
+        ${_compTh}
+        <tbody>
+          ${_cr('Delivery Excellence','tc-1')}
+          ${_cr('Analytical Thinking &amp; Problem Solving','tc-2')}
+          ${_cr('Knows Business &amp; Sector','tc-3')}
+          ${_cr('Logical Structuring','tc-4')}
+          ${_cr('Financial Acumen','tc-5')}
+          ${_cr('Executive Presence','tc-6')}
+          ${_cr('Global Mindset','tc-7')}
+          ${_cr('Technology Fluency','tc-8')}
+          ${_cr('Accesses the Organization','tc-9')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ✦ Necessary Assessment Questions -->
+    <div class="comp-block">
+      <div class="comp-block-title">✦ Necessary Assessment Questions</div>
+      <table class="comp-table">
+        ${_compTh}
+        <tbody>
+          ${_cr('Communication clarity &amp; effectiveness','aq-1')}
+          ${_cr('Problem-solving &amp; analytical approach','aq-2')}
+          ${_cr('Growth mindset &amp; adaptability','aq-3')}
+          ${_cr('Cultural fit &amp; values alignment','aq-4')}
+          ${_cr('Leadership potential &amp; team impact','aq-5')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Interviewer's Comments -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">Interviewer's Comments</div>
+      <textarea id="comp-comments" class="fb-general-ta" placeholder="Overall assessment, standout strengths, concerns, cultural fit observations…"></textarea>
+    </div>
+
+    <!-- Decision -->
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">Decision</div>
+      <div class="comp-dec-row">
+        <button class="comp-dec-btn reject" id="btn-cd-REJECT" onclick="setCompDecision('REJECT')">REJECT</button>
+        <button class="comp-dec-btn hold" id="btn-cd-ON-HOLD" onclick="setCompDecision('ON HOLD')">ON HOLD</button>
+        <button class="comp-dec-btn select" id="btn-cd-SELECT" onclick="setCompDecision('SELECT')">SELECT</button>
+      </div>
+      <div class="comp-reason-block reject-block" id="comp-reject-block">
+        <label>Reason for REJECT</label>
+        <textarea id="comp-reject-reason" class="comp-reason-ta" placeholder="Specify the reason for rejection…"></textarea>
+      </div>
+      <div class="comp-reason-block hold-block" id="comp-hold-block">
+        <label>Reason for ON HOLD</label>
+        <textarea id="comp-hold-reason" class="comp-reason-ta" placeholder="Specify why the candidate is being placed on hold…"></textarea>
+      </div>
+    </div>
+  </div>
 </div>`
   },
   {
@@ -6178,6 +6343,7 @@ function toggleAllSections(selectAll){
 
 // ── Communication rating ──────────────────────────────────────────────────────
 let commRating = null; // null | 'Not Good' | 'Average' | 'Good' | 'Very Good'
+let compDecision = null; // null | 'REJECT' | 'ON HOLD' | 'SELECT'
 
 function setCommRating(val){
   commRating = (commRating === val) ? null : val; // toggle: click same again to clear
@@ -6593,9 +6759,22 @@ function setScore(qId, score){
   });
   _syncGsCard(qId); // keep global-search mirror in sync
   updateKPIs(); buildSidebar();
+  syncDebriefFromSections(true); // auto-refresh End section debrief scores silently
 }
 
 function saveFeedback(qId, val){ state[qId].feedback = val; }
+
+function setCompDecision(val){
+  compDecision = (compDecision === val) ? null : val; // click same again to clear
+  ['REJECT','ON HOLD','SELECT'].forEach(d => {
+    const btn = document.getElementById('btn-cd-' + d.replace(' ','-'));
+    if(btn) btn.classList.toggle('active', d === compDecision);
+  });
+  const rejEl  = document.getElementById('comp-reject-block');
+  const holdEl = document.getElementById('comp-hold-block');
+  if(rejEl)  rejEl.style.display  = compDecision === 'REJECT'  ? 'block' : 'none';
+  if(holdEl) holdEl.style.display = compDecision === 'ON HOLD' ? 'block' : 'none';
+}
 
 // Tag / chip toggle helpers
 document.addEventListener('change', e => {
@@ -6699,7 +6878,7 @@ function updateKPIs(){
 }
 
 // ── Debrief auto-sync — compute section averages and fill debrief inputs ──────
-function syncDebriefFromSections(){
+function syncDebriefFromSections(silent){
   const avg = (sectionIds) => {
     const scores = sectionIds.flatMap(sid => {
       const sec = SECTIONS.find(s => s.id === sid);
@@ -6731,7 +6910,7 @@ function syncDebriefFromSections(){
     .flatMap(s=>s.questions.map(q=>state[q.id]?.score).filter(v=>v>0));
   if(allTech.length) setField('db-tech', (allTech.reduce((a,v)=>a+v,0)/allTech.length).toFixed(1));
 
-  showToast('Debrief scores synced from sections');
+  if(!silent) showToast('Debrief scores synced from sections');
 }
 
 // ── Report ────────────────────────────────────────────────────────────────────
@@ -6829,31 +7008,6 @@ function buildReport(){
     L(`${s.label.padEnd(36)} ${bar}  ${a.toFixed(1)}/5  (${qs.length}/${s.questions.length} scored)`);
   });
   L('');
-  L('QUESTION-BY-QUESTION BREAKDOWN');
-  L('-'.repeat(68));
-
-  const redFlagQs = [];
-  SECTIONS.forEach(s => {
-    if(!s.questions) return;
-    const scoredQs = s.questions.filter(q=>state[q.id].score>0);
-    if(!scoredQs.length) return;
-    L(''); L(`▸ ${s.label.toUpperCase()}`);
-    scoredQs.forEach(q => {
-      const st = state[q.id];
-      const scoreStr = `${st.score}/5 — ${SCORE_LABELS[st.score]}`;
-      const rf = st.redFlagHit ? '  🚩 RED FLAG HIT' : '';
-      L(`  [${q.code}] ${q.title}`);
-      L(`        Score  : ${scoreStr}${rf}`);
-      if(st.redFlagHit) redFlagQs.push(`[${q.code}] ${q.title}`);
-      if(st.feedback&&st.feedback.trim()){
-        const w = st.feedback.trim().replace(/(.{60})/g,'$1\n              ');
-        L(`        Notes  : ${w}`);
-      }
-    });
-  });
-
-  if(redFlagQs.length){ L(''); L('RED FLAGS TRIGGERED'); L('-'.repeat(68)); redFlagQs.forEach(r=>L(`  • ${r}`)); }
-
   // ── Internal debrief table (Step 4 in "How to End") ──────────────────────
   const DEBRIEF_ROWS = [
     {label:'Relevant experience (years)',  scoreId:'db-exp-years',   noteId:'dbn-exp-years'},
@@ -6896,6 +7050,31 @@ function buildReport(){
     });
   }
 
+  L(''); L('QUESTION-BY-QUESTION BREAKDOWN');
+  L('-'.repeat(68));
+
+  const redFlagQs = [];
+  SECTIONS.forEach(s => {
+    if(!s.questions) return;
+    const scoredQs = s.questions.filter(q=>state[q.id].score>0);
+    if(!scoredQs.length) return;
+    L(''); L(`▸ ${s.label.toUpperCase()}`);
+    scoredQs.forEach(q => {
+      const st = state[q.id];
+      const scoreStr = `${st.score}/5 — ${SCORE_LABELS[st.score]}`;
+      const rf = st.redFlagHit ? '  🚩 RED FLAG HIT' : '';
+      L(`  [${q.code}] ${q.title}`);
+      L(`        Score  : ${scoreStr}${rf}`);
+      if(st.redFlagHit) redFlagQs.push(`[${q.code}] ${q.title}`);
+      if(st.feedback&&st.feedback.trim()){
+        const w = st.feedback.trim().replace(/(.{60})/g,'$1\n              ');
+        L(`        Notes  : ${w}`);
+      }
+    });
+  });
+
+  if(redFlagQs.length){ L(''); L('RED FLAGS TRIGGERED'); L('-'.repeat(68)); redFlagQs.forEach(r=>L(`  • ${r}`)); }
+
   // ── General feedback freehand ─────────────────────────────────────────────
   const genFb = document.getElementById('general-feedback-text')?.value?.trim();
   if(genFb){
@@ -6907,6 +7086,52 @@ function buildReport(){
   if(checkedTags.length){
     L(''); L('FEEDBACK SIGNALS'); L('-'.repeat(68));
     checkedTags.forEach(t => L(`  ✓ ${t}`));
+  }
+
+  // ── Competency Capabilities Assessment ───────────────────────────────────────
+  const COMP_RNAMES = {
+    'ts-1':'Professional ethics & integrity','ts-2':'Continuous learning & development',
+    'ts-3':'Collaboration & teamwork','ts-4':'Client service orientation',
+    'lc-1':'Living our Purpose','lc-2':'Talent Development','lc-3':'Performance Drive',
+    'lc-4':'Influence','lc-5':'Strategic Direction',
+    'sl-1':'Functional expertise','sl-2':'Delivery expertise',
+    'tc-1':'Delivery Excellence','tc-2':'Analytical Thinking & Problem Solving',
+    'tc-3':'Knows Business & Sector','tc-4':'Logical Structuring','tc-5':'Financial Acumen',
+    'tc-6':'Executive Presence','tc-7':'Global Mindset','tc-8':'Technology Fluency',
+    'tc-9':'Accesses the Organization',
+    'aq-1':'Communication clarity & effectiveness','aq-2':'Problem-solving & analytical approach',
+    'aq-3':'Growth mindset & adaptability','aq-4':'Cultural fit & values alignment',
+    'aq-5':'Leadership potential & team impact',
+  };
+  const COMP_RSECS = [
+    {title:'Talent Standards Capabilities',  grps:['ts-1','ts-2','ts-3','ts-4']},
+    {title:'Leadership Capabilities',         grps:['lc-1','lc-2','lc-3','lc-4','lc-5']},
+    {title:'Service Line Capabilities',       grps:['sl-1','sl-2']},
+    {title:'Technical Capabilities',          grps:['tc-1','tc-2','tc-3','tc-4','tc-5','tc-6','tc-7','tc-8','tc-9']},
+    {title:'Assessment Questions',            grps:['aq-1','aq-2','aq-3','aq-4','aq-5']},
+  ];
+  const anyCompRated = COMP_RSECS.some(cs => cs.grps.some(g => document.querySelector('[name="'+g+'"]:checked')));
+  if(anyCompRated){
+    L(''); L('COMPETENCY CAPABILITIES ASSESSMENT'); L('='.repeat(68));
+    COMP_RSECS.forEach(cs => {
+      const rows = cs.grps.map(g => {
+        const el = document.querySelector('[name="'+g+'"]:checked');
+        if(!el) return null;
+        const val = el.value === 'na' ? 'NA' : el.value+'/5';
+        const rem = el.closest('tr')?.querySelector('.comp-rem-in')?.value?.trim() || '';
+        return '  '+(COMP_RNAMES[g]||g).padEnd(42)+'→ '+val+(rem?' ('+rem+')':'');
+      }).filter(Boolean);
+      if(!rows.length) return;
+      L(''); L(cs.title); L('-'.repeat(68)); rows.forEach(r => L(r));
+    });
+  }
+  const compCommentsTxt = document.getElementById('comp-comments')?.value?.trim();
+  if(compCommentsTxt){ L(''); L('INTERVIEWER COMMENTS (COMPETENCY)'); L('-'.repeat(68)); L(compCommentsTxt); }
+  if(compDecision){
+    L(''); L('FINAL DECISION'); L('='.repeat(68));
+    L('  Decision  : '+compDecision);
+    if(compDecision==='REJECT'){ const r=document.getElementById('comp-reject-reason')?.value?.trim(); if(r) L('  Reason    : '+r); }
+    if(compDecision==='ON HOLD'){ const r=document.getElementById('comp-hold-reason')?.value?.trim(); if(r) L('  Reason    : '+r); }
   }
 
   L(''); L('OVERALL INTERVIEWER NOTES'); L('-'.repeat(68));
