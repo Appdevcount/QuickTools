@@ -1409,21 +1409,44 @@ function tddRegisterSection() {
 }
 
 function gapLogSection() {
+  const F = id => document.getElementById(id)?.checked ?? true;
+  const showCategory = F('rpt-show-category');
+  const showSubtype  = F('rpt-show-subtype');
+  const showSeverity = F('rpt-show-severity');
+  const showStatus   = F('rpt-show-status');
+  const showImpact   = F('rpt-show-impact');
+  const showTime     = F('rpt-show-time');
+  const showAssigned = F('rpt-show-assigned');
+  const showDate     = F('rpt-show-date');
+
   const DIV='─'.repeat(80);
   const sorted=[...S.gaps].sort((a,b)=>(SEV_ORDER[sevClean(b.severity)]||0)-(SEV_ORDER[sevClean(a.severity)]||0));
   let t=`GAP LOG — ${S.gaps.length} gap${S.gaps.length!==1?'s':''} (sorted by severity)\n${DIV}\n\n`;
   if(!S.gaps.length) return t+'  (No gaps logged yet)\n';
   sorted.forEach(g=>{
     const tdd=S.tdds.find(t=>t.id===g.tddId);
-    t+=`G${String(g.id).padEnd(4)} [${sevClean(g.severity).toUpperCase().padEnd(8)}]  TDD #${tdd?.id||'?'}: ${(tdd?.title||'Unknown TDD').slice(0,50)}\n`;
-    t+=`   Category    : ${g.category||'—'}\n`;
-    t+=`   Sub-type    : ${g.subType||'—'}\n`;
+    const sevPart = showSeverity ? ` [${sevClean(g.severity).toUpperCase().padEnd(8)}]` : '';
+    t+=`G${String(g.id).padEnd(4)}${sevPart}  TDD #${tdd?.id||'?'}: ${(tdd?.title||'Unknown TDD').slice(0,50)}\n`;
+    if(showCategory) t+=`   Category    : ${g.category||'—'}\n`;
+    if(showSubtype)  t+=`   Sub-type    : ${g.subType||'—'}\n`;
     t+=`   Description : ${g.description||''}\n`;
-    t+=`   Impact      : ${g.impact||'—'} | Time Lost: ${g.timeLostH||0}h | Status: ${g.status}\n`;
-    t+=`   Found By    : ${g.foundBy||'—'} | Assigned To: ${g.assignedTo||'—'}\n`;
-    t+=`   Date Found  : ${fmtDate(g.dateFound)}`;
-    if(g.dateResolved) t+=` | Resolved: ${fmtDate(g.dateResolved)}`;
-    t+='\n';
+    if(showStatus && !showImpact && !showTime) t+=`   Status      : ${g.status}\n`;
+    if(showImpact) {
+      let line=`   Impact      : ${g.impact||'—'}`;
+      if(showTime)   line+=` | Time Lost: ${g.timeLostH||0}h`;
+      if(showStatus) line+=` | Status: ${g.status}`;
+      t+=line+'\n';
+    } else if(showTime) {
+      let line=`   Time Lost   : ${g.timeLostH||0}h`;
+      if(showStatus) line+=` | Status: ${g.status}`;
+      t+=line+'\n';
+    }
+    if(showAssigned) t+=`   Assigned To : ${g.assignedTo||'—'}\n`;
+    if(showDate) {
+      t+=`   Date Found  : ${fmtDate(g.dateFound)}`;
+      if(g.dateResolved) t+=` | Resolved: ${fmtDate(g.dateResolved)}`;
+      t+='\n';
+    }
     if(g.resolutionNotes) t+=`   Resolution  : ${g.resolutionNotes}\n`;
     t+=`\n${DIV}\n\n`;
   });

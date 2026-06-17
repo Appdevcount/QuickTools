@@ -5979,15 +5979,16 @@ function _setGsMarkedBtn(active){
 }
 
 function runGlobalSearch(keyword){
-  // Typing exits marked mode
-  if(globalMarkedMode){ globalMarkedMode = false; _setGsMarkedBtn(false); }
-
-  const kw        = keyword.trim().toLowerCase();
+  const kw        = (keyword || '').trim().toLowerCase();
   const resultsEl = document.getElementById('global-search-results');
   const countEl   = document.getElementById('global-search-count');
-  const totalQ    = SECTIONS.filter(s=>s.type!=='guide').reduce((a,s)=>a+s.questions.length, 0);
 
+  // Marked mode ON, no keyword → delegate to showGlobalMarked
+  if(globalMarkedMode && !kw){ showGlobalMarked(); return; }
+
+  // No keyword, no marked mode → show idle prompt
   if(!kw){
+    const totalQ = SECTIONS.filter(s=>s.type!=='guide').reduce((a,s)=>a+s.questions.length, 0);
     resultsEl.innerHTML = `<div style="padding:48px;text-align:center;color:var(--muted);font-size:13px;">Type a keyword to search all <strong>${totalQ}</strong> questions across every section…</div>`;
     if(countEl){ countEl.textContent=''; countEl.className='section-search-count'; }
     return;
@@ -5997,7 +5998,9 @@ function runGlobalSearch(keyword){
 
   SECTIONS.forEach(s => {
     if(s.type === 'guide') return;
-    const matched = s.questions.filter(q => {
+    // When marked mode is active, restrict pool to asked questions only
+    const pool = globalMarkedMode ? s.questions.filter(q => state[q.id]?.asked) : s.questions;
+    const matched = pool.filter(q => {
       const txt = [q.code||'', q.title||'', q.prompt||'',
         ...(q.answer||[]), ...(q.examples||[]).map(e=>e.snippet||''), q.redFlag||''
       ].join(' ').toLowerCase();
@@ -6006,16 +6009,18 @@ function runGlobalSearch(keyword){
     if(!matched.length) return;
     totalMatches += matched.length;
     sectionsHit++;
-    html += _gsGroupHtml(s, matched);
+    html += _gsGroupHtml(s, matched, globalMarkedMode ? `(${matched.length} marked)` : undefined);
   });
 
   if(!totalMatches){
-    resultsEl.innerHTML = `<div style="padding:48px;text-align:center;color:var(--red);font-size:13px;">No matches found for "<strong>${esc(keyword)}</strong>"</div>`;
+    const scope = globalMarkedMode ? ' in marked questions' : '';
+    resultsEl.innerHTML = `<div style="padding:48px;text-align:center;color:var(--red);font-size:13px;">No matches found for "<strong>${esc(keyword)}</strong>"${scope}</div>`;
     if(countEl){ countEl.textContent='No matches'; countEl.className='section-search-count no-match'; }
   } else {
     resultsEl.innerHTML = html;
     if(countEl){
-      countEl.textContent = `${totalMatches} match${totalMatches!==1?'es':''} · ${sectionsHit} section${sectionsHit!==1?'s':''}`;
+      const scope = globalMarkedMode ? ' (within marked)' : '';
+      countEl.textContent = `${totalMatches} match${totalMatches!==1?'es':''}${scope} · ${sectionsHit} section${sectionsHit!==1?'s':''}`;
       countEl.className = 'section-search-count';
     }
   }
@@ -6052,9 +6057,10 @@ function toggleGlobalMarked(){
   globalMarkedMode = !globalMarkedMode;
   _setGsMarkedBtn(globalMarkedMode);
   const inp = document.getElementById('global-search-input');
-  if(inp) inp.value = '';
-  if(globalMarkedMode) showGlobalMarked();
-  else runGlobalSearch('');
+  const kw  = inp ? inp.value.trim() : '';
+  // Keep whatever is typed in the search box — just re-filter with new marked state
+  if(globalMarkedMode && !kw) showGlobalMarked();
+  else runGlobalSearch(kw);
 }
 
 function clearGlobalSearch(){
@@ -7053,31 +7059,6 @@ function buildReport(){
     });
   }
 
-  L(''); L('QUESTION-BY-QUESTION BREAKDOWN');
-  L('-'.repeat(68));
-
-  const redFlagQs = [];
-  SECTIONS.forEach(s => {
-    if(!s.questions) return;
-    const scoredQs = s.questions.filter(q=>state[q.id].score>0);
-    if(!scoredQs.length) return;
-    L(''); L(`▸ ${s.label.toUpperCase()}`);
-    scoredQs.forEach(q => {
-      const st = state[q.id];
-      const scoreStr = `${st.score}/5 — ${SCORE_LABELS[st.score]}`;
-      const rf = st.redFlagHit ? '  🚩 RED FLAG HIT' : '';
-      L(`  [${q.code}] ${q.title}`);
-      L(`        Score  : ${scoreStr}${rf}`);
-      if(st.redFlagHit) redFlagQs.push(`[${q.code}] ${q.title}`);
-      if(st.feedback&&st.feedback.trim()){
-        const w = st.feedback.trim().replace(/(.{60})/g,'$1\n              ');
-        L(`        Notes  : ${w}`);
-      }
-    });
-  });
-
-  if(redFlagQs.length){ L(''); L('RED FLAGS TRIGGERED'); L('-'.repeat(68)); redFlagQs.forEach(r=>L(`  • ${r}`)); }
-
   // ── General feedback freehand ─────────────────────────────────────────────
   const genFb = document.getElementById('general-feedback-text')?.value?.trim();
   if(genFb){
@@ -7145,6 +7126,31 @@ function buildReport(){
     .filter(Boolean);
   if(allNotes.length) allNotes.forEach(n=>{ L(`  ${n}`); L(''); });
   else L('  (No notes provided)');
+
+  // ── Question-by-question breakdown ───────────────────────────────────────
+  L(''); L('QUESTION-BY-QUESTION BREAKDOWN'); L('-'.repeat(68));
+
+  const redFlagQs = [];
+  SECTIONS.forEach(s => {
+    if(!s.questions) return;
+    const scoredQs = s.questions.filter(q=>state[q.id].score>0);
+    if(!scoredQs.length) return;
+    L(''); L(`▸ ${s.label.toUpperCase()}`);
+    scoredQs.forEach(q => {
+      const st = state[q.id];
+      const scoreStr = `${st.score}/5 — ${SCORE_LABELS[st.score]}`;
+      const rf = st.redFlagHit ? '  🚩 RED FLAG HIT' : '';
+      L(`  [${q.code}] ${q.title}`);
+      L(`        Score  : ${scoreStr}${rf}`);
+      if(st.redFlagHit) redFlagQs.push(`[${q.code}] ${q.title}`);
+      if(st.feedback&&st.feedback.trim()){
+        const w = st.feedback.trim().replace(/(.{60})/g,'$1\n              ');
+        L(`        Notes  : ${w}`);
+      }
+    });
+  });
+
+  if(redFlagQs.length){ L(''); L('RED FLAGS TRIGGERED'); L('-'.repeat(68)); redFlagQs.forEach(r=>L(`  • ${r}`)); }
 
   L(''); L('SCORING REFERENCE'); L('-'.repeat(68));
   L('  1=No awareness  2=Basic  3=Working knowledge  4=Strong  5=Expert/Production');

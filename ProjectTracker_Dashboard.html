@@ -411,6 +411,7 @@ tr.done-row td{opacity:.65;}
       <div class="ph">
         <div><h2>Task Status Tracker</h2><p>Daily individual tracking with full detail fields</p></div>
         <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="exportTasksTxt()">⬇ Export TXT</button>
           <button class="btn btn-secondary btn-sm" onclick="triggerImport()" title="Import features and tasks from a Software Estimation Tool export (.json)">📥 Import from Estimation Tool</button>
           <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add Task</button>
         </div>
@@ -454,6 +455,7 @@ tr.done-row td{opacity:.65;}
       <div class="ph">
         <div><h2>Team Capacity Planner</h2><p>Monthly bandwidth vs allocated effort — over-burn highlighted</p></div>
         <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="exportCapacityTxt()">⬇ Export TXT</button>
           <button class="btn btn-primary btn-sm" onclick="openMemberModal()">+ Add Member</button>
         </div>
       </div>
@@ -478,6 +480,7 @@ tr.done-row td{opacity:.65;}
       <div class="ph">
         <div><h2>Workload Distribution Analyzer</h2><p>Visual effort and priority breakdown per team member</p></div>
         <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="exportWorkloadTxt()">⬇ Export TXT</button>
           <select id="wl-mode" onchange="renderWorkload()" style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px">
             <option value="effort">By Effort (hours)</option>
             <option value="count">By Task Count</option>
@@ -507,6 +510,7 @@ tr.done-row td{opacity:.65;}
       <div class="ph">
         <div><h2>Risk Register</h2><p>Score-driven risk tracking — includes incremental refinement &amp; information gaps</p></div>
         <div class="ph-actions">
+          <button class="btn btn-secondary btn-sm" onclick="exportRisksTxt()">⬇ Export TXT</button>
           <button class="btn btn-primary btn-sm" onclick="openRiskModal()">+ Add Risk</button>
         </div>
       </div>
@@ -546,7 +550,8 @@ tr.done-row td{opacity:.65;}
       <div class="ph">
         <div><h2>Daily Standup Summarizer</h2><p>Track daily progress, blockers &amp; help-needed for every team member — Agile standup log</p></div>
         <div class="ph-actions">
-          <button class="btn btn-secondary btn-sm" onclick="exportStandups()">⬇ Export Standups</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportStandupsTxt()">⬇ Export TXT</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportStandups()">⬇ Export JSON</button>
           <button class="btn btn-secondary btn-sm" onclick="triggerImportStandups()">📥 Import Standups</button>
           <button class="btn btn-primary btn-sm" onclick="openStandupModal()">+ Log Standup</button>
         </div>
@@ -950,7 +955,7 @@ tr.done-row td{opacity:.65;}
 
         <!-- Active tasks checklist — auto-populated when member is selected -->
         <div class="fg span2" id="sd-tasks-section" style="display:none">
-          <label>Today's Tasks <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">— tick tasks you'll work on today; optionally update their status</span></label>
+          <label>Tasks <span style="font-size:10px;font-weight:400;text-transform:none;color:var(--muted)">— all active tasks shown; ✔ tick to mark as "planned for today"; add status &amp; log for any task</span></label>
           <div id="sd-task-list" style="border:1px solid var(--border);border-radius:7px;overflow:hidden;max-height:240px;overflow-y:auto;background:var(--surface)"></div>
           <div id="sd-no-tasks-msg" style="display:none;font-size:11px;color:var(--muted);padding:8px 0">No active tasks assigned to this member.</div>
         </div>
@@ -2876,6 +2881,7 @@ function migrateStandupEntry(sd) {
   if (sd.helpAddressed       === undefined) sd.helpAddressed       = false;
   if (!sd.todayTaskIds)                     sd.todayTaskIds        = sd.linkedTaskIds || [];
   if (!sd.taskStatusUpdates)                sd.taskStatusUpdates   = [];
+  if (!sd.taskNotes)                        sd.taskNotes           = {};
   return sd;
 }
 
@@ -2945,7 +2951,7 @@ function renderStandupToday() {
 
     // Active tasks for this member (not done)
     const activeTasks = S.tasks.filter(t => t.assignee === m.name && t.hlStatus !== 'Done');
-    const todayTasks  = entry ? S.tasks.filter(t => (entry.todayTaskIds||[]).includes(t.id)) : [];
+    const todayTaskIdSet = new Set(entry ? (entry.todayTaskIds||[]) : []);
 
     if (!entry) {
       const taskPreview = activeTasks.slice(0, 3).map(t =>
@@ -3001,24 +3007,31 @@ function renderStandupToday() {
         </div>`;
     }
 
-    // Today's tasks with live status
+    // All active tasks with live status editing and per-task notes
     let todayTasksHtml = '';
-    if (todayTasks.length) {
+    if (activeTasks.length) {
       todayTasksHtml = `<div class="smc-field">
-        <div class="smc-lbl">Working On Today</div>
-        ${todayTasks.map(t => `
-          <div class="today-task-item">
-            <div class="today-task-dot ${taskStatusDotClass(t.hlStatus)}"></div>
-            <span style="flex:1">${esc(t.name)}</span>
-            <select onchange="quickUpdateTaskStatus(${t.id},this.value,${entry.id})"
-              style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;font-family:inherit;background:var(--surface);color:var(--text)">
-              <option value="Not Started" ${t.hlStatus==='Not Started'?'selected':''}>Not Started</option>
-              <option value="In Progress" ${t.hlStatus==='In Progress'?'selected':''}>In Progress</option>
-              <option value="At Risk"     ${t.hlStatus==='At Risk'?'selected':''}>At Risk</option>
-              <option value="Blocked"     ${t.hlStatus==='Blocked'?'selected':''}>Blocked</option>
-              <option value="Done"        ${t.hlStatus==='Done'?'selected':''}>Done</option>
-            </select>
-          </div>`).join('')}
+        <div class="smc-lbl">Active Tasks (${activeTasks.length})</div>
+        ${activeTasks.map(t => {
+          const isPlanned = todayTaskIdSet.has(t.id);
+          const note      = (entry.taskNotes || {})[t.id] || '';
+          return `
+          <div style="margin-bottom:4px">
+            <div class="today-task-item">
+              <div class="today-task-dot ${taskStatusDotClass(t.hlStatus)}"></div>
+              <span style="flex:1">${esc(t.name)}${isPlanned ? '' : ' <span style="font-size:9px;color:var(--muted);background:#f1f5f9;padding:1px 4px;border-radius:3px">carry fwd</span>'}</span>
+              <select onchange="quickUpdateTaskStatus(${t.id},this.value,${entry.id})"
+                style="font-size:10px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;font-family:inherit;background:var(--surface);color:var(--text)">
+                <option value="Not Started" ${t.hlStatus==='Not Started'?'selected':''}>Not Started</option>
+                <option value="In Progress" ${t.hlStatus==='In Progress'?'selected':''}>In Progress</option>
+                <option value="At Risk"     ${t.hlStatus==='At Risk'?'selected':''}>At Risk</option>
+                <option value="Blocked"     ${t.hlStatus==='Blocked'?'selected':''}>Blocked</option>
+                <option value="Done"        ${t.hlStatus==='Done'?'selected':''}>Done</option>
+              </select>
+            </div>
+            ${note ? `<div style="font-size:11px;color:var(--text);background:#f8fafc;border-left:2px solid var(--border);padding:3px 7px;margin-left:13px;margin-top:2px;line-height:1.45;word-break:break-word">${esc(note)}</div>` : ''}
+          </div>`;
+        }).join('')}
       </div>`;
     }
 
@@ -3295,10 +3308,23 @@ function loadMemberTasksInModal() {
   list.style.display = '';
   noMsg.style.display = 'none';
 
+  // For new entries, pre-check tasks from the most recent previous standup (carry-forward)
+  let carryForwardIds = new Set();
+  if (!editId) {
+    const currentDate = document.getElementById('sd-date').value || todayISO();
+    const prevStandup = S.standups
+      .filter(sd => sd.member === member && sd.date < currentDate)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    if (prevStandup) carryForwardIds = new Set(prevStandup.todayTaskIds || []);
+  }
+
   list.innerHTML = activeTasks.map(t => {
-    const checked = existing && (existing.todayTaskIds||[]).includes(t.id);
-    const existingUpd = existing && (existing.taskStatusUpdates||[]).find(u => u.taskId === t.id);
-    const selVal = existingUpd ? existingUpd.newStatus : '';
+    const checked = existing
+      ? (existing.todayTaskIds||[]).includes(t.id)
+      : carryForwardIds.has(t.id);
+    const existingUpd  = existing && (existing.taskStatusUpdates||[]).find(u => u.taskId === t.id);
+    const selVal       = existingUpd ? existingUpd.newStatus : '';
+    const existingNote = (existing?.taskNotes || {})[t.id] || '';
     return `
       <div class="sd-task-row">
         <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;background:${checked?'var(--accent-light)':'var(--surface)'}">
@@ -3310,16 +3336,21 @@ function loadMemberTasksInModal() {
           ${pBadge(t.priority)}
           ${sBadge(t.hlStatus)}
         </label>
-        <div id="sd-status-row-${t.id}" style="display:${checked?'flex':'none'};align-items:center;gap:8px;padding:5px 12px 7px 34px;background:#f0f6ff;border-bottom:1px solid var(--border)">
-          <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);white-space:nowrap">Update status:</span>
-          <select class="sd-task-status-sel" data-id="${t.id}"
-            style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;flex:1">
-            <option value="">Keep — ${t.hlStatus}</option>
-            <option value="In Progress" ${selVal==='In Progress'?'selected':''}>In Progress</option>
-            <option value="At Risk"     ${selVal==='At Risk'    ?'selected':''}>At Risk</option>
-            <option value="Blocked"     ${selVal==='Blocked'    ?'selected':''}>Blocked</option>
-            <option value="Done"        ${selVal==='Done'       ?'selected':''}>Done</option>
-          </select>
+        <div id="sd-status-row-${t.id}" style="display:flex;flex-direction:column;gap:6px;padding:7px 12px 9px 34px;background:${checked?'#f0f6ff':'#f8fafc'};border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);white-space:nowrap">Update status:</span>
+            <select class="sd-task-status-sel" data-id="${t.id}"
+              style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;flex:1">
+              <option value="">Keep — ${t.hlStatus}</option>
+              <option value="In Progress" ${selVal==='In Progress'?'selected':''}>In Progress</option>
+              <option value="At Risk"     ${selVal==='At Risk'    ?'selected':''}>At Risk</option>
+              <option value="Blocked"     ${selVal==='Blocked'    ?'selected':''}>Blocked</option>
+              <option value="Done"        ${selVal==='Done'       ?'selected':''}>Done</option>
+            </select>
+          </div>
+          <textarea class="sd-task-note" data-id="${t.id}" rows="2"
+            placeholder="Task log — what was done, what's next, any blocker for this task…"
+            style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;background:var(--surface);color:var(--text)">${esc(existingNote)}</textarea>
         </div>
       </div>`;
   }).join('');
@@ -3329,8 +3360,8 @@ function toggleTaskRowStatus(taskId) {
   const cb  = document.querySelector(`.sd-task-cb[data-id="${taskId}"]`);
   const row = document.getElementById(`sd-status-row-${taskId}`);
   const lbl = cb?.closest('label');
-  if (cb && row) row.style.display = cb.checked ? 'flex' : 'none';
-  if (lbl) lbl.style.background = cb.checked ? 'var(--accent-light)' : 'var(--surface)';
+  if (lbl) lbl.style.background = cb?.checked ? 'var(--accent-light)' : 'var(--surface)';
+  if (row) row.style.background  = cb?.checked ? '#f0f6ff' : '#f8fafc';
 }
 
 function openStandupModal(memberName, date, editId) {
@@ -3376,14 +3407,17 @@ function saveStandup() {
   if (!member) { alert('Please select a team member.'); return; }
   if (!date)   { alert('Please select a date.'); return; }
 
-  // Collect today's task selections and status updates
+  // Collect today's task selections, status updates and per-task notes
   const todayTaskIds      = [];
   const taskStatusUpdates = [];
+  const taskNotes         = {};
   document.querySelectorAll('.sd-task-cb:checked').forEach(cb => {
     const taskId = parseInt(cb.dataset.id);
     todayTaskIds.push(taskId);
-    const sel = document.querySelector(`.sd-task-status-sel[data-id="${taskId}"]`);
+    const sel  = document.querySelector(`.sd-task-status-sel[data-id="${taskId}"]`);
     if (sel && sel.value) taskStatusUpdates.push({ taskId, newStatus: sel.value });
+    const note = document.querySelector(`.sd-task-note[data-id="${taskId}"]`);
+    if (note && note.value.trim()) taskNotes[taskId] = note.value.trim();
   });
 
   // Apply status updates to task tracker
@@ -3412,6 +3446,9 @@ function saveStandup() {
     taskStatusUpdates:   existing
                            ? [...(existing.taskStatusUpdates||[]).filter(u => !taskStatusUpdates.find(n => n.taskId === u.taskId)), ...taskStatusUpdates]
                            : taskStatusUpdates,
+    taskNotes:           existing
+                           ? { ...(existing.taskNotes||{}), ...taskNotes }
+                           : taskNotes,
     notes:               document.getElementById('sd-notes').value.trim()
   };
 
@@ -3491,7 +3528,11 @@ function copyStandupSummary() {
     lines.push(`👤 ${e.member}`);
     if (e.yesterday)    lines.push(`  Yesterday : ${e.yesterday}`);
     if (e.today)        lines.push(`  Today     : ${e.today}`);
-    if (todayTasks.length) todayTasks.forEach(t => lines.push(`  Task      : #${t.id} ${t.name} [${t.hlStatus}]`));
+    if (todayTasks.length) todayTasks.forEach(t => {
+      lines.push(`  Task      : #${t.id} ${t.name} [${t.hlStatus}]`);
+      const note = (e.taskNotes||{})[t.id];
+      if (note) lines.push(`    Log     : ${note}`);
+    });
     if (e.blockers)     lines.push(`  ${e.blockersResolved?'✅ Resolved Blocker':'⛔ Blocker'} : ${e.blockers}`);
     if (e.helpNeeded)   lines.push(`  ${e.helpAddressed?'✅ Help Addressed':'🙋 Help'} : ${e.helpNeeded}`);
     if (e.notes)        lines.push(`  Notes     : ${e.notes}`);
@@ -3527,7 +3568,11 @@ function _buildWeeklyLines(ws, we, rows) {
       lines.push(`  ${fmtDateShort(e.date)}`);
       if (e.yesterday)    lines.push(`    Yesterday    : ${e.yesterday}`);
       if (e.today)        lines.push(`    Today (notes): ${e.today}`);
-      todayTasks.forEach(t => lines.push(`    Task         : #${t.id} ${t.name} [${t.hlStatus}]`));
+      todayTasks.forEach(t => {
+        lines.push(`    Task         : #${t.id} ${t.name} [${t.hlStatus}]`);
+        const note = (e.taskNotes||{})[t.id];
+        if (note) lines.push(`      Log        : ${note}`);
+      });
       if ((e.taskStatusUpdates||[]).length) {
         e.taskStatusUpdates.forEach(u => {
           const t = S.tasks.find(tk=>tk.id===u.taskId);
@@ -4117,6 +4162,120 @@ updateHeader();
 renderOverview();
 fillAssignees(['f-assignee','t-assignee','r-owner']);
 setTimeout(() => { _ptInit = true; }, 0);
+
+// ── Panel TXT Exports ──────────────────────────────────────
+function _dlTxt(txt, filename) {
+  const b = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function exportTasksTxt() {
+  const d = todayISO();
+  const m = S.meta;
+  let txt = `TASK STATUS TRACKER\n${m.projectName||'Project'} — ${m.sprint||'Sprint'}\nExported: ${d}\n${'═'.repeat(55)}\n\n`;
+  if (!S.tasks.length) { txt += '(No tasks)\n'; _dlTxt(txt, `tasks_${d}.txt`); return; }
+  const order = ['Blocked','At Risk','In Progress','Not Started','Done'];
+  const groups = {};
+  for (const t of S.tasks) { const k = t.hlStatus||'Not Started'; (groups[k]=groups[k]||[]).push(t); }
+  for (const st of order) {
+    const tasks = groups[st]; if (!tasks?.length) continue;
+    txt += `[${st.toUpperCase()}]  (${tasks.length})\n${'─'.repeat(40)}\n`;
+    for (const t of tasks) {
+      txt += `  ${t.name}`;
+      if (t.assignee)    txt += `  →  ${t.assignee}`;
+      if (t.priority)    txt += `  [${t.priority}]`;
+      if (t.eta)         txt += `  ETA: ${t.eta}`;
+      if (t.effort)      txt += `  (${t.effort}h)`;
+      txt += '\n';
+      if (t.feature)     txt += `    Feature: ${t.feature}\n`;
+      if (t.blocker)     txt += `    Blocker: ${t.blocker}\n`;
+      if (t.detailedStatus) txt += `    Detail: ${t.detailedStatus}\n`;
+    }
+    txt += '\n';
+  }
+  _dlTxt(txt, `tasks_${d}.txt`);
+}
+
+function exportCapacityTxt() {
+  const d = todayISO();
+  const m = S.meta;
+  let txt = `TEAM CAPACITY PLANNER\n${m.projectName||'Project'} — ${m.sprint||'Sprint'}  (${hpd()}h/day)\nExported: ${d}\n${'═'.repeat(55)}\n\n`;
+  if (!S.team.length) { txt += '(No team members)\n'; _dlTxt(txt, `capacity_${d}.txt`); return; }
+  let totalAvail = 0, totalAlloc = 0;
+  for (const mb of S.team) {
+    const avail = daysToH(mb.days);
+    const alloc = S.tasks.filter(t=>t.assignee===mb.name).reduce((s,t)=>s+(parseFloat(t.effort)||0),0);
+    const pct   = avail ? Math.round(alloc/avail*100) : 0;
+    totalAvail += avail; totalAlloc += alloc;
+    txt += `${mb.name}  [${mb.role||'—'}]\n`;
+    txt += `  Working Days: ${mb.days||20}d  Available: ${avail}h  Allocated: ${alloc.toFixed(1)}h  Utilization: ${pct}%${pct>100?' ⚠ OVER-BURN':''}\n\n`;
+  }
+  txt += `${'─'.repeat(40)}\nTOTAL  Available: ${totalAvail.toFixed(1)}h  Allocated: ${totalAlloc.toFixed(1)}h  Utilization: ${totalAvail?Math.round(totalAlloc/totalAvail*100):0}%\n`;
+  _dlTxt(txt, `capacity_${d}.txt`);
+}
+
+function exportWorkloadTxt() {
+  const d = todayISO();
+  const m = S.meta;
+  let txt = `WORKLOAD DISTRIBUTION ANALYZER\n${m.projectName||'Project'} — ${m.sprint||'Sprint'}\nExported: ${d}\n${'═'.repeat(55)}\n\n`;
+  const groups = {};
+  for (const t of S.tasks) { const k = t.assignee||'(Unassigned)'; (groups[k]=groups[k]||[]).push(t); }
+  const members = [...S.team.map(mb=>mb.name), ...Object.keys(groups).filter(k=>!S.team.find(mb=>mb.name===k))];
+  for (const name of members) {
+    const tasks = groups[name] || [];
+    const effort = tasks.reduce((s,t)=>s+(parseFloat(t.effort)||0),0);
+    txt += `${name}  [${tasks.length} task${tasks.length!==1?'s':''} · ${effort.toFixed(1)}h]\n`;
+    if (!tasks.length) { txt += '  (No tasks assigned)\n\n'; continue; }
+    for (const t of tasks) {
+      txt += `  • [${t.priority||'—'}] ${t.name}  ${t.effort||0}h  ${t.hlStatus||'Not Started'}\n`;
+    }
+    txt += '\n';
+  }
+  _dlTxt(txt, `workload_${d}.txt`);
+}
+
+function exportStandupsTxt() {
+  const d = todayISO();
+  if (!S.standups.length) { alert('No standup entries to export.'); return; }
+  const m = S.meta;
+  let txt = `DAILY STANDUP LOG\n${m.projectName||'Project'} — ${m.sprint||'Sprint'}\nExported: ${d}\n${'═'.repeat(55)}\n\n`;
+  const sorted = [...S.standups].sort((a,b)=>b.date.localeCompare(a.date));
+  let lastDate = '';
+  for (const sd of sorted) {
+    if (sd.date !== lastDate) {
+      txt += `${sd.date}\n${'─'.repeat(40)}\n`;
+      lastDate = sd.date;
+    }
+    const moodMap = {1:'😔',2:'😐',3:'🙂',4:'😊',5:'🤩'};
+    txt += `  ${sd.member||'—'}  ${moodMap[sd.mood]||''}\n`;
+    if (sd.yesterday)  txt += `    Yesterday:  ${sd.yesterday}\n`;
+    if (sd.today)      txt += `    Today:      ${sd.today}\n`;
+    if (sd.blockers)   txt += `    Blockers:   ${sd.blockers}${sd.blockersResolved?' [resolved]':''}\n`;
+    if (sd.helpNeeded) txt += `    Help:       ${sd.helpNeeded}${sd.helpAddressed?' [addressed]':''}\n`;
+    txt += '\n';
+  }
+  _dlTxt(txt, `standups_${d}.txt`);
+}
+
+function exportRisksTxt() {
+  const d = todayISO();
+  const m = S.meta;
+  let txt = `RISK REGISTER\n${m.projectName||'Project'} — ${m.sprint||'Sprint'}\nExported: ${d}\n${'═'.repeat(55)}\n\n`;
+  if (!S.risks.length) { txt += '(No risks logged)\n'; _dlTxt(txt, `risks_${d}.txt`); return; }
+  const sorted = [...S.risks].sort((a,b)=>(b.score||b.impact*b.likelihood||0)-(a.score||a.impact*a.likelihood||0));
+  const scoreLabel = s => s>=15?'CRITICAL':s>=10?'HIGH':s>=5?'MEDIUM':'LOW';
+  for (const r of sorted) {
+    const sc = r.score || (r.impact||1)*(r.likelihood||1);
+    txt += `[${scoreLabel(sc)}]  Score: ${sc}  Status: ${r.status||'Open'}\n`;
+    txt += `  ${r.description||'—'}\n`;
+    if (r.category)   txt += `  Category:   ${r.category}\n`;
+    if (r.owner)      txt += `  Owner:      ${r.owner}\n`;
+    if (r.eta)        txt += `  ETA:        ${r.eta}\n`;
+    if (r.mitigation) txt += `  Mitigation: ${r.mitigation}\n`;
+    txt += '\n';
+  }
+  _dlTxt(txt, `risks_${d}.txt`);
+}
 </script>
 </body>
 </html>
