@@ -623,11 +623,15 @@ tr:hover td{background:#fafcff;}
       <button class="modal-close" onclick="closeModal('tdd-report-modal')">×</button>
     </div>
     <div class="modal-body" style="padding:0">
-      <div style="padding:8px 16px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;gap:7px;align-items:center">
+      <div style="padding:8px 16px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;gap:7px;align-items:center;flex-wrap:wrap">
         <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em">View:</span>
         <button class="btn btn-primary btn-sm" id="tdd-rv-txt" onclick="toggleReportView('txt')">📄 TXT</button>
         <button class="btn btn-secondary btn-sm" id="tdd-rv-md" onclick="toggleReportView('md')">📝 Markdown</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-secondary btn-sm" id="tdd-fields-toggle" onclick="toggleFieldSelector()" title="Choose which fields appear in the TXT/MD report and export">⚙ Fields ▾</button>
+        <span style="font-size:10px;color:var(--muted)" id="tdd-fields-count"></span>
       </div>
+      <div id="tdd-report-fields" style="display:none;padding:10px 16px;background:#fbfcfe;border-bottom:1px solid var(--border);max-height:30vh;overflow-y:auto"></div>
       <div id="tdd-report-txt-pane">
         <pre id="tdd-report-content" style="padding:18px;font-family:'Consolas','Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;max-height:58vh;overflow-y:auto;color:var(--text);margin:0"></pre>
       </div>
@@ -1694,6 +1698,95 @@ function resetSample() {
 // ════════════════════════════════════════
 let _currentTDDReportId = null;
 
+// ── Report field selector ──
+const REPORT_FIELDS = [
+  {key:'title',         label:'TDD Title',            group:'TDD Details'},
+  {key:'flow',          label:'Integration Flow',     group:'TDD Details'},
+  {key:'author',        label:'Author',               group:'TDD Details'},
+  {key:'reviewer',      label:'Reviewer',             group:'TDD Details'},
+  {key:'status',        label:'Status',               group:'TDD Details'},
+  {key:'priority',      label:'Priority',             group:'TDD Details'},
+  {key:'dateReceived',  label:'Date Received',         group:'TDD Details'},
+  {key:'dateApproved',  label:'Date Approved',         group:'TDD Details'},
+  {key:'azureServices', label:'Azure Services',        group:'TDD Details'},
+  {key:'project',       label:'Project',               group:'TDD Details'},
+  {key:'generated',     label:'Generated Timestamp',   group:'TDD Details'},
+  {key:'notes',         label:'Notes',                 group:'TDD Details'},
+  {key:'gapSummary',    label:'Gap Summary block',     group:'Sections'},
+  {key:'openGaps',      label:'Open Gaps section',     group:'Sections'},
+  {key:'resolvedGaps',  label:'Resolved Gaps section', group:'Sections'},
+  {key:'waivedGaps',    label:'Waived Gaps section',   group:'Sections'},
+  {key:'g_category',      label:'Category',          group:'Per-Gap Fields'},
+  {key:'g_subType',       label:'Sub-type',          group:'Per-Gap Fields'},
+  {key:'g_severity',      label:'Severity',          group:'Per-Gap Fields'},
+  {key:'g_status',        label:'Status',            group:'Per-Gap Fields'},
+  {key:'g_description',   label:'Description',       group:'Per-Gap Fields'},
+  {key:'g_impact',        label:'Impact',            group:'Per-Gap Fields'},
+  {key:'g_timeLost',      label:'Time Lost',         group:'Per-Gap Fields'},
+  {key:'g_assignedTo',    label:'Assigned To',       group:'Per-Gap Fields'},
+  {key:'g_foundBy',       label:'Found By',          group:'Per-Gap Fields'},
+  {key:'g_dateFound',     label:'Date Found',        group:'Per-Gap Fields'},
+  {key:'g_dateResolved',  label:'Date Resolved',     group:'Per-Gap Fields'},
+  {key:'g_resolutionNotes',label:'Resolution Notes', group:'Per-Gap Fields'}
+];
+let _reportFields = new Set(REPORT_FIELDS.map(f => f.key));
+function rfInc(k) { return _reportFields.has(k); }
+
+function loadReportFieldPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('tddReportFields') || 'null');
+    if (Array.isArray(saved)) _reportFields = new Set(saved.filter(k => REPORT_FIELDS.some(f => f.key === k)));
+  } catch (e) {}
+}
+function saveReportFieldPrefs() {
+  try { localStorage.setItem('tddReportFields', JSON.stringify([..._reportFields])); } catch (e) {}
+}
+function renderFieldSelector() {
+  const wrap = document.getElementById('tdd-report-fields');
+  if (!wrap) return;
+  const groups = {};
+  REPORT_FIELDS.forEach(f => { (groups[f.group] = groups[f.group] || []).push(f); });
+  let html = `<div style="display:flex;gap:6px;margin-bottom:8px"><button class="btn btn-secondary btn-xs" onclick="setAllReportFields(true)">✓ Select all</button><button class="btn btn-secondary btn-xs" onclick="setAllReportFields(false)">✕ Clear all</button></div>`;
+  Object.keys(groups).forEach(g => {
+    html += `<div style="margin-bottom:9px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;margin-bottom:5px">${g}</div><div style="display:flex;flex-wrap:wrap;gap:5px 16px">`;
+    groups[g].forEach(f => {
+      html += `<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" ${_reportFields.has(f.key)?'checked':''} onchange="onReportFieldToggle('${f.key}',this.checked)">${esc(f.label)}</label>`;
+    });
+    html += `</div></div>`;
+  });
+  wrap.innerHTML = html;
+  updateFieldsCount();
+}
+function onReportFieldToggle(k, on) {
+  if (on) _reportFields.add(k); else _reportFields.delete(k);
+  saveReportFieldPrefs(); updateFieldsCount(); refreshReportView();
+}
+function setAllReportFields(on) {
+  _reportFields = on ? new Set(REPORT_FIELDS.map(f => f.key)) : new Set();
+  saveReportFieldPrefs(); renderFieldSelector(); refreshReportView();
+}
+function updateFieldsCount() {
+  const el = document.getElementById('tdd-fields-count');
+  if (el) el.textContent = `${_reportFields.size}/${REPORT_FIELDS.length} fields`;
+}
+function toggleFieldSelector() {
+  const w = document.getElementById('tdd-report-fields');
+  const b = document.getElementById('tdd-fields-toggle');
+  if (!w) return;
+  const show = w.style.display === 'none';
+  w.style.display = show ? '' : 'none';
+  if (b) b.textContent = show ? '⚙ Fields ▴' : '⚙ Fields ▾';
+}
+function refreshReportView() {
+  if (!_currentTDDReportId) return;
+  const pre = document.getElementById('tdd-report-content');
+  if (pre) pre.textContent = generateTDDReportText(_currentTDDReportId);
+  if (_tddReportView === 'md') {
+    const mdPane = document.getElementById('tdd-report-md-pane');
+    if (mdPane) mdPane.innerHTML = renderMarkdownToHTML(generateTDDReportMD(_currentTDDReportId));
+  }
+}
+
 function generateTDDReportText(id) {
   const tdd = S.tdds.find(t => t.id === id);
   if (!tdd) return '';
@@ -1710,70 +1803,75 @@ function generateTDDReportText(id) {
   t += `${EQ}\n`;
   t += `TDD GAP REPORT\n`;
   t += `${EQ}\n`;
-  t += `TDD Title        : ${tdd.title}\n`;
-  if (tdd.flow)     t += `Integration Flow : ${tdd.flow}\n`;
-  t +=               `Author           : ${tdd.author || '—'}\n`;
-  if (tdd.reviewer) t += `Reviewer         : ${tdd.reviewer}\n`;
-  t +=               `Status           : ${tdd.status}\n`;
-  if (tdd.priority) t += `Priority         : ${tdd.priority}\n`;
-  if (tdd.dateReceived) t += `Date Received    : ${fmtDate(tdd.dateReceived)}\n`;
-  if (tdd.dateApproved) t += `Date Approved    : ${fmtDate(tdd.dateApproved)}\n`;
-  if (tdd.azureServices && tdd.azureServices.length) t += `Azure Services   : ${tdd.azureServices.join(', ')}\n`;
-  t +=               `Project          : ${S.meta.projectName || '—'}\n`;
-  t +=               `Generated        : ${now}\n`;
+  if (rfInc('title'))                t += `TDD Title        : ${tdd.title}\n`;
+  if (rfInc('flow') && tdd.flow)     t += `Integration Flow : ${tdd.flow}\n`;
+  if (rfInc('author'))               t += `Author           : ${tdd.author || '—'}\n`;
+  if (rfInc('reviewer') && tdd.reviewer) t += `Reviewer         : ${tdd.reviewer}\n`;
+  if (rfInc('status'))               t += `Status           : ${tdd.status}\n`;
+  if (rfInc('priority') && tdd.priority) t += `Priority         : ${tdd.priority}\n`;
+  if (rfInc('dateReceived') && tdd.dateReceived) t += `Date Received    : ${fmtDate(tdd.dateReceived)}\n`;
+  if (rfInc('dateApproved') && tdd.dateApproved) t += `Date Approved    : ${fmtDate(tdd.dateApproved)}\n`;
+  if (rfInc('azureServices') && tdd.azureServices && tdd.azureServices.length) t += `Azure Services   : ${tdd.azureServices.join(', ')}\n`;
+  if (rfInc('project'))              t += `Project          : ${S.meta.projectName || '—'}\n`;
+  if (rfInc('generated'))            t += `Generated        : ${now}\n`;
 
-  t += `\n${L}\nGAP SUMMARY\n${L}\n`;
-  t += `  Total Gaps     : ${gaps.length}\n`;
-  t += `  Open           : ${gaps.filter(g => g.status === 'Open').length}\n`;
-  t += `  In Progress    : ${gaps.filter(g => g.status === 'In Progress').length}\n`;
-  t += `  Resolved       : ${gaps.filter(g => g.status === 'Resolved').length}\n`;
-  t += `  Waived         : ${gaps.filter(g => g.status === 'Waived').length}\n`;
-  t += `  Critical Open  : ${critOpen.length}${critOpen.length > 0 ? ' ⚠ ACTION REQUIRED' : ' ✓ None'}\n`;
-  t += `  Total Time Lost: ${totalTime}h\n`;
+  if (rfInc('gapSummary')) {
+    t += `\n${L}\nGAP SUMMARY\n${L}\n`;
+    t += `  Total Gaps     : ${gaps.length}\n`;
+    t += `  Open           : ${gaps.filter(g => g.status === 'Open').length}\n`;
+    t += `  In Progress    : ${gaps.filter(g => g.status === 'In Progress').length}\n`;
+    t += `  Resolved       : ${gaps.filter(g => g.status === 'Resolved').length}\n`;
+    t += `  Waived         : ${gaps.filter(g => g.status === 'Waived').length}\n`;
+    t += `  Critical Open  : ${critOpen.length}${critOpen.length > 0 ? ' ⚠ ACTION REQUIRED' : ' ✓ None'}\n`;
+    t += `  Total Time Lost: ${totalTime}h\n`;
+  }
 
-  if (tdd.notes) {
+  if (rfInc('notes') && tdd.notes) {
     t += `\n${L}\nNOTES\n${L}\n  ${tdd.notes}\n`;
   }
 
   const sorted = [...gaps].sort((a, b) => (SEV_ORDER[sevClean(b.severity)] || 0) - (SEV_ORDER[sevClean(a.severity)] || 0));
 
   const openGaps = sorted.filter(g => g.status === 'Open' || g.status === 'In Progress');
-  if (openGaps.length) {
+  if (rfInc('openGaps') && openGaps.length) {
     t += `\n${L}\nOPEN GAPS (${openGaps.length}) — ACTION REQUIRED\n${L}\n`;
     openGaps.forEach(g => {
       t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category}\n`;
-      t += `  Category         : ${g.category}\n`;
-      if (g.subType) t += `  Sub-type         : ${g.subType}\n`;
-      t += `  Status           : ${g.status}\n`;
-      t += `  Description      : ${g.description}\n`;
-      t += `  Impact           : ${g.impact} | Time Lost: ${g.timeLostH || 0}h\n`;
-      if (g.assignedTo) t += `  Assigned To      : ${g.assignedTo}\n`;
-      if (g.foundBy)    t += `  Found By         : ${g.foundBy}\n`;
-      t +=               `  Date Found       : ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)\n`;
-      t +=               `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+      if (rfInc('g_category')) t += `  Category         : ${g.category}\n`;
+      if (rfInc('g_subType') && g.subType) t += `  Sub-type         : ${g.subType}\n`;
+      if (rfInc('g_severity')) t += `  Severity         : ${sevClean(g.severity)}\n`;
+      if (rfInc('g_status')) t += `  Status           : ${g.status}\n`;
+      if (rfInc('g_description')) t += `  Description      : ${g.description}\n`;
+      if (rfInc('g_impact'))   t += `  Impact           : ${g.impact}\n`;
+      if (rfInc('g_timeLost')) t += `  Time Lost        : ${g.timeLostH || 0}h\n`;
+      if (rfInc('g_assignedTo') && g.assignedTo) t += `  Assigned To      : ${g.assignedTo}\n`;
+      if (rfInc('g_foundBy') && g.foundBy)    t += `  Found By         : ${g.foundBy}\n`;
+      if (rfInc('g_dateFound')) t += `  Date Found       : ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old)\n`;
+      if (rfInc('g_resolutionNotes')) t += `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
     });
   }
 
   const resolvedGaps = sorted.filter(g => g.status === 'Resolved');
-  if (resolvedGaps.length) {
+  if (rfInc('resolvedGaps') && resolvedGaps.length) {
     t += `\n${L}\nRESOLVED GAPS (${resolvedGaps.length})\n${L}\n`;
     resolvedGaps.forEach(g => {
       t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category} ✓ Resolved\n`;
-      t += `  Category         : ${g.category}\n`;
-      if (g.subType) t += `  Sub-type         : ${g.subType}\n`;
-      t += `  Description      : ${g.description}\n`;
-      t += `  Time Lost        : ${g.timeLostH || 0}h | Resolved: ${fmtDate(g.dateResolved)}\n`;
-      t +=  `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+      if (rfInc('g_category')) t += `  Category         : ${g.category}\n`;
+      if (rfInc('g_subType') && g.subType) t += `  Sub-type         : ${g.subType}\n`;
+      if (rfInc('g_description')) t += `  Description      : ${g.description}\n`;
+      if (rfInc('g_timeLost'))    t += `  Time Lost        : ${g.timeLostH || 0}h\n`;
+      if (rfInc('g_dateResolved')) t += `  Resolved         : ${fmtDate(g.dateResolved)}\n`;
+      if (rfInc('g_resolutionNotes')) t += `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
     });
   }
 
   const waivedGaps = sorted.filter(g => g.status === 'Waived');
-  if (waivedGaps.length) {
+  if (rfInc('waivedGaps') && waivedGaps.length) {
     t += `\n${L}\nWAIVED GAPS (${waivedGaps.length})\n${L}\n`;
     waivedGaps.forEach(g => {
       t += `\n[G${g.id}] ${sevClean(g.severity).toUpperCase()} — ${g.subType || g.category} (Waived)\n`;
-      t += `  Description      : ${g.description}\n`;
-      t += `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
+      if (rfInc('g_description')) t += `  Description      : ${g.description}\n`;
+      if (rfInc('g_resolutionNotes')) t += `  Resolution Notes : ${g.resolutionNotes || '—'}\n`;
     });
   }
 
@@ -1788,6 +1886,7 @@ function viewTDDReport(id) {
   const tdd = S.tdds.find(t => t.id === id);
   if (!tdd) return;
   document.getElementById('tdd-report-modal-title').textContent = `Gap Report — ${tdd.title}`;
+  renderFieldSelector();
   document.getElementById('tdd-report-content').textContent = generateTDDReportText(id);
   document.getElementById('tdd-report-copy-btn').textContent = '⎘ Copy for Email';
   const mdPane = document.getElementById('tdd-report-md-pane');
@@ -2050,29 +2149,36 @@ function generateTDDReportMD(id) {
   const tv = s => String(s || '').replace(/\|/g, '/');
 
   let md = `# TDD Gap Report — ${tv(tdd.title)}\n\n`;
-  md += `> **Project:** ${tv(S.meta.projectName || '—')} | **Generated:** ${now}\n\n---\n\n`;
+  const hdrBits = [];
+  if (rfInc('project'))   hdrBits.push(`**Project:** ${tv(S.meta.projectName || '—')}`);
+  if (rfInc('generated')) hdrBits.push(`**Generated:** ${now}`);
+  if (hdrBits.length) md += `> ${hdrBits.join(' | ')}\n\n`;
+  md += `---\n\n`;
 
-  md += `## TDD Details\n\n| Field | Value |\n|---|---|\n`;
-  md += `| Title | ${tv(tdd.title)} |\n`;
-  if (tdd.flow)     md += `| Integration Flow | ${tv(tdd.flow)} |\n`;
-  md += `| Author | ${tv(tdd.author || '—')} |\n`;
-  if (tdd.reviewer) md += `| Reviewer | ${tv(tdd.reviewer)} |\n`;
-  md += `| Status | **${tv(tdd.status)}** |\n`;
-  if (tdd.priority) md += `| Priority | ${tv(tdd.priority)} |\n`;
-  if (tdd.dateReceived) md += `| Date Received | ${fmtDate(tdd.dateReceived)} |\n`;
-  if (tdd.dateApproved) md += `| Date Approved | ${fmtDate(tdd.dateApproved)} |\n`;
-  if (tdd.azureServices && tdd.azureServices.length) md += `| Azure Services | ${tv(tdd.azureServices.join(', '))} |\n`;
+  const detailRows = [];
+  if (rfInc('title'))                detailRows.push(`| Title | ${tv(tdd.title)} |`);
+  if (rfInc('flow') && tdd.flow)     detailRows.push(`| Integration Flow | ${tv(tdd.flow)} |`);
+  if (rfInc('author'))               detailRows.push(`| Author | ${tv(tdd.author || '—')} |`);
+  if (rfInc('reviewer') && tdd.reviewer) detailRows.push(`| Reviewer | ${tv(tdd.reviewer)} |`);
+  if (rfInc('status'))               detailRows.push(`| Status | **${tv(tdd.status)}** |`);
+  if (rfInc('priority') && tdd.priority) detailRows.push(`| Priority | ${tv(tdd.priority)} |`);
+  if (rfInc('dateReceived') && tdd.dateReceived) detailRows.push(`| Date Received | ${fmtDate(tdd.dateReceived)} |`);
+  if (rfInc('dateApproved') && tdd.dateApproved) detailRows.push(`| Date Approved | ${fmtDate(tdd.dateApproved)} |`);
+  if (rfInc('azureServices') && tdd.azureServices && tdd.azureServices.length) detailRows.push(`| Azure Services | ${tv(tdd.azureServices.join(', '))} |`);
+  if (detailRows.length) md += `## TDD Details\n\n| Field | Value |\n|---|---|\n${detailRows.join('\n')}\n`;
 
-  md += `\n## Gap Summary\n\n| Metric | Value |\n|---|---|\n`;
-  md += `| Total Gaps | **${gaps.length}** |\n`;
-  md += `| Open | ${gaps.filter(g => g.status === 'Open').length} |\n`;
-  md += `| In Progress | ${gaps.filter(g => g.status === 'In Progress').length} |\n`;
-  md += `| Resolved | ${gaps.filter(g => g.status === 'Resolved').length} |\n`;
-  md += `| Waived | ${gaps.filter(g => g.status === 'Waived').length} |\n`;
-  md += `| Critical Open | **${critOpen.length}**${critOpen.length > 0 ? ' — ACTION REQUIRED' : ' — None'} |\n`;
-  md += `| Total Time Lost | **${totalTime}h** |\n`;
+  if (rfInc('gapSummary')) {
+    md += `\n## Gap Summary\n\n| Metric | Value |\n|---|---|\n`;
+    md += `| Total Gaps | **${gaps.length}** |\n`;
+    md += `| Open | ${gaps.filter(g => g.status === 'Open').length} |\n`;
+    md += `| In Progress | ${gaps.filter(g => g.status === 'In Progress').length} |\n`;
+    md += `| Resolved | ${gaps.filter(g => g.status === 'Resolved').length} |\n`;
+    md += `| Waived | ${gaps.filter(g => g.status === 'Waived').length} |\n`;
+    md += `| Critical Open | **${critOpen.length}**${critOpen.length > 0 ? ' — ACTION REQUIRED' : ' — None'} |\n`;
+    md += `| Total Time Lost | **${totalTime}h** |\n`;
+  }
 
-  if (tdd.notes) md += `\n## Notes\n\n> ${tv(tdd.notes)}\n`;
+  if (rfInc('notes') && tdd.notes) md += `\n## Notes\n\n> ${tv(tdd.notes)}\n`;
 
   const sorted = [...gaps].sort((a, b) => (SEV_ORDER[sevClean(b.severity)] || 0) - (SEV_ORDER[sevClean(a.severity)] || 0));
   const openGaps     = sorted.filter(g => g.status === 'Open' || g.status === 'In Progress');
@@ -2080,45 +2186,50 @@ function generateTDDReportMD(id) {
   const waivedGaps   = sorted.filter(g => g.status === 'Waived');
   const SEV_ICON = {Critical:'🔴', High:'🟠', Medium:'🟡', Low:'🟢'};
 
-  if (openGaps.length) {
+  if (rfInc('openGaps') && openGaps.length) {
     md += `\n## Open Gaps (${openGaps.length}) — Action Required\n\n`;
     openGaps.forEach(g => {
       const icon = SEV_ICON[sevClean(g.severity)] || '⚪';
       md += `### ${icon} [G${g.id}] ${tv(g.subType || g.category)}\n\n`;
-      md += `| Field | Value |\n|---|---|\n`;
-      md += `| Category | ${tv(g.category)} |\n`;
-      if (g.subType) md += `| Sub-type | ${tv(g.subType)} |\n`;
-      md += `| Severity | **${sevClean(g.severity)}** |\n`;
-      md += `| Status | ${g.status} |\n`;
-      md += `| Impact | ${g.impact} |\n`;
-      md += `| Time Lost | ${g.timeLostH || 0}h |\n`;
-      if (g.assignedTo) md += `| Assigned To | **${tv(g.assignedTo)}** |\n`;
-      if (g.foundBy)    md += `| Found By | ${tv(g.foundBy)} |\n`;
-      md += `| Date Found | ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old) |\n`;
-      md += `\n**Description:**\n\n> ${tv(g.description)}\n\n`;
-      if (g.resolutionNotes) md += `**Resolution Notes:**\n\n> ${tv(g.resolutionNotes)}\n\n`;
+      const rows = [];
+      if (rfInc('g_category')) rows.push(`| Category | ${tv(g.category)} |`);
+      if (rfInc('g_subType') && g.subType) rows.push(`| Sub-type | ${tv(g.subType)} |`);
+      if (rfInc('g_severity')) rows.push(`| Severity | **${sevClean(g.severity)}** |`);
+      if (rfInc('g_status')) rows.push(`| Status | ${g.status} |`);
+      if (rfInc('g_impact')) rows.push(`| Impact | ${g.impact} |`);
+      if (rfInc('g_timeLost')) rows.push(`| Time Lost | ${g.timeLostH || 0}h |`);
+      if (rfInc('g_assignedTo') && g.assignedTo) rows.push(`| Assigned To | **${tv(g.assignedTo)}** |`);
+      if (rfInc('g_foundBy') && g.foundBy) rows.push(`| Found By | ${tv(g.foundBy)} |`);
+      if (rfInc('g_dateFound')) rows.push(`| Date Found | ${fmtDate(g.dateFound)} (${daysSince(g.dateFound)} old) |`);
+      if (rows.length) md += `| Field | Value |\n|---|---|\n${rows.join('\n')}\n`;
+      if (rfInc('g_description')) md += `\n**Description:**\n\n> ${tv(g.description)}\n\n`;
+      if (rfInc('g_resolutionNotes') && g.resolutionNotes) md += `**Resolution Notes:**\n\n> ${tv(g.resolutionNotes)}\n\n`;
       md += `---\n\n`;
     });
   }
 
-  if (resolvedGaps.length) {
+  if (rfInc('resolvedGaps') && resolvedGaps.length) {
     md += `\n## Resolved Gaps (${resolvedGaps.length})\n\n`;
     resolvedGaps.forEach(g => {
       md += `### [G${g.id}] ${tv(g.subType || g.category)}\n\n`;
-      md += `**Category:** ${tv(g.category)} | **Severity:** ${sevClean(g.severity)} | **Time Lost:** ${g.timeLostH || 0}h`;
-      if (g.dateResolved) md += ` | **Resolved:** ${fmtDate(g.dateResolved)}`;
-      md += `\n\n> ${tv(g.description)}\n\n`;
-      if (g.resolutionNotes) md += `**Resolution:** ${tv(g.resolutionNotes)}\n\n`;
+      const bits = [];
+      if (rfInc('g_category')) bits.push(`**Category:** ${tv(g.category)}`);
+      if (rfInc('g_severity')) bits.push(`**Severity:** ${sevClean(g.severity)}`);
+      if (rfInc('g_timeLost')) bits.push(`**Time Lost:** ${g.timeLostH || 0}h`);
+      if (rfInc('g_dateResolved') && g.dateResolved) bits.push(`**Resolved:** ${fmtDate(g.dateResolved)}`);
+      if (bits.length) md += bits.join(' | ') + `\n\n`;
+      if (rfInc('g_description')) md += `> ${tv(g.description)}\n\n`;
+      if (rfInc('g_resolutionNotes') && g.resolutionNotes) md += `**Resolution:** ${tv(g.resolutionNotes)}\n\n`;
       md += `---\n\n`;
     });
   }
 
-  if (waivedGaps.length) {
+  if (rfInc('waivedGaps') && waivedGaps.length) {
     md += `\n## Waived Gaps (${waivedGaps.length})\n\n`;
     waivedGaps.forEach(g => {
       md += `### [G${g.id}] ${tv(g.subType || g.category)} (Waived)\n\n`;
-      md += `> ${tv(g.description)}\n\n`;
-      if (g.resolutionNotes) md += `**Notes:** ${tv(g.resolutionNotes)}\n\n`;
+      if (rfInc('g_description')) md += `> ${tv(g.description)}\n\n`;
+      if (rfInc('g_resolutionNotes') && g.resolutionNotes) md += `**Notes:** ${tv(g.resolutionNotes)}\n\n`;
       md += `---\n\n`;
     });
   }
@@ -2245,6 +2356,7 @@ function exportTDDReportTxt() {
 // INIT
 // ════════════════════════════════════════
 hydrate();
+loadReportFieldPrefs();
 if(!S.tdds.length&&!S.gaps.length) loadSampleData();
 updateHeader();
 renderTDDs();
