@@ -546,10 +546,6 @@ tr.done-row td{opacity:.65;}
         <div class="filter-row">
           <select id="fr-cat" onchange="renderRisks()">
             <option value="">All Categories</option>
-            <option>Incremental Refinement Tracking</option>
-            <option>Lack of Information vs Expected Deliverables</option>
-            <option>Schedule Risk</option><option>Resource Risk</option>
-            <option>Technical Risk</option><option>Other</option>
           </select>
           <select id="fr-status" onchange="renderRisks()">
             <option value="">All Statuses</option>
@@ -880,12 +876,10 @@ tr.done-row td{opacity:.65;}
       <div class="modal-grid">
         <div class="fg span2"><label>Risk Description *</label><textarea id="r-desc" placeholder="Describe the risk in detail…"></textarea></div>
         <div class="fg span2"><label>Category</label>
-          <select id="r-cat">
-            <option>Incremental Refinement Tracking</option>
-            <option>Lack of Information vs Expected Deliverables</option>
-            <option>Schedule Risk</option><option>Resource Risk</option>
-            <option>Technical Risk</option><option>Other</option>
-          </select>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="r-cat" style="flex:1"></select>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addRiskCategory()" title="Add a new risk category">+ New</button>
+          </div>
         </div>
         <div class="fg"><label>Impact</label><select id="r-impact"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
         <div class="fg"><label>Likelihood</label><select id="r-likelihood"><option>Low</option><option selected>Medium</option><option>High</option></select></div>
@@ -1173,9 +1167,20 @@ let S = {
   team: [],   // {id,name,role,days}  — days = working days available this month
   tasks: [],  // {id,name,assignee,priority,startDate,eta,deliveryDate,hlStatus,detailedStatus,blocker,dependency,riskFlag,comments,effort,featureId}
   risks: [],  // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
+  riskCategories: [], // custom + default risk category labels
   standups: [],// {id,date,member,yesterday,today,blockers,helpNeeded,mood,sprint,linkedTaskIds,notes}
   retros: []  // {id,sprint,startDate,endDate,format,items:[{id,category,text,votes}],actionItems:[{id,text,owner,dueDate,status}],notes}
 };
+const DEFAULT_RISK_CATS = [
+  'Incremental Refinement Tracking',
+  'Lack of Information vs Expected Deliverables',
+  'Schedule Risk', 'Resource Risk', 'Technical Risk', 'Other'
+];
+// Returns the working list of risk categories, seeding defaults on first use.
+function riskCats() {
+  if (!Array.isArray(S.riskCategories) || !S.riskCategories.length) S.riskCategories = [...DEFAULT_RISK_CATS];
+  return S.riskCategories;
+}
 let tid = 1, mid = 1, rid = 1, sid = 1, retId = 1, fid = 1;
 let _isDirty = false, _ptInit = false;
 
@@ -1210,6 +1215,9 @@ function hydrate() {
       if (!S.meta.hoursPerDay) S.meta.hoursPerDay = 8;
     }
     if (!S.features) S.features = [];
+    // Seed risk categories, then absorb any category already in use that isn't listed yet
+    if (!Array.isArray(S.riskCategories) || !S.riskCategories.length) S.riskCategories = [...DEFAULT_RISK_CATS];
+    (S.risks||[]).forEach(r => { if (r.category && !S.riskCategories.includes(r.category)) S.riskCategories.push(r.category); });
     if (!S.standups) S.standups = [];
     S.standups = S.standups.map(migrateStandupEntry);
     if (!S.retros) S.retros = [];
@@ -1351,13 +1359,13 @@ function saveSettings() {
 }
 function clearAll() {
   if (!confirm('Delete ALL tasks, team members, and risks? This cannot be undone.')) return;
-  S = { meta: S.meta, team: [], tasks: [], risks: [], standups: [], retros: [] };
+  S = { meta: S.meta, team: [], tasks: [], risks: [], riskCategories: [...DEFAULT_RISK_CATS], standups: [], retros: [] };
   tid=1; mid=1; rid=1; sid=1; retId=1;
   persist(); _isDirty = false; renderOverview(); badges(); closeModal('settings-modal');
 }
 function resetSample() {
   if (!confirm('Replace all data with the "Digital Banking Platform Relaunch" sample project? Your current data will be lost.')) return;
-  S = { meta:{}, team:[], tasks:[], risks:[] };
+  S = { meta:{}, team:[], tasks:[], risks:[], riskCategories:[...DEFAULT_RISK_CATS] };
   tid=1; mid=1; rid=1;
   loadSampleData();
   updateHeader(); renderOverview(); badges(); closeModal('settings-modal');
@@ -2045,13 +2053,44 @@ function renderWorkload() {
 // ════════════════════════════════════════
 // RISK REGISTER
 // ════════════════════════════════════════
+// Populate the modal category <select> and the filter <select> from the saved category list.
+function fillRiskCategories(selected) {
+  const cats = riskCats();
+  const sel = document.getElementById('r-cat');
+  if (sel) {
+    const cur = selected !== undefined ? selected : sel.value;
+    sel.innerHTML = cats.map(c => `<option${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+  }
+  const fil = document.getElementById('fr-cat');
+  if (fil) {
+    const curF = fil.value;
+    fil.innerHTML = `<option value="">All Categories</option>` + cats.map(c => `<option${c===curF?' selected':''}>${esc(c)}</option>`).join('');
+  }
+}
+
+// Prompt for and add a new risk category, then select it in the modal.
+function addRiskCategory() {
+  const name = (prompt('New risk category name:')||'').trim();
+  if (!name) return;
+  const cats = riskCats();
+  if (cats.some(c => c.toLowerCase() === name.toLowerCase())) {
+    const existing = cats.find(c => c.toLowerCase() === name.toLowerCase());
+    fillRiskCategories(existing);
+    return;
+  }
+  cats.push(name);
+  persist();
+  fillRiskCategories(name);
+}
+
 function openRiskModal(id) {
   fillAssignees(['r-owner']); fillTaskDropdown();
   document.getElementById('risk-modal-title').textContent = id ? 'Edit Risk' : 'Add Risk';
   const r = id ? S.risks.find(x=>x.id===id) : null;
+  fillRiskCategories(r?.category || riskCats()[0]);
   document.getElementById('r-id').value = id||'';
   document.getElementById('r-desc').value = r?.description||'';
-  document.getElementById('r-cat').value = r?.category||'Incremental Refinement Tracking';
+  document.getElementById('r-cat').value = r?.category||riskCats()[0];
   document.getElementById('r-impact').value = r?.impact||'Medium';
   document.getElementById('r-likelihood').value = r?.likelihood||'Medium';
   document.getElementById('r-mitigation').value = r?.mitigation||'';
@@ -2090,7 +2129,7 @@ function delRisk(id) {
 }
 
 function renderRisks() {
-  fillAssignees(['r-owner']); fillTaskDropdown();
+  fillAssignees(['r-owner']); fillTaskDropdown(); fillRiskCategories();
   const fC=document.getElementById('fr-cat')?.value||'';
   const fS=document.getElementById('fr-status')?.value||'';
   const fSc=document.getElementById('fr-score')?.value||'';
@@ -2399,6 +2438,7 @@ function exportAllData() {
     team:        S.team,
     tasks:       S.tasks,
     risks:       S.risks,
+    riskCategories: riskCats(),
     standups:    S.standups,
     retros:      S.retros,
     ids:         { tid, mid, rid, sid, retId }
@@ -2501,6 +2541,7 @@ function applyLoadBackup() {
     S.team     = _loadPayload.team  || [];
     S.tasks    = _loadPayload.tasks || [];
     S.risks    = _loadPayload.risks || [];
+    S.riskCategories = (Array.isArray(_loadPayload.riskCategories) && _loadPayload.riskCategories.length) ? [..._loadPayload.riskCategories] : [...DEFAULT_RISK_CATS];
     S.standups = _loadPayload.standups || [];
     S.retros   = _loadPayload.retros   || [];
     if (_loadPayload.ids) {
@@ -2558,7 +2599,14 @@ function applyLoadBackup() {
     (_loadPayload.retros||[]).forEach(r => {
       S.retros.push({ ...r, id: retId++ });
     });
+
+    // Risk categories: union of existing + backup's custom categories
+    (_loadPayload.riskCategories||[]).forEach(c => { if (c && !S.riskCategories.includes(c)) S.riskCategories.push(c); });
   }
+
+  // Absorb any category referenced by a risk but not yet in the list
+  riskCats();
+  (S.risks||[]).forEach(r => { if (r.category && !S.riskCategories.includes(r.category)) S.riskCategories.push(r.category); });
 
   persist();
   updateHeader();
