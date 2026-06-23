@@ -316,6 +316,12 @@ nav {
 .card-23 .card-cta { color: #f43f5e; }
 .card-23 .tag { background: rgba(190,18,60,0.10); color: #fb7185; border-color: rgba(190,18,60,0.25); }
 
+.card-24::before { background: linear-gradient(90deg, #4338ca, #6366f1); }
+.card-24:hover   { border-color: #4338ca; }
+.card-24 .card-icon { background: rgba(79,70,229,0.15); }
+.card-24 .card-cta { color: #818cf8; }
+.card-24 .tag { background: rgba(79,70,229,0.12); color: #818cf8; border-color: rgba(79,70,229,0.25); }
+
 .card-16::before { background: linear-gradient(90deg, #1e3a8a, #6366f1); }
 .card-16:hover   { border-color: #2563eb; }
 .card-16 .card-icon { background: rgba(37,99,235,0.15); }
@@ -535,13 +541,13 @@ footer {
       <span class="nav-desc">A diagnostic toolkit for engineering teams. Not a checklist, not a workflow — each tool exists to trace an effect back to its cause, so you act on the root, not the symptom.</span>
     </div>
   </div>
-  <span class="nav-badge">21 tools</span>
+  <span class="nav-badge">24 tools</span>
 </nav>
 
 <div class="tool-bar">
   <div class="search-wrap">
     <span class="s-icon">🔍</span>
-    <input type="text" id="toolSearch" placeholder="Search 21 tools…" autocomplete="off">
+    <input type="text" id="toolSearch" placeholder="Search 24 tools…" autocomplete="off">
     <button class="clear-btn" id="clearSearch" title="Clear">✕</button>
   </div>
   <div class="filter-chips">
@@ -927,6 +933,23 @@ footer {
       <span class="tag">PR Audit</span>
       <span class="tag">Architecture</span>
       <span class="tag">Quality</span>
+    </div>
+    <div class="card-cta">
+      Open tool <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="card card-24" href="SDLC_Task_Planner.html">
+    <div class="card-icon">🗂️</div>
+    <div class="card-meta">
+      <h2>SDLC Task Planner</h2>
+      <p>Standalone task helper seeded with a standard SDLC task library across every phase. Pull tasks onto an assigned work item, set estimated &amp; actual hours, and during standup tag above-standard work (spikes, bugs, rework, tech debt). Rolls up effort by phase with a standup board.</p>
+    </div>
+    <div class="card-tags">
+      <span class="tag">SDLC</span>
+      <span class="tag">Estimation</span>
+      <span class="tag">Standup</span>
+      <span class="tag">Tasks</span>
     </div>
     <div class="card-cta">
       Open tool <span class="arrow">→</span>

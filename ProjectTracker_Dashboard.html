@@ -45,6 +45,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-secondary:hover{background:#f1f5f9;}
 .btn-sm{padding:5px 11px;font-size:11px;}
 .btn-xs{padding:3px 8px;font-size:11px;}
+.icon-btn{width:26px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;cursor:pointer;transition:background .15s,border-color .15s;flex:0 0 auto;}
+.icon-btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.icon-btn-danger{color:#991b1b;}
+.icon-btn-danger:hover{background:#fee2e2;border-color:#fecaca;}
 
 /* ── LAYOUT ── */
 .app{flex:1;display:flex;overflow:hidden;}
@@ -105,6 +109,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ph h2{font-size:17px;font-weight:700;color:var(--text);}
 .ph p{font-size:11px;color:var(--muted);margin-top:2px;}
 .ph-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+
+/* ── TODAY'S FOCUS STRIP ── */
+.focus-strip{background:linear-gradient(135deg,#fffbeb,#fff);border:1px solid #fde68a;border-left:3px solid #f59e0b;border-radius:var(--radius);margin-bottom:16px;box-shadow:var(--shadow);overflow:hidden;}
+.focus-hd{display:flex;align-items:center;gap:12px;padding:9px 14px;flex-wrap:wrap;}
+.focus-title{font-size:12px;font-weight:800;color:#92400e;letter-spacing:.3px;}
+.focus-date{border:1px solid #fde68a;border-radius:6px;padding:3px 7px;font-size:11px;font-family:inherit;color:#92400e;background:#fff;}
+.focus-date:focus{outline:none;border-color:var(--amber);}
+.focus-count{font-size:11px;font-weight:600;color:var(--muted);}
+.focus-count-blk{color:var(--red);font-weight:700;}
+.focus-toggle{margin-left:auto;background:transparent;border:none;cursor:pointer;font-size:13px;color:#92400e;padding:2px 6px;border-radius:5px;}
+.focus-toggle:hover{background:#fef3c7;}
+.focus-body{display:flex;flex-direction:column;gap:4px;padding:0 12px 11px;}
+.focus-item{display:flex;align-items:center;gap:9px;padding:6px 9px;background:#fff;border:1px solid var(--border);border-radius:7px;font-size:12px;}
+.focus-item.blk{border-color:#fecaca;background:#fef2f2;}
+.focus-item-star{color:#f59e0b;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;}
+.focus-item-star:hover{color:#b45309;}
+.focus-item-name{font-weight:600;color:var(--text);cursor:pointer;}
+.focus-item-name:hover{color:var(--accent);text-decoration:underline;}
+.focus-item-feat{font-size:10px;color:var(--muted);background:#f1f5f9;border-radius:10px;padding:1px 7px;}
+.focus-item-who{font-size:11px;color:var(--muted);margin-left:auto;}
+.focus-item-blk{font-size:12px;cursor:help;}
+.focus-src{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:5px;padding:2px 6px;}
+.focus-src-pin{background:#fef3c7;color:#92400e;}
+.focus-src-standup{background:#eff6ff;color:#1d4ed8;}
+.focus-src-auto{background:#f1f5f9;color:#64748b;}
+.focus-empty{font-size:11px;color:var(--muted);padding:4px 2px;font-style:italic;}
+/* per-row pin star in task table */
+.focus-star{cursor:pointer;font-size:14px;line-height:1;color:#cbd5e1;margin-right:5px;user-select:none;vertical-align:middle;}
+.focus-star:hover{color:#f59e0b;}
+.focus-star.on{color:#f59e0b;}
 
 /* ── CARD ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
@@ -442,6 +476,7 @@ tr.done-row td{opacity:.65;}
           <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add Task</button>
         </div>
       </div>
+      <div id="today-focus" class="focus-strip"></div>
       <div class="card" style="padding:13px">
         <div class="filter-row">
           <input type="search" id="f-search" placeholder="Search tasks…" oninput="renderTasks()" style="flex:1;min-width:160px">
@@ -786,7 +821,7 @@ tr.done-row td{opacity:.65;}
       <input type="hidden" id="t-id">
       <div class="modal-grid">
         <div class="fg span2"><label>Task Name *</label><input type="text" id="t-name" placeholder="e.g. Implement login API"></div>
-        <div class="fg span2"><label>Feature <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(tasks are grouped by feature in the tracker)</span></label><select id="t-feature"><option value="">— No Feature —</option></select></div>
+        <div class="fg span2"><label>Feature * <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--muted)">(every task must belong to a feature)</span></label><select id="t-feature"><option value="">— Select Feature —</option></select></div>
         <div class="fg"><label>Assignee</label><select id="t-assignee"><option value="">Unassigned</option></select></div>
         <div class="fg"><label>Priority</label>
           <select id="t-priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
@@ -1053,6 +1088,17 @@ tr.done-row td{opacity:.65;}
   </div>
 </div>
 
+<!-- ══ TASK DAILY LOG MODAL ══ -->
+<div class="modal-overlay" id="task-history-modal">
+  <div class="modal" style="max-width:880px">
+    <div class="modal-hd"><h3 id="task-history-title">Daily Log</h3><button class="modal-close" onclick="closeModal('task-history-modal')">×</button></div>
+    <div class="modal-body" id="task-history-body" style="max-height:80vh;overflow-y:auto;padding:18px 20px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('task-history-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ RETRO MODAL ══ -->
 <div class="modal-overlay" id="retro-modal">
   <div class="modal" style="max-width:480px">
@@ -1169,7 +1215,8 @@ let S = {
   risks: [],  // {id,description,category,impact,likelihood,score,mitigation,owner,status,eta,linkedTaskId}
   riskCategories: [], // custom + default risk category labels
   standups: [],// {id,date,member,yesterday,today,blockers,helpNeeded,mood,sprint,linkedTaskIds,notes}
-  retros: []  // {id,sprint,startDate,endDate,format,items:[{id,category,text,votes}],actionItems:[{id,text,owner,dueDate,status}],notes}
+  retros: [],  // {id,sprint,startDate,endDate,format,items:[{id,category,text,votes}],actionItems:[{id,text,owner,dueDate,status}],notes}
+  dailyFocus: {} // { 'YYYY-MM-DD': { '<taskId>': 'pin' | 'auto' } } — tasks worked/focused per day (history retained)
 };
 const DEFAULT_RISK_CATS = [
   'Incremental Refinement Tracking',
@@ -1221,6 +1268,7 @@ function hydrate() {
     if (!S.standups) S.standups = [];
     S.standups = S.standups.map(migrateStandupEntry);
     if (!S.retros) S.retros = [];
+    if (!S.dailyFocus || typeof S.dailyFocus !== 'object') S.dailyFocus = {};
     const ids = localStorage.getItem('pt2_ids');
     if (ids) { const p = JSON.parse(ids); tid=p.t||1; mid=p.m||1; rid=p.r||1; sid=p.s||1; retId=p.retId||1; fid=p.fid||1; }
   } catch(e) {}
@@ -1365,7 +1413,7 @@ function clearAll() {
 }
 function resetSample() {
   if (!confirm('Replace all data with the "Digital Banking Platform Relaunch" sample project? Your current data will be lost.')) return;
-  S = { meta:{}, team:[], tasks:[], risks:[], riskCategories:[...DEFAULT_RISK_CATS] };
+  S = { meta:{}, team:[], tasks:[], risks:[], riskCategories:[...DEFAULT_RISK_CATS], dailyFocus:{} };
   tid=1; mid=1; rid=1;
   loadSampleData();
   updateHeader(); renderOverview(); badges(); closeModal('settings-modal');
@@ -1463,8 +1511,9 @@ function renderOverview() {
 // Track which expand rows are open (survives filter changes)
 const _expanded = new Set();
 
-function _buildTaskRows(t, today, statusCls, priCls) {
+function _buildTaskRows(t, today, statusCls, priCls, focusSet) {
   const overdue  = t.hlStatus!=='Done' && t.eta && new Date(t.eta+'T00:00:00') < today;
+  const isFocus  = focusSet ? focusSet.has(t.id) : false;
   const rowCls   = t.hlStatus==='Blocked'?'blocked-row':t.hlStatus==='At Risk'?'atrisk-row':t.hlStatus==='Done'?'done-row':'';
   const expCls   = t.hlStatus==='Blocked'?'blocked-expand':t.hlStatus==='At Risk'?'atrisk-expand':'';
   const isOpen   = _expanded.has(t.id);
@@ -1472,10 +1521,14 @@ function _buildTaskRows(t, today, statusCls, priCls) {
   const main = `<tr class="${rowCls}" data-tid="${t.id}">
     <td style="color:var(--muted);font-size:10px;text-align:center;width:38px">${t.id}</td>
     <td style="min-width:220px">
-      <div class="edit-name" contenteditable="true"
-        onblur="quickSave(${t.id},'name',this.innerText.trim()||'Unnamed')"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-      >${esc(t.name||'Unnamed')}</div>
+      <div style="display:flex;align-items:flex-start;gap:2px">
+        <span class="focus-star ${isFocus?'on':''}" id="star-${t.id}"
+          title="Mark as worked today" onclick="toggleFocusPin(${t.id})">★</span>
+        <div class="edit-name" contenteditable="true" style="flex:1"
+          onblur="quickSave(${t.id},'name',this.innerText.trim()||'Unnamed')"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+        >${esc(t.name||'Unnamed')}</div>
+      </div>
     </td>
     <td style="width:145px">
       <select class="tbl-sel" onchange="quickSave(${t.id},'assignee',this.value)">${aOpts}</select>
@@ -1515,13 +1568,19 @@ function _buildTaskRows(t, today, statusCls, priCls) {
         style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer"
         onchange="quickSave(${t.id},'riskFlag',this.checked)">
     </td>
-    <td style="width:92px;white-space:nowrap">
-      <button class="btn btn-secondary btn-xs" id="expbtn-${t.id}"
-        onclick="toggleExpand(${t.id})"
-        style="width:100%;margin-bottom:3px;font-size:11px"
-        title="Edit Detailed Status, Comments, dates, dependency"
-      >${isOpen?'▲ Less':'▼ Details'}</button>
-      <button class="btn btn-danger btn-xs" onclick="delTask(${t.id})" style="width:100%">✕ Del</button>
+    <td style="width:96px">
+      <div style="display:flex;gap:4px;justify-content:center">
+        <button class="icon-btn" id="expbtn-${t.id}"
+          onclick="toggleExpand(${t.id})"
+          title="Details — edit detailed status, comments, dates, dependency"
+        >${isOpen?'▲':'▼'}</button>
+        <button class="icon-btn" onclick="openTaskHistory(${t.id})"
+          title="Daily Log — day-by-day work on this task, pulled from daily standups"
+        >📅</button>
+        <button class="icon-btn icon-btn-danger" onclick="delTask(${t.id})"
+          title="Delete this task"
+        >✕</button>
+      </div>
     </td>
   </tr>`;
   const detail = `<tr id="exp-${t.id}" class="expand-row ${expCls}" style="display:${isOpen?'table-row':'none'}">
@@ -1572,6 +1631,7 @@ function _buildTaskRows(t, today, statusCls, priCls) {
 function renderTasks() {
   fillAssignees(['f-assignee','t-assignee']);
   fillFeatures(['f-feature','t-feature']);
+  renderTodayFocus();
   const search = (document.getElementById('f-search')?.value||'').toLowerCase();
   const fA = document.getElementById('f-assignee')?.value||'';
   const fS = document.getElementById('f-status')?.value||'';
@@ -1596,6 +1656,7 @@ function renderTasks() {
 
   const statusCls = {'Not Started':'sel-ns','In Progress':'sel-ip','At Risk':'sel-ar','Blocked':'sel-bl','Done':'sel-dn'};
   const priCls    = {Critical:'sel-critical',High:'sel-high',Medium:'sel-medium',Low:'sel-low'};
+  const focusSet  = workedToday(todayISO());
 
   // Group tasks by featureId
   const byFeat = new Map();
@@ -1620,7 +1681,7 @@ function renderTasks() {
       <strong>${esc(f.name)}</strong>
       <span style="margin-left:10px;font-size:10px;color:var(--muted);font-weight:400">${ft.length} task${ft.length!==1?'s':''} · ${done} done${blk?' · <span style="color:var(--red)">'+blk+' blocked</span>':''}</span>
     </td></tr>`);
-    for (const t of ft) rows.push(..._buildTaskRows(t, today, statusCls, priCls));
+    for (const t of ft) rows.push(..._buildTaskRows(t, today, statusCls, priCls, focusSet));
   }
   if (noFeat.length) {
     rows.push(`<tr class="feat-group-row"><td colspan="10" style="padding-left:12px">
@@ -1628,7 +1689,7 @@ function renderTasks() {
       <strong style="color:var(--muted)">No Feature</strong>
       <span style="margin-left:10px;font-size:10px;color:var(--muted);font-weight:400">${noFeat.length} task${noFeat.length!==1?'s':''}</span>
     </td></tr>`);
-    for (const t of noFeat) rows.push(..._buildTaskRows(t, today, statusCls, priCls));
+    for (const t of noFeat) rows.push(..._buildTaskRows(t, today, statusCls, priCls, focusSet));
   }
   tbody.innerHTML = rows.join('');
 }
@@ -1638,8 +1699,11 @@ function quickSave(id, field, value) {
   const task = S.tasks.find(t => t.id === id);
   if (!task) return;
   task[field] = value;
+  // Editing a work-signal field counts the task as worked on today
+  if (FOCUS_MEANINGFUL_FIELDS.has(field)) { markWorkedAuto(id); refreshFocusStar(id); }
   persist();
   badges();
+  renderTodayFocus();
 }
 
 // Toggle expand row open/closed; preserves state across filter changes
@@ -1651,11 +1715,11 @@ function toggleExpand(id) {
   if (nowOpen) {
     row.style.display = 'none';
     _expanded.delete(id);
-    if (btn) btn.textContent = '▼ Details';
+    if (btn) btn.textContent = '▼';
   } else {
     row.style.display = 'table-row';
     _expanded.add(id);
-    if (btn) btn.textContent = '▲ Less';
+    if (btn) btn.textContent = '▲';
   }
 }
 
@@ -1714,6 +1778,8 @@ function openTaskModal(id) {
 function saveTask() {
   const name = document.getElementById('t-name').value.trim();
   if (!name) { alert('Task name is required.'); return; }
+  const featVal = document.getElementById('t-feature').value;
+  if (!featVal) { alert('Please select a feature — every task must belong to a feature.'); return; }
   const id = document.getElementById('t-id').value;
   const task = {
     id: id ? parseInt(id) : tid++,
@@ -1756,6 +1822,40 @@ function delTask(id) {
 // FEATURES
 // ════════════════════════════════════════
 const FEAT_COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#64748b'];
+
+// Generic starter features so a project is never feature-less and every task has a home.
+const DEFAULT_FEATURES = [
+  { name:'Backend & API',           description:'Server-side logic, APIs, services' },
+  { name:'Frontend & UI',           description:'User interface and client-side work' },
+  { name:'Database',                description:'Schema, migrations, data layer' },
+  { name:'QA & Testing',            description:'Test authoring, execution, bug fixes' },
+  { name:'DevOps & Infrastructure', description:'CI/CD, environments, deployment' },
+  { name:'Documentation',           description:'Docs, release notes, changelogs' },
+  { name:'General',                 description:'Uncategorised work' }
+];
+
+// Guarantees the project always has features and that every task is linked to one.
+// Seeds a generic set on first use and sweeps any orphan tasks into "General".
+function ensureFeatures() {
+  let changed = false;
+  if (!Array.isArray(S.features) || !S.features.length) {
+    S.features = DEFAULT_FEATURES.map((f,i) => ({
+      id: fid++, name: f.name, description: f.description, color: FEAT_COLORS[i % FEAT_COLORS.length]
+    }));
+    changed = true;
+  }
+  const orphans = S.tasks.filter(t => !t.featureId || !S.features.some(f => f.id === t.featureId));
+  if (orphans.length) {
+    let general = S.features.find(f => f.name === 'General');
+    if (!general) {
+      general = { id: fid++, name:'General', description:'Uncategorised work', color: FEAT_COLORS[FEAT_COLORS.length-1] };
+      S.features.push(general);
+    }
+    orphans.forEach(t => { t.featureId = general.id; t.feature = general.name; });
+    changed = true;
+  }
+  if (changed) persist();
+}
 
 function renderFeatures() {
   const grid = document.getElementById('feat-grid');
@@ -1836,13 +1936,19 @@ function saveFeature() {
 
 function delFeature(id) {
   const f = S.features.find(x=>x.id===id);
-  const taskCount = S.tasks.filter(t=>t.featureId===id).length;
-  const msg = taskCount
-    ? `Delete feature "${f?.name}"? ${taskCount} task${taskCount!==1?'s':''} will be moved to "No Feature".`
+  const affected = S.tasks.filter(t=>t.featureId===id);
+  // Every task must stay under a feature, so reassign rather than orphan.
+  const target = S.features.find(x=>x.id!==id && x.name==='General') || S.features.find(x=>x.id!==id);
+  if (affected.length && !target) {
+    alert(`Cannot delete "${f?.name}" — it's the only feature and ${affected.length} task${affected.length!==1?'s':''} depend on it. Create another feature first.`);
+    return;
+  }
+  const msg = affected.length
+    ? `Delete feature "${f?.name}"? ${affected.length} task${affected.length!==1?'s':''} will be moved to "${target.name}".`
     : `Delete feature "${f?.name}"?`;
   if (!confirm(msg)) return;
   S.features = S.features.filter(f=>f.id!==id);
-  S.tasks.forEach(t=>{ if(t.featureId===id){ t.featureId=null; t.feature=''; } });
+  affected.forEach(t=>{ t.featureId=target.id; t.feature=target.name; });
   persist(); renderFeatures(); badges();
 }
 
@@ -2441,6 +2547,7 @@ function exportAllData() {
     riskCategories: riskCats(),
     standups:    S.standups,
     retros:      S.retros,
+    dailyFocus:  S.dailyFocus,
     ids:         { tid, mid, rid, sid, retId }
   };
   const safeName = (S.meta.projectName || 'project').replace(/[^a-z0-9_\-]/gi, '_');
@@ -2544,6 +2651,7 @@ function applyLoadBackup() {
     S.riskCategories = (Array.isArray(_loadPayload.riskCategories) && _loadPayload.riskCategories.length) ? [..._loadPayload.riskCategories] : [...DEFAULT_RISK_CATS];
     S.standups = _loadPayload.standups || [];
     S.retros   = _loadPayload.retros   || [];
+    S.dailyFocus = (_loadPayload.dailyFocus && typeof _loadPayload.dailyFocus === 'object') ? _loadPayload.dailyFocus : {};
     if (_loadPayload.ids) {
       tid   = _loadPayload.ids.tid   || 1;
       mid   = _loadPayload.ids.mid   || 1;
@@ -3099,6 +3207,15 @@ function loadSampleData() {
   ];
   rid = 9;
 
+  // Seed a few "worked today" tasks so Today's Focus is populated on first load
+  S.dailyFocus = {};
+  const _todayFocus = S.tasks.filter(t => t.hlStatus === 'In Progress').slice(0, 3);
+  if (_todayFocus.length) {
+    const d = todayISO();
+    S.dailyFocus[d] = {};
+    _todayFocus.forEach(t => { S.dailyFocus[d][t.id] = 'auto'; });
+  }
+
   persist();
 }
 
@@ -3110,6 +3227,119 @@ const MOOD_EMOJI  = { '1':'😞','2':'😕','3':'😐','4':'😊','5':'🚀' };
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ════════════════════════════════════════
+// TODAY'S FOCUS — actively-worked tasks per day
+// ════════════════════════════════════════
+// Fields whose inline edit signals "this task was worked on today".
+const FOCUS_MEANINGFUL_FIELDS = new Set(['hlStatus','blocker','detailedStatus','comments','effort','dependency']);
+let _focusCollapsed = false;
+
+// Single source of truth for "worked on `date`": union of standup marks (derived,
+// live) + dailyFocus pins/auto-stamps. Returns Map<taskId:number, 'pin'|'standup'|'auto'>.
+// Precedence pin > standup > auto. A tracker pin is the authoritative "is today" signal;
+// un-checking a task in standup does not clear a tracker pin.
+function workedToday(date) {
+  const m = new Map();
+  S.standups.filter(sd => sd.date === date)
+    .forEach(sd => (sd.todayTaskIds||[]).forEach(id => m.set(+id, 'standup')));
+  const f = (S.dailyFocus||{})[date] || {};
+  Object.keys(f).forEach(id => {
+    const src = f[id];
+    if (src === 'pin' || !m.has(+id)) m.set(+id, src);
+  });
+  return m;
+}
+
+// Auto-stamp a task as worked today (does not override an existing pin).
+function markWorkedAuto(id) {
+  const d = todayISO();
+  const day = S.dailyFocus[d] || (S.dailyFocus[d] = {});
+  if (!day[id]) day[id] = 'auto';
+}
+
+// Manual ⭐ toggle from a task row: pin if not focused, else remove from today entirely.
+function toggleFocusPin(id) {
+  const d = todayISO();
+  const day = S.dailyFocus[d] || (S.dailyFocus[d] = {});
+  if (day[id] === 'pin') delete day[id];
+  else day[id] = 'pin';
+  persist();
+  renderTodayFocus();
+  refreshFocusStar(id);
+  badges();
+}
+
+// Remove a task from today's focus from within the strip (✕). Drops pin/auto;
+// a standup-sourced task can't be removed here (it lives on the standup entry).
+function removeFromFocus(id) {
+  const day = S.dailyFocus[todayISO()];
+  if (day && day[id] !== undefined) { delete day[id]; persist(); }
+  renderTodayFocus();
+  refreshFocusStar(id);
+  badges();
+}
+
+// Update just one row's star without re-rendering the whole table.
+function refreshFocusStar(id) {
+  const star = document.getElementById('star-' + id);
+  if (star) star.classList.toggle('on', workedToday(todayISO()).has(+id));
+}
+
+// Jump from the strip to a task's row in the table, expanding its detail.
+function focusGotoTask(id) {
+  const row = document.querySelector(`tr[data-tid="${id}"]`);
+  if (!row) return;
+  if (!_expanded.has(id)) toggleExpand(id);
+  row.scrollIntoView({ behavior:'smooth', block:'center' });
+  row.style.transition = 'background .3s';
+  const tds = row.querySelectorAll('td');
+  tds.forEach(td => td.style.background = '#fef9c3');
+  setTimeout(() => tds.forEach(td => td.style.background = ''), 900);
+}
+
+const FOCUS_SRC_LABEL = { pin:'pinned', standup:'standup', auto:'auto' };
+
+// Render the "Today's Focus" strip at the top of the Task Tracker panel.
+function renderTodayFocus() {
+  const host = document.getElementById('today-focus');
+  if (!host) return;
+  const dateEl = document.getElementById('focus-date');
+  const date = (dateEl && dateEl.value) || todayISO();
+  const set = workedToday(date);
+  const ids = [...set.keys()];
+  const tasks = ids.map(id => S.tasks.find(t => t.id === id)).filter(Boolean);
+  const blocked = tasks.filter(t => t.hlStatus === 'Blocked').length;
+  const isToday = date === todayISO();
+
+  const statusBadge = {
+    'Not Started':'badge-notstarted','In Progress':'badge-inprogress',
+    'At Risk':'badge-atrisk','Blocked':'badge-blocked','Done':'badge-done'
+  };
+
+  const rows = tasks.length ? tasks.map(t => {
+    const src = set.get(t.id);
+    const feat = t.featureId ? (S.features.find(f => f.id === t.featureId)||{}).name : '';
+    return `<div class="focus-item${t.hlStatus==='Blocked'?' blk':''}">
+      <span class="focus-item-star" title="Remove from today" onclick="removeFromFocus(${t.id})">★</span>
+      <span class="focus-item-name" title="Go to task" onclick="focusGotoTask(${t.id})">${esc(t.name||'Unnamed')}</span>
+      ${feat?`<span class="focus-item-feat">${esc(feat)}</span>`:''}
+      <span class="focus-item-who">${esc(t.assignee||'Unassigned')}</span>
+      <span class="badge ${statusBadge[t.hlStatus]||'badge-notstarted'}">${esc(t.hlStatus||'')}</span>
+      ${t.blocker?`<span class="focus-item-blk" title="${esc(t.blocker)}">⛔</span>`:''}
+      <span class="focus-src focus-src-${src}">${FOCUS_SRC_LABEL[src]||src}</span>
+    </div>`;
+  }).join('') : `<div class="focus-empty">No tasks worked ${isToday?'yet today':'on this day'} — edit a task's status or ★ pin one.</div>`;
+
+  host.innerHTML = `
+    <div class="focus-hd">
+      <span class="focus-title">⭐ Today's Focus</span>
+      <input type="date" id="focus-date" class="focus-date" value="${date}" onchange="renderTodayFocus()">
+      <span class="focus-count">${tasks.length} task${tasks.length!==1?'s':''}${blocked?` · <span class="focus-count-blk">${blocked} blocked</span>`:''}</span>
+      <button class="focus-toggle" onclick="_focusCollapsed=!_focusCollapsed;renderTodayFocus()" title="Collapse/expand">${_focusCollapsed?'▸':'▾'}</button>
+    </div>
+    ${_focusCollapsed?'':`<div class="focus-body">${rows}</div>`}`;
 }
 
 function weekStart(dateStr) {
@@ -3210,7 +3440,8 @@ function renderStandupToday() {
 
     // Active tasks for this member (not done)
     const activeTasks = S.tasks.filter(t => t.assignee === m.name && t.hlStatus !== 'Done');
-    const todayTaskIdSet = new Set(entry ? (entry.todayTaskIds||[]) : []);
+    // "Today" set = this member's standup marks ∪ tracker pins/auto for the date (kept in sync)
+    const todayTaskIdSet = new Set([...(entry ? (entry.todayTaskIds||[]) : []), ...workedToday(date).keys()]);
 
     if (!entry) {
       const taskPreview = activeTasks.slice(0, 3).map(t =>
@@ -3577,10 +3808,13 @@ function loadMemberTasksInModal() {
     if (prevStandup) carryForwardIds = new Set(prevStandup.todayTaskIds || []);
   }
 
+  const modalDate = document.getElementById('sd-date').value || todayISO();
+  const workedSet = workedToday(modalDate);
   list.innerHTML = activeTasks.map(t => {
-    const checked = existing
+    // Pre-check from the saved entry / carry-forward, OR if pinned/auto-worked in the tracker (sync)
+    const checked = (existing
       ? (existing.todayTaskIds||[]).includes(t.id)
-      : carryForwardIds.has(t.id);
+      : carryForwardIds.has(t.id)) || workedSet.has(t.id);
     const existingUpd  = existing && (existing.taskStatusUpdates||[]).find(u => u.taskId === t.id);
     const selVal       = existingUpd ? existingUpd.newStatus : '';
     const existingNote = (existing?.taskNotes || {})[t.id] || '';
@@ -3719,11 +3953,15 @@ function saveStandup() {
     S.standups.push(entry);
   }
 
+  // Tasks given a status update during standup count as worked that day
+  if (date === todayISO()) taskStatusUpdates.forEach(upd => markWorkedAuto(upd.taskId));
+
   persist();
   closeModal('standup-modal');
   renderStandupToday();
   renderStandupHistory();
   updateStandupSidebarBadge();
+  renderTodayFocus();
   if (taskStatusUpdates.length) { badges(); renderOverview(); }
 }
 
@@ -3734,6 +3972,87 @@ function deleteStandup(id) {
   renderStandupHistory();
   renderStandupToday();
   updateStandupSidebarBadge();
+}
+
+// ════════════════════════════════════════
+// TASK DAILY LOG — day-by-day work from standups
+// ════════════════════════════════════════
+function openTaskHistory(taskId) {
+  const t = S.tasks.find(x => x.id === taskId);
+  if (!t) return;
+
+  document.getElementById('task-history-title').innerHTML =
+    `📅 Daily Log — <span style="color:var(--accent)">#${t.id} ${esc(t.name||'Unnamed')}</span>`;
+
+  // Every standup entry that touched this task: planned for the day,
+  // a per-task note was logged, or its status was changed that day.
+  const entries = S.standups.filter(sd =>
+    (sd.todayTaskIds||[]).includes(taskId) ||
+    (sd.taskStatusUpdates||[]).some(u => u.taskId === taskId) ||
+    (sd.taskNotes && sd.taskNotes[taskId])
+  );
+
+  // Group standup entries by date (a date can have several members)
+  const byDate = {};
+  entries.forEach(sd => { (byDate[sd.date] = byDate[sd.date] || []).push(sd); });
+  const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a)); // newest first
+
+  const body = document.getElementById('task-history-body');
+
+  if (!dates.length) {
+    body.innerHTML = `<div style="text-align:center;padding:46px 20px;color:var(--muted)">
+      <div style="font-size:36px;margin-bottom:12px">🗒️</div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:5px">No daily standup activity logged for this task yet.</div>
+      <div style="font-size:12px;max-width:420px;margin:0 auto">Open <strong>Daily Standup → Log Standup</strong>, tick this task and add a status update or a task note to start building its day-by-day history.</div>
+    </div>`;
+    openModal('task-history-modal');
+    return;
+  }
+
+  const statusUpd = entries.reduce((n,sd)=>n + (sd.taskStatusUpdates||[]).filter(u=>u.taskId===taskId).length, 0);
+  const members   = [...new Set(entries.map(sd=>sd.member).filter(Boolean))];
+
+  const summary =
+    `<div style="display:flex;gap:20px;flex-wrap:wrap;padding:11px 15px;background:var(--accent-light);border-radius:8px;margin-bottom:16px;font-size:12px;color:var(--text)">
+       <span><strong>${dates.length}</strong> day${dates.length>1?'s':''} of activity</span>
+       <span><strong>${entries.length}</strong> standup entr${entries.length>1?'ies':'y'}</span>
+       <span><strong>${statusUpd}</strong> status update${statusUpd!==1?'s':''}</span>
+       <span><strong>${members.length}</strong> contributor${members.length!==1?'s':''}${members.length?': '+esc(members.join(', ')):''}</span>
+       <span style="margin-left:auto">Current status: <strong>${esc(t.hlStatus||'—')}</strong></span>
+     </div>`;
+
+  const days = dates.map(date => {
+    const items = byDate[date].map(sd => {
+      const note    = sd.taskNotes && sd.taskNotes[taskId];
+      const upd     = (sd.taskStatusUpdates||[]).find(u => u.taskId === taskId);
+      const planned = (sd.todayTaskIds||[]).includes(taskId);
+      let lines = '';
+      if (note)
+        lines += `<div style="margin:5px 0;white-space:pre-wrap;font-size:13px;line-height:1.5">${esc(note)}</div>`;
+      if (upd)
+        lines += `<div style="margin:5px 0;font-size:12px">Status set to <strong style="color:var(--accent)">${esc(upd.newStatus)}</strong></div>`;
+      if (!note && !upd && planned)
+        lines += `<div style="margin:5px 0;font-size:12px;color:var(--muted)">Planned / worked on this task${sd.today?': '+esc(sd.today):''}</div>`;
+      const blocker = sd.blockers
+        ? `<div style="margin:5px 0;font-size:12px;color:#991b1b"><strong>⚠ Blocker:</strong> ${esc(sd.blockers)}${sd.blockersResolved?' <span style="color:var(--green)">(resolved)</span>':''}</div>`
+        : '';
+      return `<div style="padding:11px 14px;border-top:1px solid var(--border)">
+        <div style="font-weight:600;font-size:12px;margin-bottom:2px">👤 ${esc(sd.member||'—')}${sd.sprint?` <span style="font-weight:400;color:var(--muted)">· ${esc(sd.sprint)}</span>`:''}</div>
+        ${lines||'<div style="font-size:12px;color:var(--muted)">—</div>'}
+        ${blocker}
+      </div>`;
+    }).join('');
+    return `<div style="border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:13px;box-shadow:var(--shadow)">
+      <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:10px 15px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+        <span>${fmtDate(date)}</span>
+        <span style="font-weight:500;opacity:.85">${byDate[date].length} update${byDate[date].length>1?'s':''}</span>
+      </div>
+      ${items}
+    </div>`;
+  }).join('');
+
+  body.innerHTML = summary + days;
+  openModal('task-history-modal');
 }
 
 function toggleBlockerResolved(sdId) {
@@ -3768,10 +4087,12 @@ function quickUpdateTaskStatus(taskId, newStatus, sdId) {
     else updates.push({ taskId, newStatus });
     sd.taskStatusUpdates = updates;
   }
+  if (sd && sd.date === todayISO()) markWorkedAuto(taskId);
   persist();
   renderStandupToday();
   badges();
   renderOverview();
+  renderTodayFocus();
 }
 
 // ════════════════════════════════════════
@@ -4417,6 +4738,7 @@ function exportRetro() {
 // ════════════════════════════════════════
 hydrate();
 if (!S.tasks.length && !S.team.length) loadSampleData();
+ensureFeatures();
 updateHeader();
 renderOverview();
 fillAssignees(['f-assignee','t-assignee','r-owner']);
