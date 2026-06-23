@@ -107,6 +107,14 @@
   #previewWrap{height:calc(100% - 44px);overflow:auto;border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:12px}
   #preview svg{max-width:100%;height:auto}
   .err{color:var(--danger);font-size:12.5px;white-space:pre-wrap;font-family:ui-monospace,monospace;padding:8px;background:var(--accent-soft);border-radius:6px}
+  /* closable, non-blocking error popup */
+  .err-popup{position:fixed;bottom:16px;right:16px;width:min(440px,calc(100vw - 32px));max-height:42vh;overflow:auto;
+    background:var(--panel);border:1px solid var(--danger);border-left:4px solid var(--danger);
+    border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:11px 14px;z-index:60}
+  .err-popup .err-title{font-weight:650;color:var(--danger);font-size:13px;margin:0 0 6px;padding-right:22px}
+  .err-popup .err-body{margin:0;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+  .err-popup .err-close{position:absolute;top:7px;right:9px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;font-weight:700;line-height:1}
+  .err-popup .err-close:hover{color:var(--danger)}
   .plantuml-view{display:flex;flex-direction:column;gap:10px}
   .plantuml-view a{color:var(--accent);font-weight:600;text-decoration:none}
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-weight:600}
@@ -138,6 +146,7 @@
 <main>
   <section class="pane" id="builderPane">
     <h2>Requirement builder</h2>
+    <button class="btn-primary" id="sampleBtn" style="margin-bottom:12px;background:var(--ok)">✨ Load full-feature sample</button>
     <div id="builderRoot"></div>
     <button class="btn-primary" id="genBtn" style="margin-top:8px">↻ Generate script</button>
     <div class="hint" id="builderHint"></div>
@@ -171,6 +180,11 @@
 </main>
 
 <div class="toast" id="toast"></div>
+<div class="err-popup" id="errPopup" style="display:none">
+  <button class="err-close" id="errClose" title="Dismiss">✕</button>
+  <p class="err-title">⚠ Diagram syntax error</p>
+  <pre class="err-body" id="errMsg"></pre>
+</div>
 
 <script>
 /* ---------------- Setup ---------------- */
@@ -179,7 +193,7 @@ const el = (t,a={},...kids)=>{const e=document.createElement(t);for(const k in a
 
 let theme = localStorage.getItem('ds-theme') || 'light';
 document.documentElement.dataset.theme = theme;
-mermaid.initialize({startOnLoad:false, theme: theme==='dark'?'dark':'default', securityLevel:'loose'});
+mermaid.initialize({startOnLoad:false, theme: theme==='dark'?'dark':'default', securityLevel:'loose', suppressErrorRendering:true});
 
 let engine = 'mermaid';
 let current = 'sequence';
@@ -189,9 +203,15 @@ const TYPES = {
   sequence:  {label:'Sequence'},
   swimlane:  {label:'Swimlane'},
   workflow:  {label:'Workflow'},
-  azure:     {label:'Azure Arch'},
-  er:        {label:'ER'},
+  state:     {label:'State'},
   class:     {label:'Class'},
+  er:        {label:'ER'},
+  azure:     {label:'Azure Arch'},
+  mindmap:   {label:'Mindmap'},
+  journey:   {label:'Journey'},
+  gitgraph:  {label:'Git graph'},
+  timeline:  {label:'Timeline'},
+  pie:       {label:'Pie'},
   gantt:     {label:'Gantt'}
 };
 
@@ -220,10 +240,15 @@ const defaults = ()=>({
     title:'User login',
     participants:[{id:'U',name:'User'},{id:'A',name:'App'},{id:'DB',name:'Database'}],
     messages:[
-      {from:'U',to:'A',text:'Enter credentials',type:'->>'},
-      {from:'A',to:'DB',text:'Validate user',type:'->>'},
-      {from:'DB',to:'A',text:'User record',type:'-->>'},
-      {from:'A',to:'U',text:'Login success',type:'-->>'}
+      {kind:'msg',from:'U',to:'A',text:'Enter credentials',type:'->>',act:'+'},
+      {kind:'note',pos:'right of',a:'A',b:'',text:'Validate input'},
+      {kind:'alt',label:'credentials valid'},
+      {kind:'msg',from:'A',to:'DB',text:'Validate user',type:'->>',act:'+'},
+      {kind:'msg',from:'DB',to:'A',text:'User record',type:'-->>',act:'-'},
+      {kind:'msg',from:'A',to:'U',text:'Login success',type:'-->>',act:''},
+      {kind:'else',label:'invalid'},
+      {kind:'msg',from:'A',to:'U',text:'Show error',type:'-->>',act:'-'},
+      {kind:'end'}
     ]
   },
   swimlane:{
@@ -231,32 +256,33 @@ const defaults = ()=>({
     direction:'TD',
     lanes:[{id:'cust',name:'Customer'},{id:'sales',name:'Sales'},{id:'wh',name:'Warehouse'}],
     steps:[
-      {id:'s1',lane:'cust',text:'Place order',shape:'box'},
-      {id:'s2',lane:'sales',text:'Confirm order',shape:'box'},
-      {id:'s3',lane:'wh',text:'Pack items',shape:'box'},
-      {id:'s4',lane:'wh',text:'Ship order',shape:'box'},
-      {id:'s5',lane:'cust',text:'Receive order',shape:'box'}
+      {id:'s1',lane:'cust',text:'Place order',shape:'box',color:''},
+      {id:'s2',lane:'sales',text:'Confirm order',shape:'box',color:'blue'},
+      {id:'s3',lane:'wh',text:'Pack items',shape:'box',color:''},
+      {id:'s4',lane:'wh',text:'Ship order',shape:'box',color:'green'},
+      {id:'s5',lane:'cust',text:'Receive order',shape:'round',color:''}
     ],
-    links:[['s1','s2'],['s2','s3'],['s3','s4'],['s4','s5']]
+    links:[{from:'s1',to:'s2',type:'-->',label:''},{from:'s2',to:'s3',type:'-->',label:''},{from:'s3',to:'s4',type:'-->',label:''},{from:'s4',to:'s5',type:'-->',label:''}]
   },
   workflow:{
     title:'Deploy pipeline',
     direction:'TD',
+    groups:[{id:'ci',name:'CI Pipeline'}],
     nodes:[
-      {id:'start',text:'Commit code',shape:'round'},
-      {id:'build',text:'Build',shape:'box'},
-      {id:'test',text:'Tests pass?',shape:'diamond'},
-      {id:'deploy',text:'Deploy',shape:'box'},
-      {id:'fix',text:'Fix issues',shape:'box'},
-      {id:'done',text:'Done',shape:'round'}
+      {id:'start',text:'Commit code',shape:'stadium',color:'',group:''},
+      {id:'build',text:'Build',shape:'box',color:'blue',group:'ci'},
+      {id:'test',text:'Tests pass?',shape:'diamond',color:'yellow',group:'ci'},
+      {id:'deploy',text:'Deploy',shape:'box',color:'green',group:''},
+      {id:'fix',text:'Fix issues',shape:'box',color:'red',group:'ci'},
+      {id:'done',text:'Done',shape:'stadium',color:'',group:''}
     ],
     links:[
-      {from:'start',to:'build',label:''},
-      {from:'build',to:'test',label:''},
-      {from:'test',to:'deploy',label:'Yes'},
-      {from:'test',to:'fix',label:'No'},
-      {from:'fix',to:'build',label:''},
-      {from:'deploy',to:'done',label:''}
+      {from:'start',to:'build',label:'',type:'-->'},
+      {from:'build',to:'test',label:'',type:'-->'},
+      {from:'test',to:'deploy',label:'Yes',type:'-->'},
+      {from:'test',to:'fix',label:'No',type:'-->'},
+      {from:'fix',to:'build',label:'retry',type:'-.->'},
+      {from:'deploy',to:'done',label:'',type:'==>'}
     ]
   },
   azure:{
@@ -309,10 +335,183 @@ const defaults = ()=>({
         {id:'b2',name:'Backend',start:'after a2',dur:'10d',status:'crit'}
       ]}
     ]
+  },
+  state:{
+    title:'Order lifecycle',
+    direction:'TD',
+    states:[
+      {id:'Pending',label:'Pending',color:''},
+      {id:'Paid',label:'Paid',color:'green'},
+      {id:'Shipped',label:'Shipped',color:'blue'},
+      {id:'Cancelled',label:'Cancelled',color:'red'}
+    ],
+    transitions:[
+      {from:'[*]',to:'Pending',label:''},
+      {from:'Pending',to:'Paid',label:'payment ok'},
+      {from:'Pending',to:'Cancelled',label:'timeout'},
+      {from:'Paid',to:'Shipped',label:'dispatch'},
+      {from:'Shipped',to:'[*]',label:''},
+      {from:'Cancelled',to:'[*]',label:''}
+    ]
+  },
+  mindmap:{
+    title:'Product launch',
+    nodes:[
+      {id:'root',parent:'',text:'Product launch',shape:'circle'},
+      {id:'m1',parent:'root',text:'Marketing',shape:'rounded'},
+      {id:'m2',parent:'m1',text:'Social ads',shape:'default'},
+      {id:'m3',parent:'m1',text:'Press kit',shape:'default'},
+      {id:'e1',parent:'root',text:'Engineering',shape:'rounded'},
+      {id:'e2',parent:'e1',text:'Scale infra',shape:'default'},
+      {id:'e3',parent:'e1',text:'Bug bash',shape:'default'},
+      {id:'s1',parent:'root',text:'Sales',shape:'rounded'}
+    ]
+  },
+  journey:{
+    title:'Customer onboarding',
+    sections:[
+      {name:'Discover',tasks:[
+        {name:'Visit site',score:4,actors:'Visitor'},
+        {name:'Read docs',score:3,actors:'Visitor'}
+      ]},
+      {name:'Sign up',tasks:[
+        {name:'Create account',score:3,actors:'Visitor, System'},
+        {name:'Verify email',score:2,actors:'Visitor'}
+      ]},
+      {name:'Activate',tasks:[
+        {name:'First project',score:5,actors:'User'},
+        {name:'Invite team',score:4,actors:'User'}
+      ]}
+    ]
+  },
+  gitgraph:{
+    title:'Feature branch flow',
+    direction:'LR',
+    ops:[
+      {kind:'commit',arg:'init',tag:''},
+      {kind:'commit',arg:'',tag:'v1.0'},
+      {kind:'branch',arg:'develop',tag:''},
+      {kind:'checkout',arg:'develop',tag:''},
+      {kind:'commit',arg:'feature work',tag:''},
+      {kind:'commit',arg:'',tag:''},
+      {kind:'checkout',arg:'main',tag:''},
+      {kind:'merge',arg:'develop',tag:''},
+      {kind:'commit',arg:'',tag:'v1.1'}
+    ]
+  },
+  timeline:{
+    title:'Company milestones',
+    periods:[
+      {section:'Early',time:'2019',events:'Founded; First prototype'},
+      {section:'Early',time:'2020',events:'Seed round'},
+      {section:'Growth',time:'2022',events:'Series A; 50 employees'},
+      {section:'Growth',time:'2024',events:'1M users'},
+      {section:'',time:'2026',events:'Global launch'}
+    ]
+  },
+  pie:{
+    title:'Traffic by source',
+    showData:true,
+    slices:[
+      {label:'Organic',value:42},
+      {label:'Direct',value:28},
+      {label:'Referral',value:18},
+      {label:'Social',value:12}
+    ]
   }
 });
 
-let state = JSON.parse(localStorage.getItem('ds-state')||'null') || defaults();
+/* Full-feature samples (validated against Mermaid v11) — loaded by the ✨ button */
+const SAMPLES={
+  sequence:{title:'Sequence — all features',participants:[{id:'U',name:'User',actor:true},{id:'A',name:'API'},{id:'S',name:'Service'},{id:'DB',name:'Database'}],messages:[
+    {kind:'note',pos:'left of',a:'U',b:'',text:'start'},
+    {kind:'msg',from:'U',to:'A',text:'open (->>)',type:'->>',act:'+'},
+    {kind:'note',pos:'right of',a:'A',b:'',text:'validate'},
+    {kind:'rect',label:'rgb(235,240,255)'},
+    {kind:'msg',from:'A',to:'S',text:'forward (->>)',type:'->>',act:'+'},
+    {kind:'note',pos:'over',a:'A',b:'S',text:'processing region'},
+    {kind:'loop',label:'each item'},
+    {kind:'msg',from:'S',to:'DB',text:'query (-->)',type:'-->',act:''},
+    {kind:'msg',from:'DB',to:'S',text:'rows (-->>)',type:'-->>',act:''},
+    {kind:'end'},
+    {kind:'msg',from:'S',to:'A',text:'result (-->>)',type:'-->>',act:'-'},
+    {kind:'end'},
+    {kind:'alt',label:'ok'},
+    {kind:'msg',from:'A',to:'U',text:'signal (->)',type:'->',act:''},
+    {kind:'opt',label:'cache'},
+    {kind:'msg',from:'A',to:'A',text:'self async (-))',type:'-)',act:''},
+    {kind:'end'},
+    {kind:'else',label:'fail'},
+    {kind:'msg',from:'A',to:'U',text:'lost (--x)',type:'--x',act:''},
+    {kind:'end'},
+    {kind:'par',label:'notify'},
+    {kind:'msg',from:'A',to:'U',text:'push (--))',type:'--)',act:''},
+    {kind:'and',label:'audit'},
+    {kind:'msg',from:'A',to:'S',text:'lost async (-x)',type:'-x',act:''},
+    {kind:'end'},
+    {kind:'msg',from:'A',to:'U',text:'done (-->>)',type:'-->>',act:'-'}
+  ]},
+  swimlane:{title:'Swimlane — all features',direction:'LR',lanes:[{id:'cust',name:'Customer'},{id:'ops',name:'Operations'},{id:'wh',name:'Warehouse'}],
+    steps:[{id:'a',lane:'cust',text:'Place order',shape:'stadium',color:'blue'},{id:'b',lane:'ops',text:'Validate?',shape:'diamond',color:'yellow'},{id:'c',lane:'ops',text:'Charge card',shape:'box',color:''},{id:'d',lane:'wh',text:'Pick & pack',shape:'subroutine',color:'purple'},{id:'e',lane:'wh',text:'Store',shape:'cylinder',color:''},{id:'f',lane:'cust',text:'Receive',shape:'circle',color:'green'},{id:'g',lane:'ops',text:'Refund',shape:'round',color:'red'}],
+    links:[{from:'a',to:'b',type:'-->',label:'submit'},{from:'b',to:'c',type:'-->',label:'yes'},{from:'b',to:'g',type:'-.->',label:'no'},{from:'c',to:'d',type:'==>',label:''},{from:'d',to:'e',type:'--o',label:'shelf'},{from:'d',to:'f',type:'---',label:'ship'},{from:'g',to:'f',type:'--x',label:'notify'}]},
+  workflow:{title:'Workflow — all features',direction:'TD',groups:[{id:'ci',name:'CI'},{id:'cd',name:'CD'}],
+    nodes:[{id:'s',text:'Start',shape:'stadium',color:'',group:''},{id:'b',text:'Build',shape:'box',color:'blue',group:'ci'},{id:'t',text:'Tests pass?',shape:'diamond',color:'yellow',group:'ci'},{id:'p',text:'Package',shape:'subroutine',color:'purple',group:'ci'},{id:'st',text:'Store artifact',shape:'cylinder',color:'',group:'cd'},{id:'d',text:'Deploy',shape:'hexagon',color:'green',group:'cd'},{id:'f',text:'Fix',shape:'round',color:'red',group:''},{id:'e',text:'End',shape:'circle',color:'',group:''}],
+    links:[{from:'s',to:'b',type:'-->',label:''},{from:'b',to:'t',type:'-->',label:''},{from:'t',to:'p',type:'-->',label:'Yes'},{from:'t',to:'f',type:'-.->',label:'No'},{from:'f',to:'b',type:'==>',label:'retry'},{from:'p',to:'st',type:'--o',label:''},{from:'st',to:'d',type:'-->',label:''},{from:'d',to:'e',type:'--x',label:'done'}]},
+  state:{title:'State — all features',direction:'LR',states:[{id:'Pending',label:'Pending review',color:''},{id:'Active',label:'Active',color:'blue'},{id:'Paused',label:'Paused',color:'yellow'},{id:'Done',label:'Completed',color:'green'},{id:'Failed',label:'Failed',color:'red'}],
+    transitions:[{from:'[*]',to:'Pending',label:''},{from:'Pending',to:'Active',label:'approve'},{from:'Active',to:'Paused',label:'pause'},{from:'Paused',to:'Active',label:'resume'},{from:'Active',to:'Done',label:'finish'},{from:'Active',to:'Failed',label:'error'},{from:'Done',to:'[*]',label:''},{from:'Failed',to:'[*]',label:''}]},
+  class:{title:'Class — all features',direction:'LR',classes:[
+    {id:'Drawable',attrs:[],methods:['+draw() void']},
+    {id:'Shape',attrs:['#String name','+int sides','+count$ int'],methods:['+area()* float','+draw() void']},
+    {id:'Circle',attrs:['-float radius'],methods:['+area() float']},
+    {id:'Square',attrs:['~float side'],methods:['+area() float']},
+    {id:'Canvas',attrs:['-List shapes'],methods:['+add(Shape s) void']},
+    {id:'Renderer',attrs:[],methods:['+render(Canvas c) void']}],
+    rels:[{from:'Shape',to:'Circle',type:'<|--',label:''},{from:'Shape',to:'Square',type:'<|--',label:''},{from:'Drawable',to:'Shape',type:'<|..',label:'implements'},{from:'Canvas',to:'Shape',type:'*--',label:'contains'},{from:'Canvas',to:'Renderer',type:'o--',label:'uses'},{from:'Renderer',to:'Shape',type:'-->',label:'draws'},{from:'Renderer',to:'Drawable',type:'..>',label:'depends'}]},
+  er:{title:'ER — all features',entities:[
+    {id:'CUSTOMER',attrs:[{key:'PK',type:'int',name:'id'},{key:'UK',type:'string',name:'email'},{key:'',type:'string',name:'name'}]},
+    {id:'ADDRESS',attrs:[{key:'PK',type:'int',name:'id'},{key:'FK',type:'int',name:'customer_id'}]},
+    {id:'ORDER',attrs:[{key:'PK',type:'int',name:'id'},{key:'FK',type:'int',name:'customer_id'}]},
+    {id:'ORDER_ITEM',attrs:[{key:'PK',type:'int',name:'id'},{key:'FK',type:'int',name:'order_id'}]},
+    {id:'PRODUCT',attrs:[{key:'PK',type:'int',name:'id'},{key:'',type:'decimal',name:'price'}]}],
+    rels:[{from:'CUSTOMER',to:'ORDER',card:'||--o{',label:'places'},{from:'CUSTOMER',to:'ADDRESS',card:'||--o|',label:'has'},{from:'CUSTOMER',to:'CUSTOMER',card:'||--||',label:'self'},{from:'ORDER',to:'ORDER_ITEM',card:'|o--o{',label:'includes'},{from:'ORDER_ITEM',to:'PRODUCT',card:'}o--o{',label:'refers'}]},
+  azure:{title:'Azure — all features',groups:[{id:'rg',name:'Resource Group'},{id:'data',name:'Data Tier'}],
+    services:[{id:'users',name:'Users',icon:'users',group:''},{id:'fd',name:'Front Door',icon:'frontdoor',group:'rg'},{id:'app',name:'App Service',icon:'appservice',group:'rg'},{id:'fn',name:'Functions',icon:'function',group:'rg'},{id:'sql',name:'Azure SQL',icon:'sql',group:'data'},{id:'cos',name:'Cosmos',icon:'cosmos',group:'data'},{id:'blob',name:'Storage',icon:'storage',group:'data'}],
+    links:[['users','fd'],['fd','app'],['app','fn'],['app','sql'],['fn','cos'],['fn','blob']]},
+  mindmap:{title:'Mindmap — all features',nodes:[
+    {id:'root',parent:'',text:'Launch',shape:'circle'},
+    {id:'a',parent:'root',text:'Square node',shape:'square'},
+    {id:'b',parent:'root',text:'Rounded node',shape:'rounded'},
+    {id:'c',parent:'root',text:'Bang node',shape:'bang'},
+    {id:'d',parent:'root',text:'Cloud node',shape:'cloud'},
+    {id:'e',parent:'root',text:'Hexagon node',shape:'hexagon'},
+    {id:'f',parent:'a',text:'Default child',shape:'default'},
+    {id:'g',parent:'a',text:'Another leaf',shape:'default'}]},
+  journey:{title:'Journey — all features',sections:[
+    {name:'Discover',tasks:[{name:'Find site',score:5,actors:'Visitor'},{name:'Read docs',score:3,actors:'Visitor, Support'}]},
+    {name:'Sign up',tasks:[{name:'Register',score:2,actors:'Visitor, System'},{name:'Verify',score:1,actors:'Visitor'}]},
+    {name:'Use',tasks:[{name:'First win',score:5,actors:'User'},{name:'Invite team',score:4,actors:'User, System'}]}]},
+  gitgraph:{title:'Git — all features',direction:'LR',ops:[
+    {kind:'commit',arg:'A',tag:''},{kind:'commit',arg:'',tag:'v0.1'},
+    {kind:'branch',arg:'develop',tag:''},{kind:'checkout',arg:'develop',tag:''},
+    {kind:'commit',arg:'B',tag:''},{kind:'checkout',arg:'main',tag:''},
+    {kind:'merge',arg:'develop',tag:''},{kind:'checkout',arg:'develop',tag:''},
+    {kind:'commit',arg:'C',tag:''},{kind:'checkout',arg:'main',tag:''},
+    {kind:'cherry',arg:'C',tag:''},{kind:'commit',arg:'',tag:'v1.0'},{kind:'commit',arg:'',tag:''}]},
+  timeline:{title:'Timeline — all features',periods:[
+    {section:'Early',time:'2019',events:'Founded; First prototype'},
+    {section:'Early',time:'2020',events:'Seed round'},
+    {section:'Growth',time:'2022',events:'Series A; 50 staff; New HQ'},
+    {section:'Growth',time:'2024',events:'1M users'},
+    {section:'',time:'2026',events:'Global launch'}]},
+  pie:{title:'Pie — all features',showData:true,slices:[{label:'Organic',value:42.5},{label:'Direct',value:28},{label:'Referral',value:18},{label:'Social',value:11.5}]},
+  gantt:{title:'Gantt — all features',dateFormat:'YYYY-MM-DD',sections:[
+    {name:'Design',tasks:[{id:'a1',name:'Research',start:'2026-07-01',dur:'5d',status:'done'},{id:'a2',name:'Wireframes',start:'after a1',dur:'4d',status:'active'},{id:'m1',name:'Design sign-off',start:'after a2',dur:'0d',status:'milestone'}]},
+    {name:'Build',tasks:[{id:'b1',name:'Frontend',start:'after m1',dur:'8d',status:''},{id:'b2',name:'Backend',start:'after m1',dur:'10d',status:'crit'}]}]}
+};
+
+/* Merge defaults so older saved state still gains newly-added diagram types */
+let state = Object.assign(defaults(), JSON.parse(localStorage.getItem('ds-state')||'null')||{});
+let mermaidTheme = localStorage.getItem('ds-mtheme') || 'auto';
 function saveState(){localStorage.setItem('ds-state',JSON.stringify(state));}
 
 /* ---------------- Tabs ---------------- */
@@ -332,16 +531,45 @@ function renderBuilder(){
   const root=$('#builderRoot'); root.innerHTML='';
   const st=state[current];
   root.append(guideBlock());
+  root.append(styleBlock());
   // title
   root.append(field('Diagram title', st.title, v=>{st.title=v;}));
-  if(current==='sequence') buildSequence(root,st);
-  if(current==='swimlane') buildSwimlane(root,st);
-  if(current==='workflow') buildWorkflow(root,st);
-  if(current==='azure') buildAzure(root,st);
-  if(current==='er') buildER(root,st);
-  if(current==='class') buildClass(root,st);
-  if(current==='gantt') buildGantt(root,st);
+  const builders={sequence:buildSequence,swimlane:buildSwimlane,workflow:buildWorkflow,
+    state:buildState,azure:buildAzure,er:buildER,class:buildClass,gantt:buildGantt,
+    mindmap:buildMindmap,journey:buildJourney,gitgraph:buildGitgraph,timeline:buildTimeline,pie:buildPie};
+  (builders[current]||(()=>{}))(root,st);
   $('#builderHint').textContent = hints[current];
+}
+
+/* Global mermaid theme/styling block */
+const M_THEMES=['auto','default','neutral','dark','forest','base'];
+function styleBlock(){
+  const wrap=el('div',{class:'builder-block'});
+  wrap.append(el('h3',{},'Styling & theme'));
+  const w=el('div');
+  w.append(el('label',{},'Mermaid theme (all diagrams)'));
+  const s=el('select',{onchange:e=>{mermaidTheme=e.target.value;localStorage.setItem('ds-mtheme',mermaidTheme);generate();}});
+  M_THEMES.forEach(t=>{const o=el('option',{value:t},t==='auto'?'auto (follow page)':t);if(t===mermaidTheme)o.selected=true;s.append(o);});
+  w.append(s);
+  wrap.append(w);
+  const hasColors=['workflow','swimlane','state'].includes(current);
+  wrap.append(el('div',{class:'hint'},hasColors
+    ? 'Tip: set a colour on individual nodes below to highlight them.'
+    : 'Theme applies to the live Mermaid preview and the generated script.'));
+  return wrap;
+}
+
+/* Node colour palette → emitted as classDef styles */
+const NODE_COLORS={'':'',blue:'#2563eb',green:'#16a34a',red:'#dc2626',yellow:'#d97706',gray:'#64748b',purple:'#7c3aed'};
+const COLOR_OPTS=Object.keys(NODE_COLORS);
+function colorClassDefs(usedColors){
+  let o='';
+  usedColors.forEach(c=>{
+    if(!c||!NODE_COLORS[c])return;
+    const hex=NODE_COLORS[c];
+    o+=`  classDef ${c} fill:${hex}22,stroke:${hex},stroke-width:1.5px,color:${hex};\n`;
+  });
+  return o;
 }
 const hints={
   sequence:'Add participants, then messages between them. ->> sync, -->> dashed return, -) async.',
@@ -350,7 +578,13 @@ const hints={
   azure:'Add Azure services with authentic icons, optionally place them in a group, then connect them.',
   er:'Add entities with attributes (PK/FK keys), then relationships with crow’s-foot cardinality.',
   class:'Add classes with attributes (+public/-private/#protected) and methods, then relationships.',
-  gantt:'Add sections, then tasks with a start date or "after <id>", a duration (e.g. 5d), and status.'
+  gantt:'Add sections, then tasks with a start date or "after <id>", a duration (e.g. 5d), and status.',
+  state:'Add states, then transitions. Use [*] for the start/end pseudo-states; label transitions with triggers.',
+  mindmap:'First node is the centre. Give every other node a parent to branch out; pick a shape per node.',
+  journey:'Add sections (phases), then tasks scored 1–5 (sad→happy) with the actors involved.',
+  gitgraph:'Order operations: commit, branch, checkout, merge. Switch branch before committing onto it.',
+  timeline:'Add periods (time + events). Separate multiple events with "; ". Optional sections group periods.',
+  pie:'Add labelled slices with numeric values — Mermaid computes the percentages automatically.'
 };
 
 /* Rich, mermaid-focused guide shown at the top of the builder */
@@ -375,14 +609,14 @@ const guides={
       <tr><td><code>-)</code></td><td>Open head — async (fire &amp; forget)</td></tr>
       <tr><td><code>--)</code></td><td>Dashed open head — async reply</td></tr>
     </table>
-    <h4>Build complex flows (edit the script)</h4>
+    <h4>Build complex flows — right in the builder</h4>
     <ul>
-      <li><b>Lifelines:</b> add <code>+</code>/<code>-</code> after the arrow to activate/deactivate, e.g. <code>A-&gt;&gt;+B: call</code> then <code>B--&gt;&gt;-A: done</code>.</li>
-      <li><b>Loops &amp; branches:</b> wrap lines in <code>loop&nbsp;label … end</code>, <code>alt&nbsp;cond / else / end</code>, <code>opt&nbsp;cond … end</code>, or <code>par / and / end</code> for parallel.</li>
-      <li><b>Notes:</b> <code>Note over A,B: text</code> or <code>Note left of A: text</code>.</li>
-      <li><b>Highlight:</b> <code>rect rgb(235,240,255) … end</code> shades a region.</li>
+      <li><b>Step type</b> dropdown turns any row into a Message, Note, or a block: <code>loop</code>, <code>alt</code>/<code>else</code>, <code>opt</code>, <code>par</code>/<code>and</code>, or a highlight <code>rect</code> — each auto-closed by an <b>End</b> row. Use ↑/↓ to reorder.</li>
+      <li><b>Activation:</b> the Activation field adds <code>+</code> (turn on the lifeline bar) or <code>-</code> (turn off) — e.g. <code>A-&gt;&gt;+B</code> then <code>B--&gt;&gt;-A</code>.</li>
+      <li><b>Notes:</b> place <i>over</i> one or two actors, or to the <i>left/right of</i> one.</li>
+      <li><b>Actor vs participant:</b> set a participant to render as a stick-figure actor.</li>
     </ul>
-    <div class="tip">The builder emits <code>autonumber</code> so every message is numbered automatically.</div>`,
+    <div class="tip">The builder emits <code>autonumber</code> so every message is numbered automatically. <code>-x</code>/<code>--x</code> arrows mark a lost/failed message.</div>`,
 
   swimlane:`
     <p>Lanes become <code>subgraph</code> blocks; steps are nodes inside them; connections are <code>--&gt;</code> links across lanes.</p>
@@ -481,7 +715,74 @@ const guides={
       <tr><td><code>crit</code></td><td>critical path (red)</td></tr>
       <tr><td><code>milestone</code></td><td>zero-length marker ◆</td></tr>
     </table>
-    <div class="tip">Chain tasks with <code>after a1</code> to build dependencies — durations then cascade automatically. Add <code>excludes weekends</code> in the script to skip Sat/Sun.</div>`
+    <div class="tip">Chain tasks with <code>after a1</code> to build dependencies — durations then cascade automatically. Add <code>excludes weekends</code> in the script to skip Sat/Sun.</div>`,
+
+  state:`
+    <p>Model a finite-state machine: states are nodes, transitions are <code>--&gt;</code> arrows labelled with the trigger.</p>
+    <ul>
+      <li><b>Start / end:</b> use the special <code>[*]</code> state — <code>[*] --&gt; Idle</code> begins, <code>Done --&gt; [*]</code> ends.</li>
+      <li><b>Label</b> is the readable name; <b>ID</b> is the token used in transitions (keep it short, no spaces).</li>
+      <li><b>Colour</b> a state to highlight it (e.g. error/terminal states).</li>
+    </ul>
+    <h4>Advanced (script)</h4>
+    <ul>
+      <li><b>Composite:</b> <code>state Active { … }</code> nests sub-states.</li>
+      <li><b>Choice/fork:</b> <code>state c &lt;&lt;choice&gt;&gt;</code>, <code>&lt;&lt;fork&gt;&gt;</code>, <code>&lt;&lt;join&gt;&gt;</code>.</li>
+      <li><b>Notes:</b> <code>note right of Idle : text</code>.</li>
+    </ul>
+    <div class="tip">Direction <code>LR</code> reads well for long linear lifecycles; <code>TD</code> for branchy ones.</div>`,
+
+  mindmap:`
+    <p>The first node is the central topic; every other node points to a <b>parent</b>, building the tree. Indentation in the script encodes depth.</p>
+    <h4>Node shapes</h4>
+    <table><tr><th>Shape</th><th>Renders as</th></tr>
+      <tr><td>default</td><td>plain text branch</td></tr>
+      <tr><td>square</td><td><code>[text]</code></td></tr>
+      <tr><td>rounded</td><td><code>(text)</code></td></tr>
+      <tr><td>circle</td><td><code>((text))</code></td></tr>
+      <tr><td>bang</td><td><code>))text((</code> explosion</td></tr>
+      <tr><td>cloud</td><td><code>)text(</code></td></tr>
+      <tr><td>hexagon</td><td><code>{{text}}</code></td></tr>
+    </table>
+    <div class="tip">Deleting a node re-parents its children, so the tree stays connected. Add an emoji or <code>::icon(fa fa-book)</code> in the script for visual flair.</div>`,
+
+  journey:`
+    <p>Map a user's experience as phases (sections) and tasks. Each task gets a satisfaction <b>score 1–5</b> and the <b>actors</b> involved.</p>
+    <ul>
+      <li>Score drives the face shown: <code>1</code> 😞 → <code>5</code> 😄 — great for spotting pain points.</li>
+      <li><b>Actors</b> are comma-separated; each gets a coloured marker on the row.</li>
+      <li>Script line format: <code>Task name: 3: Actor1, Actor2</code>.</li>
+    </ul>
+    <div class="tip">Keep sections in chronological order (Discover → Sign up → Activate) so the journey reads left-to-right.</div>`,
+
+  gitgraph:`
+    <p>Operations run top-to-bottom to draw branch &amp; merge history. Reorder with ↑/↓.</p>
+    <table><tr><th>Op</th><th>Effect</th></tr>
+      <tr><td><code>commit</code></td><td>adds a dot on the current branch (optional id + tag)</td></tr>
+      <tr><td><code>branch x</code></td><td>creates branch <code>x</code> and switches to it</td></tr>
+      <tr><td><code>checkout x</code></td><td>switches the active branch to <code>x</code></td></tr>
+      <tr><td><code>merge x</code></td><td>merges <code>x</code> into the current branch</td></tr>
+      <tr><td><code>cherry-pick</code></td><td>copies a specific commit by id</td></tr>
+    </table>
+    <div class="tip">Order matters: <code>branch develop</code> → <code>checkout develop</code> → <code>commit</code> puts the commit on <i>develop</i>, then <code>checkout main</code> → <code>merge develop</code>. Tag releases (e.g. <code>v1.0</code>) on commits.</div>`,
+
+  timeline:`
+    <p>Each row is a time period plus the events that happened then. Optional sections group consecutive periods into eras.</p>
+    <ul>
+      <li><b>Time</b> can be a year, quarter, date, or any label.</li>
+      <li><b>Events:</b> separate multiple with <code>;</code> — they stack under the period (script uses <code> : </code>).</li>
+      <li><b>Section</b> bands consecutive periods (e.g. "Early", "Growth") with a shared colour.</li>
+    </ul>
+    <div class="tip">Leave Section blank to keep a period under the running era. Great for roadmaps and company history.</div>`,
+
+  pie:`
+    <p>Add labelled slices with raw numbers — Mermaid converts them to percentages and sorts the legend.</p>
+    <ul>
+      <li>Values need not sum to 100; proportions are computed for you.</li>
+      <li><b>Show values</b> prints the underlying number next to each label.</li>
+      <li>Script line format: <code>"Label" : 42</code>.</li>
+    </ul>
+    <div class="tip">Use the <b>Mermaid theme</b> selector above to recolour the slices (e.g. <code>forest</code>, <code>neutral</code>).</div>`
 };
 
 function field(labelText,val,onInput,type='text'){
@@ -490,30 +791,71 @@ function field(labelText,val,onInput,type='text'){
   return wrap;
 }
 
+const SEQ_KINDS={msg:'Message',note:'Note',loop:'Loop … end',alt:'Alt (if) … end',else:'Else',opt:'Opt … end',par:'Par … end',and:'And (par branch)',end:'End block',rect:'Highlight rect … end'};
 function buildSequence(root,st){
   const pb=el('div',{class:'builder-block'}); pb.append(el('h3',{},'Participants'));
   st.participants.forEach((p,i)=>{
     const r=el('div',{class:'item-row'});
-    r.append(rowInput('Name',p.name,v=>p.name=v), rowInput('Alias/ID',p.id,v=>p.id=v),
+    r.append(rowInput('Name',p.name,v=>p.name=v),
+      twoCol(rowInput('Alias/ID',p.id,v=>p.id=v),
+             selectInput('Render as',['participant','actor'],p.actor?'actor':'participant',v=>p.actor=(v==='actor'))),
       el('button',{class:'del',onclick:()=>{st.participants.splice(i,1);renderBuilder();}},'✕ remove'));
     pb.append(r);
   });
   pb.append(el('button',{class:'add-btn',onclick:()=>{st.participants.push({id:'P'+(st.participants.length+1),name:'Participant'});renderBuilder();}},'+ Add participant'));
   root.append(pb);
 
-  const mb=el('div',{class:'builder-block'}); mb.append(el('h3',{},'Messages'));
+  const ids=st.participants.map(p=>p.id);
+  const mb=el('div',{class:'builder-block'}); mb.append(el('h3',{},'Messages & flow control'));
   st.messages.forEach((m,i)=>{
+    if(!m.kind) m.kind='msg';
     const r=el('div',{class:'item-row'});
-    r.append(
-      twoCol(selectInput('From',st.participants.map(p=>p.id),m.from,v=>m.from=v),
-             selectInput('To',st.participants.map(p=>p.id),m.to,v=>m.to=v)),
-      rowInput('Message',m.text,v=>m.text=v),
-      selectInput('Arrow',['->>','-->>','->','-->','-)' ,'--)'],m.type,v=>m.type=v),
-      el('button',{class:'del',onclick:()=>{st.messages.splice(i,1);renderBuilder();}},'✕ remove'));
+    const move=el('div',{class:'row'});
+    move.append(selectInput('Step type',Object.keys(SEQ_KINDS),m.kind,v=>{morphSeq(m,v);renderBuilder();}),
+      el('button',{class:'del',onclick:()=>{if(i>0){const t=st.messages[i-1];st.messages[i-1]=m;st.messages[i]=t;renderBuilder();}}},'↑'),
+      el('button',{class:'del',onclick:()=>{if(i<st.messages.length-1){const t=st.messages[i+1];st.messages[i+1]=m;st.messages[i]=t;renderBuilder();}}},'↓'),
+      el('button',{class:'del',onclick:()=>{st.messages.splice(i,1);renderBuilder();}},'✕'));
+    r.append(move);
+    if(m.kind==='msg'){
+      r.append(
+        twoCol(selectInput('From',ids,m.from,v=>m.from=v),
+               selectInput('To',ids,m.to,v=>m.to=v)),
+        rowInput('Message',m.text,v=>m.text=v),
+        twoCol(selectInput('Arrow',['->>','-->>','->','-->','-)','--)','-x','--x'],m.type,v=>m.type=v),
+               selectInput('Activation',['','+','-'],m.act||'',v=>m.act=v)));
+    }else if(m.kind==='note'){
+      r.append(
+        selectInput('Position',['left of','right of','over'],m.pos||'over',v=>{m.pos=v;renderBuilder();}),
+        m.pos==='over'
+          ? twoCol(selectInput('From',ids,m.a,v=>m.a=v),selectInput('To (opt.)',['',...ids],m.b||'',v=>m.b=v))
+          : selectInput('Actor',ids,m.a,v=>m.a=v),
+        rowInput('Note text',m.text,v=>m.text=v));
+    }else if(m.kind==='end'){
+      r.append(el('div',{class:'hint'},'Closes the most recent open loop/alt/opt/par/rect block.'));
+    }else{
+      const lbl=m.kind==='rect'?'Colour (e.g. rgb(235,240,255))':'Label / condition';
+      r.append(rowInput(lbl,m.label||'',v=>m.label=v));
+    }
     mb.append(r);
   });
-  mb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.participants[0]?.id||'A';st.messages.push({from:f,to:f,text:'Message',type:'->>'});renderBuilder();}},'+ Add message'));
+  const f=st.participants[0]?.id||'A';
+  const addRow=el('div',{class:'row'});
+  addRow.append(
+    el('button',{class:'add-btn',onclick:()=>{st.messages.push({kind:'msg',from:f,to:f,text:'Message',type:'->>',act:''});renderBuilder();}},'+ Message'),
+    el('button',{class:'add-btn',onclick:()=>{st.messages.push({kind:'note',pos:'over',a:f,b:'',text:'Note'});renderBuilder();}},'+ Note'),
+    el('button',{class:'add-btn',onclick:()=>{st.messages.push({kind:'alt',label:'condition'});st.messages.push({kind:'end'});renderBuilder();}},'+ Alt block'),
+    el('button',{class:'add-btn',onclick:()=>{st.messages.push({kind:'loop',label:'every item'});st.messages.push({kind:'end'});renderBuilder();}},'+ Loop block'));
+  mb.append(addRow);
   root.append(mb);
+}
+function morphSeq(m,kind){
+  const f=state.sequence.participants[0]?.id||'A';
+  Object.keys(m).forEach(k=>{if(k!=='kind')delete m[k];});
+  m.kind=kind;
+  if(kind==='msg')Object.assign(m,{from:f,to:f,text:'Message',type:'->>',act:''});
+  else if(kind==='note')Object.assign(m,{pos:'over',a:f,b:'',text:'Note'});
+  else if(kind==='rect')m.label='rgb(235,240,255)';
+  else if(kind!=='end')m.label='label';
 }
 
 function buildSwimlane(root,st){
@@ -533,26 +875,56 @@ function buildSwimlane(root,st){
     const r=el('div',{class:'item-row'});
     r.append(rowInput('Step text',s.text,v=>s.text=v),
       twoCol(selectInput('Lane',st.lanes.map(l=>l.id),s.lane,v=>s.lane=v),
-             selectInput('Shape',['box','round','diamond'],s.shape,v=>s.shape=v)),
-      el('button',{class:'del',onclick:()=>{st.steps.splice(i,1);st.links=st.links.filter(x=>x[0]!==s.id&&x[1]!==s.id);renderBuilder();}},'✕ remove'));
+             selectInput('Shape',['box','round','diamond','stadium','circle','subroutine','cylinder'],s.shape,v=>s.shape=v)),
+      selectInput('Colour',COLOR_OPTS,s.color||'',v=>s.color=v),
+      el('button',{class:'del',onclick:()=>{st.steps.splice(i,1);st.links=st.links.filter(x=>!sameStep(x,s.id));renderBuilder();}},'✕ remove'));
     sb.append(r);
   });
-  sb.append(el('button',{class:'add-btn',onclick:()=>{const id='s'+(st.steps.length+1)+Date.now()%1000;st.steps.push({id,lane:st.lanes[0]?.id||'',text:'Step',shape:'box'});renderBuilder();}},'+ Add step'));
+  sb.append(el('button',{class:'add-btn',onclick:()=>{const id='s'+(st.steps.length+1)+Date.now()%1000;st.steps.push({id,lane:st.lanes[0]?.id||'',text:'Step',shape:'box',color:''});renderBuilder();}},'+ Add step'));
   root.append(sb);
-  root.append(linkBlock(st,st.steps,true));
-}
 
+  const cb=el('div',{class:'builder-block'}); cb.append(el('h3',{},'Connections'));
+  st.links.forEach((lk,i)=>{
+    if(Array.isArray(lk)){lk={from:lk[0],to:lk[1],type:'-->',label:''};st.links[i]=lk;}
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(selectInput('From',st.steps.map(x=>x.id),lk.from,v=>lk.from=v),
+                    selectInput('To',st.steps.map(x=>x.id),lk.to,v=>lk.to=v)),
+      twoCol(rowInput('Label (optional)',lk.label,v=>lk.label=v),
+             selectInput('Line',LINK_TYPES,lk.type||'-->',v=>lk.type=v)),
+      el('button',{class:'del',onclick:()=>{st.links.splice(i,1);renderBuilder();}},'✕ remove'));
+    cb.append(r);
+  });
+  cb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.steps[0]?.id||'';st.links.push({from:f,to:f,type:'-->',label:''});renderBuilder();}},'+ Add connection'));
+  root.append(cb);
+}
+function sameStep(lk,id){return Array.isArray(lk)?(lk[0]===id||lk[1]===id):(lk.from===id||lk.to===id);}
+
+const LINK_TYPES=['-->','---','-.->','==>','--o','--x'];
 function buildWorkflow(root,st){
   root.append(dirField(st));
+  if(!st.groups) st.groups=[];
+
+  const gb=el('div',{class:'builder-block'}); gb.append(el('h3',{},'Groups / subgraphs (optional)'));
+  st.groups.forEach((g,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Group name',g.name,v=>g.name=v),rowInput('ID',g.id,v=>g.id=v),
+      el('button',{class:'del',onclick:()=>{st.groups.splice(i,1);st.nodes.forEach(n=>{if(n.group===g.id)n.group='';});renderBuilder();}},'✕ remove'));
+    gb.append(r);
+  });
+  gb.append(el('button',{class:'add-btn',onclick:()=>{st.groups.push({id:'g'+(st.groups.length+1),name:'Group'});renderBuilder();}},'+ Add group'));
+  root.append(gb);
+
   const nb=el('div',{class:'builder-block'}); nb.append(el('h3',{},'Nodes'));
   st.nodes.forEach((n,i)=>{
     const r=el('div',{class:'item-row'});
     r.append(rowInput('Text',n.text,v=>n.text=v),
-      selectInput('Shape',['box','round','diamond','stadium','circle'],n.shape,v=>n.shape=v),
+      twoCol(selectInput('Shape',['box','round','diamond','stadium','circle','subroutine','cylinder','hexagon'],n.shape,v=>n.shape=v),
+             selectInput('Colour',COLOR_OPTS,n.color||'',v=>n.color=v)),
+      selectInput('Group',['',...st.groups.map(g=>g.id)],n.group||'',v=>n.group=v),
       el('button',{class:'del',onclick:()=>{st.nodes.splice(i,1);st.links=st.links.filter(x=>x.from!==n.id&&x.to!==n.id);renderBuilder();}},'✕ remove'));
     nb.append(r);
   });
-  nb.append(el('button',{class:'add-btn',onclick:()=>{const id='n'+(st.nodes.length+1)+Date.now()%1000;st.nodes.push({id,text:'Node',shape:'box'});renderBuilder();}},'+ Add node'));
+  nb.append(el('button',{class:'add-btn',onclick:()=>{const id='n'+(st.nodes.length+1)+Date.now()%1000;st.nodes.push({id,text:'Node',shape:'box',color:'',group:''});renderBuilder();}},'+ Add node'));
   root.append(nb);
 
   const cb=el('div',{class:'builder-block'}); cb.append(el('h3',{},'Connections'));
@@ -560,11 +932,12 @@ function buildWorkflow(root,st){
     const r=el('div',{class:'item-row'});
     r.append(twoCol(selectInput('From',st.nodes.map(n=>n.id),lk.from,v=>lk.from=v),
                     selectInput('To',st.nodes.map(n=>n.id),lk.to,v=>lk.to=v)),
-      rowInput('Edge label (optional)',lk.label,v=>lk.label=v),
+      twoCol(rowInput('Edge label (optional)',lk.label,v=>lk.label=v),
+             selectInput('Line',LINK_TYPES,lk.type||'-->',v=>lk.type=v)),
       el('button',{class:'del',onclick:()=>{st.links.splice(i,1);renderBuilder();}},'✕ remove'));
     cb.append(r);
   });
-  cb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.nodes[0]?.id||'';st.links.push({from:f,to:f,label:''});renderBuilder();}},'+ Add connection'));
+  cb.append(el('button',{class:'add-btn',onclick:()=>{const f=st.nodes[0]?.id||'';st.links.push({from:f,to:f,label:'',type:'-->'});renderBuilder();}},'+ Add connection'));
   root.append(cb);
 }
 
@@ -686,7 +1059,131 @@ function buildGantt(root,st){
   root.append(el('button',{class:'add-btn',onclick:()=>{st.sections.push({name:'Section',tasks:[]});renderBuilder();}},'+ Add section'));
 }
 
+function buildState(root,st){
+  root.append(dirField(st));
+  const sb=el('div',{class:'builder-block'}); sb.append(el('h3',{},'States'));
+  st.states.forEach((s,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(rowInput('ID',s.id,v=>{const old=s.id;s.id=v.replace(/\s+/g,'_');st.transitions.forEach(t=>{if(t.from===old)t.from=s.id;if(t.to===old)t.to=s.id;});}),
+                    rowInput('Label (optional)',s.label||'',v=>s.label=v)),
+      selectInput('Colour',COLOR_OPTS,s.color||'',v=>s.color=v),
+      el('button',{class:'del',onclick:()=>{st.states.splice(i,1);st.transitions=st.transitions.filter(t=>t.from!==s.id&&t.to!==s.id);renderBuilder();}},'✕ remove'));
+    sb.append(r);
+  });
+  sb.append(el('button',{class:'add-btn',onclick:()=>{const id='State'+(st.states.length+1);st.states.push({id,label:'',color:''});renderBuilder();}},'+ Add state'));
+  root.append(sb);
+
+  const opts=['[*]',...st.states.map(s=>s.id)];
+  const tb=el('div',{class:'builder-block'}); tb.append(el('h3',{},'Transitions'));
+  st.transitions.forEach((t,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(selectInput('From',opts,t.from,v=>t.from=v),selectInput('To',opts,t.to,v=>t.to=v)),
+      rowInput('Trigger / label',t.label,v=>t.label=v),
+      el('button',{class:'del',onclick:()=>{st.transitions.splice(i,1);renderBuilder();}},'✕ remove'));
+    tb.append(r);
+  });
+  tb.append(el('button',{class:'add-btn',onclick:()=>{st.transitions.push({from:'[*]',to:st.states[0]?.id||'',label:''});renderBuilder();}},'+ Add transition'));
+  root.append(tb);
+}
+
+const MIND_SHAPES=['default','square','rounded','circle','bang','cloud','hexagon'];
+function buildMindmap(root,st){
+  const nb=el('div',{class:'builder-block'}); nb.append(el('h3',{},'Nodes (first = central root)'));
+  st.nodes.forEach((n,i)=>{
+    const isRoot=i===0||!n.parent;
+    const parentOpts=st.nodes.filter(x=>x.id!==n.id).map(x=>x.id);
+    const r=el('div',{class:'item-row'});
+    r.append(rowInput('Text',n.text,v=>n.text=v),
+      twoCol(isRoot?staticField('Parent','(root)'):selectInput('Parent',parentOpts,n.parent,v=>n.parent=v),
+             selectInput('Shape',MIND_SHAPES,n.shape||'default',v=>n.shape=v)),
+      isRoot?el('div',{class:'hint'},'The first node is the centre of the mind map.')
+            :el('button',{class:'del',onclick:()=>{const kids=st.nodes.filter(x=>x.parent===n.id);kids.forEach(k=>k.parent=n.parent);st.nodes.splice(i,1);renderBuilder();}},'✕ remove'));
+    nb.append(r);
+  });
+  nb.append(el('button',{class:'add-btn',onclick:()=>{const id='n'+Date.now()%100000;st.nodes.push({id,parent:st.nodes[0]?.id||'',text:'Idea',shape:'default'});renderBuilder();}},'+ Add node'));
+  root.append(nb);
+}
+
+function buildJourney(root,st){
+  st.sections.forEach((sec,si)=>{
+    const box=el('div',{class:'builder-block'});
+    const head=el('div',{class:'row'});
+    head.append(rowInput('Section',sec.name,v=>sec.name=v),
+      el('button',{class:'del',onclick:()=>{st.sections.splice(si,1);renderBuilder();}},'✕ section'));
+    box.append(head);
+    sec.tasks.forEach((t,ti)=>{
+      const r=el('div',{class:'item-row'});
+      r.append(rowInput('Task',t.name,v=>t.name=v),
+        twoCol(selectInput('Score (1=😞 … 5=😄)',['1','2','3','4','5'],String(t.score),v=>t.score=+v),
+               rowInput('Actors (comma sep.)',t.actors,v=>t.actors=v)),
+        el('button',{class:'del',onclick:()=>{sec.tasks.splice(ti,1);renderBuilder();}},'✕ remove'));
+      box.append(r);
+    });
+    box.append(el('button',{class:'add-btn',onclick:()=>{sec.tasks.push({name:'Task',score:3,actors:'User'});renderBuilder();}},'+ Add task'));
+    root.append(box);
+  });
+  root.append(el('button',{class:'add-btn',onclick:()=>{st.sections.push({name:'Section',tasks:[]});renderBuilder();}},'+ Add section'));
+}
+
+const GIT_KINDS={commit:'Commit',branch:'Branch',checkout:'Checkout/switch',merge:'Merge',cherry:'Cherry-pick'};
+function buildGitgraph(root,st){
+  const w=el('div',{class:'builder-block'});
+  w.append(el('label',{},'Orientation'));
+  const s=el('select',{onchange:e=>st.direction=e.target.value});
+  ['LR','TB','BT'].forEach(d=>{const o=el('option',{value:d},d);if(d===st.direction)o.selected=true;s.append(o);});
+  w.append(s); root.append(w);
+
+  const ob=el('div',{class:'builder-block'}); ob.append(el('h3',{},'Operations (in order)'));
+  st.ops.forEach((op,i)=>{
+    const r=el('div',{class:'item-row'});
+    const argLbl=op.kind==='commit'?'Commit message (optional)':op.kind==='cherry'?'Commit id':'Branch name';
+    r.append(selectInput('Operation',Object.keys(GIT_KINDS),op.kind,v=>{op.kind=v;renderBuilder();}),
+      twoCol(rowInput(argLbl,op.arg||'',v=>op.arg=v),
+             op.kind==='commit'?rowInput('Tag (optional)',op.tag||'',v=>op.tag=v):staticField('—','')),
+      el('div',{class:'row'},
+        el('button',{class:'del',onclick:()=>{if(i>0){const t=st.ops[i-1];st.ops[i-1]=op;st.ops[i]=t;renderBuilder();}}},'↑'),
+        el('button',{class:'del',onclick:()=>{if(i<st.ops.length-1){const t=st.ops[i+1];st.ops[i+1]=op;st.ops[i]=t;renderBuilder();}}},'↓'),
+        el('button',{class:'del',onclick:()=>{st.ops.splice(i,1);renderBuilder();}},'✕')));
+    ob.append(r);
+  });
+  ob.append(el('button',{class:'add-btn',onclick:()=>{st.ops.push({kind:'commit',arg:'',tag:''});renderBuilder();}},'+ Add operation'));
+  root.append(ob);
+}
+
+function buildTimeline(root,st){
+  const pb=el('div',{class:'builder-block'}); pb.append(el('h3',{},'Periods'));
+  st.periods.forEach((p,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(rowInput('Time / period',p.time,v=>p.time=v),
+                    rowInput('Section (optional)',p.section||'',v=>p.section=v)),
+      rowInput('Events (separate with "; ")',p.events,v=>p.events=v),
+      el('button',{class:'del',onclick:()=>{st.periods.splice(i,1);renderBuilder();}},'✕ remove'));
+    pb.append(r);
+  });
+  pb.append(el('button',{class:'add-btn',onclick:()=>{st.periods.push({section:'',time:'Year',events:'Event'});renderBuilder();}},'+ Add period'));
+  root.append(pb);
+}
+
+function buildPie(root,st){
+  const w=el('div',{class:'builder-block'});
+  w.append(el('label',{},'Show values on chart'));
+  const cb=el('select',{onchange:e=>{st.showData=e.target.value==='yes';}});
+  ['yes','no'].forEach(v=>{const o=el('option',{value:v},v==='yes'?'Yes':'No');if((v==='yes')===!!st.showData)o.selected=true;cb.append(o);});
+  w.append(cb); root.append(w);
+
+  const sb=el('div',{class:'builder-block'}); sb.append(el('h3',{},'Slices'));
+  st.slices.forEach((s,i)=>{
+    const r=el('div',{class:'item-row'});
+    r.append(twoCol(rowInput('Label',s.label,v=>s.label=v),rowInput('Value',String(s.value),v=>s.value=parseFloat(v)||0)),
+      el('button',{class:'del',onclick:()=>{st.slices.splice(i,1);renderBuilder();}},'✕ remove'));
+    sb.append(r);
+  });
+  sb.append(el('button',{class:'add-btn',onclick:()=>{st.slices.push({label:'Slice',value:10});renderBuilder();}},'+ Add slice'));
+  root.append(sb);
+}
+
 /* shared builder helpers */
+function staticField(lbl,val){const w=el('div');w.append(el('label',{},lbl),el('input',{value:val,disabled:'disabled'}));return w;}
 function rowInput(lbl,val,on){const w=el('div');w.append(el('label',{},lbl),el('input',{value:val||'',oninput:e=>on(e.target.value)}));return w;}
 function selectInput(lbl,opts,val,on){const w=el('div');const s=el('select',{onchange:e=>on(e.target.value)});opts.forEach(o=>{const op=el('option',{value:o},o||'(none)');if(o===val)op.selected=true;s.append(op);});w.append(el('label',{},lbl),s);return w;}
 function twoCol(a,b){const w=el('div',{class:'row'});w.append(a,b);return w;}
@@ -705,17 +1202,41 @@ function linkBlock(st,items,pairs){
 }
 
 /* ---------------- Script generation ---------------- */
-const ARROW_PUML={'->>':'->','-->>':'-->','->':'->','-->':'-->','-)':'->>','--)':'-->>'};
+const ARROW_PUML={'->>':'->','-->>':'-->','->':'->','-->':'-->','-)':'->>','--)':'-->>','-x':'->x','--x':'-->x'};
 function esc(s){return (s||'').replace(/"/g,"'");}
+
+/* Front-matter: carries optional title + the chosen Mermaid theme (when not "auto") */
+function frontMatter(title){
+  const parts=[];
+  if(title) parts.push(`title: ${esc(title)}`);
+  if(mermaidTheme && mermaidTheme!=='auto'){ parts.push('config:'); parts.push(`  theme: ${mermaidTheme}`); }
+  return parts.length?`---\n${parts.join('\n')}\n---\n`:'';
+}
 
 function genMermaid(){
   const st=state[current];
   if(current==='sequence'){
     let o=`sequenceDiagram\n  autonumber\n`;
-    if(st.title) o=`---\ntitle: ${st.title}\n---\n`+o;
-    st.participants.forEach(p=>o+=`  participant ${p.id} as ${p.name}\n`);
-    st.messages.forEach(m=>o+=`  ${m.from}${m.type}${m.to}: ${m.text}\n`);
-    return o;
+    st.participants.forEach(p=>o+=`  ${p.actor?'actor':'participant'} ${p.id} as ${p.name}\n`);
+    let depth=1; const pad=()=>'  '.repeat(depth);
+    st.messages.forEach(m=>{
+      const k=m.kind||'msg';
+      if(k==='msg'){
+        o+=`${pad()}${m.from}${m.type}${m.act||''}${m.to}: ${m.text}\n`;
+      }else if(k==='note'){
+        const tgt=m.pos==='over'?(m.a+(m.b?(', '+m.b):'')):m.a;
+        o+=`${pad()}Note ${m.pos} ${tgt}: ${m.text}\n`;
+      }else if(k==='rect'){
+        o+=`${pad()}rect ${m.label||'rgb(235,240,255)'}\n`; depth++;
+      }else if(['loop','alt','opt','par','critical','break'].includes(k)){
+        o+=`${pad()}${k} ${m.label||''}\n`; depth++;
+      }else if(k==='else'||k==='and'){
+        depth=Math.max(1,depth-1); o+=`${pad()}${k} ${m.label||''}\n`; depth++;
+      }else if(k==='end'){
+        depth=Math.max(1,depth-1); o+=`${pad()}end\n`;
+      }
+    });
+    return frontMatter(st.title)+o;
   }
   if(current==='swimlane'){
     let o=`flowchart ${st.direction}\n`;
@@ -724,14 +1245,80 @@ function genMermaid(){
       st.steps.filter(s=>s.lane===l.id).forEach(s=>o+=`    ${s.id}${shapeMermaid(s)}\n`);
       o+=`  end\n`;
     });
-    st.links.forEach(([a,b])=>o+=`  ${a} --> ${b}\n`);
-    return o;
+    st.links.forEach(lk=>{
+      const a=Array.isArray(lk)?lk[0]:lk.from, b=Array.isArray(lk)?lk[1]:lk.to;
+      const type=(lk&&lk.type)||'-->', label=lk&&lk.label;
+      o+=`  ${a} ${type}${label?`|${esc(label)}|`:''} ${b}\n`;
+    });
+    o+=nodeColorStyles(st.steps);
+    return frontMatter(st.title)+o;
   }
   if(current==='workflow'){
     let o=`flowchart ${st.direction}\n`;
-    st.nodes.forEach(n=>o+=`  ${n.id}${shapeMermaid(n)}\n`);
-    st.links.forEach(lk=>o+=`  ${lk.from} -->${lk.label?`|${esc(lk.label)}|`:''} ${lk.to}\n`);
-    return o;
+    const groups=st.groups||[]; const grouped=new Set();
+    groups.forEach(g=>{
+      o+=`  subgraph ${g.id}["${esc(g.name)}"]\n`;
+      st.nodes.filter(n=>n.group===g.id).forEach(n=>{o+=`    ${n.id}${shapeMermaid(n)}\n`;grouped.add(n.id);});
+      o+=`  end\n`;
+    });
+    st.nodes.filter(n=>!grouped.has(n.id)).forEach(n=>o+=`  ${n.id}${shapeMermaid(n)}\n`);
+    st.links.forEach(lk=>{const type=lk.type||'-->';o+=`  ${lk.from} ${type}${lk.label?`|${esc(lk.label)}|`:''} ${lk.to}\n`;});
+    o+=nodeColorStyles(st.nodes);
+    return frontMatter(st.title)+o;
+  }
+  if(current==='state'){
+    let o=`stateDiagram-v2\n`;
+    if(st.direction)o+=`  direction ${st.direction}\n`;
+    st.states.forEach(s=>{if(s.label&&s.label!==s.id)o+=`  state "${esc(s.label)}" as ${s.id}\n`;});
+    st.transitions.forEach(t=>o+=`  ${t.from} --> ${t.to}${t.label?` : ${esc(t.label)}`:''}\n`);
+    const used=new Set(); st.states.forEach(s=>{if(s.color)used.add(s.color);});
+    o+=colorClassDefs(used);
+    st.states.forEach(s=>{if(s.color)o+=`  class ${s.id} ${s.color}\n`;});
+    return frontMatter(st.title)+o;
+  }
+  if(current==='mindmap'){
+    let o=`mindmap\n`;
+    const wrap=n=>{const t=n.text||'';switch(n.shape){
+      case 'square':return `[${t}]`; case 'rounded':return `(${t})`; case 'circle':return `((${t}))`;
+      case 'bang':return `))${t}((`; case 'cloud':return `)${t}(`; case 'hexagon':return `{{${t}}}`; default:return t;}};
+    const emit=(n,depth)=>{o+='  '.repeat(depth+1)+wrap(n)+'\n';st.nodes.filter(c=>c.parent===n.id&&c.id!==n.id).forEach(c=>emit(c,depth+1));};
+    if(st.nodes[0])emit(st.nodes[0],0);
+    return frontMatter('')+o;
+  }
+  if(current==='journey'){
+    let o=`journey\n  title ${st.title||'User journey'}\n`;
+    st.sections.forEach(sec=>{
+      o+=`  section ${sec.name}\n`;
+      sec.tasks.forEach(t=>{const actors=(t.actors||'').split(',').map(x=>x.trim()).filter(Boolean).join(', ');o+=`    ${t.name}: ${t.score}: ${actors}\n`;});
+    });
+    return frontMatter('')+o;
+  }
+  if(current==='gitgraph'){
+    let o=`gitGraph ${st.direction||'LR'}:\n`;
+    st.ops.forEach(op=>{
+      if(op.kind==='commit'){const p=[];if(op.arg)p.push(`id: "${esc(op.arg)}"`);if(op.tag)p.push(`tag: "${esc(op.tag)}"`);o+=`  commit${p.length?' '+p.join(' '):''}\n`;}
+      else if(op.kind==='branch')o+=`  branch ${op.arg||'feature'}\n`;
+      else if(op.kind==='checkout')o+=`  checkout ${op.arg||'main'}\n`;
+      else if(op.kind==='merge')o+=`  merge ${op.arg||'main'}\n`;
+      else if(op.kind==='cherry')o+=`  cherry-pick id: "${esc(op.arg)}"\n`;
+    });
+    return frontMatter('')+o;
+  }
+  if(current==='timeline'){
+    let o=`timeline\n  title ${st.title||'Timeline'}\n`;
+    let curSec=null;
+    st.periods.forEach(p=>{
+      const sec=p.section||'';
+      if(sec&&sec!==curSec){o+=`  section ${sec}\n`;curSec=sec;}
+      const evs=(p.events||'').split(';').map(x=>x.trim()).filter(Boolean);
+      o+=`    ${p.time} : ${evs.join(' : ')}\n`;
+    });
+    return frontMatter('')+o;
+  }
+  if(current==='pie'){
+    let o=`pie${st.showData?' showData':''}\n  title ${st.title||'Pie chart'}\n`;
+    st.slices.forEach(s=>o+=`  "${esc(s.label)}" : ${s.value}\n`);
+    return frontMatter('')+o;
   }
   if(current==='azure'){
     let o=`architecture-beta\n`;
@@ -739,7 +1326,7 @@ function genMermaid(){
     st.services.forEach(s=>{const ic=AZ_ICONS.icons[s.icon]?`az:${s.icon}`:s.icon;o+=`  service ${s.id}(${ic})[${esc(s.name)}]${s.group?` in ${s.group}`:''}\n`;});
     o+='\n';
     st.links.forEach(([a,b])=>o+=`  ${a}:R -- L:${b}\n`);
-    return o;
+    return frontMatter('')+o;
   }
   if(current==='er'){
     let o=`erDiagram\n`;
@@ -749,7 +1336,7 @@ function genMermaid(){
       e.attrs.forEach(a=>o+=`    ${a.type||'string'} ${a.name}${a.key?' '+a.key:''}\n`);
       o+=`  }\n`;
     });
-    return o;
+    return frontMatter(st.title)+o;
   }
   if(current==='class'){
     let o=`classDiagram\n`;
@@ -761,7 +1348,7 @@ function genMermaid(){
       o+=`  }\n`;
     });
     st.rels.forEach(r=>o+=`  ${r.from} ${r.type} ${r.to}${r.label?` : ${esc(r.label)}`:''}\n`);
-    return o;
+    return frontMatter(st.title)+o;
   }
   if(current==='gantt'){
     let o=`gantt\n  title ${st.title||'Gantt'}\n  dateFormat ${st.dateFormat}\n`;
@@ -772,18 +1359,28 @@ function genMermaid(){
         o+=`  ${t.name} :${tags?tags+', ':''}${t.start}, ${t.dur}\n`;
       });
     });
-    return o;
+    return frontMatter('')+o;
   }
 }
 function shapeMermaid(n){
   const t=esc(n.text);
   switch(n.shape){
-    case 'round':return `(["${t}"])`;
+    case 'round':return `("${t}")`;
     case 'diamond':return `{"${t}"}`;
     case 'stadium':return `(["${t}"])`;
     case 'circle':return `(("${t}"))`;
+    case 'subroutine':return `[["${t}"]]`;
+    case 'cylinder':return `[("${t}")]`;
+    case 'hexagon':return `{{"${t}"}}`;
     default:return `["${t}"]`;
   }
+}
+/* classDef + class assignments for any coloured flowchart nodes/steps */
+function nodeColorStyles(items){
+  const used=new Set(); items.forEach(n=>{if(n.color)used.add(n.color);});
+  let o=colorClassDefs(used);
+  items.forEach(n=>{if(n.color)o+=`  class ${n.id} ${n.color};\n`;});
+  return o;
 }
 
 function genPlantUML(){
@@ -802,8 +1399,9 @@ function genPlantUML(){
     const byId={}; st.steps.forEach(s=>byId[s.id]=s);
     const laneName=id=>{const l=st.lanes.find(x=>x.id===id);return san(l?l.name:'Lane')||'Lane';};
     const out={}; st.steps.forEach(s=>out[s.id]=[]);
-    (st.links||[]).forEach(([a,b])=>{ if(out[a]&&byId[b]) out[a].push(b); });
-    const hasIn={}; (st.links||[]).forEach(([a,b])=>{ if(byId[b]) hasIn[b]=true; });
+    const pairs=(st.links||[]).map(l=>Array.isArray(l)?[l[0],l[1]]:[l.from,l.to]);
+    pairs.forEach(([a,b])=>{ if(out[a]&&byId[b]) out[a].push(b); });
+    const hasIn={}; pairs.forEach(([a,b])=>{ if(byId[b]) hasIn[b]=true; });
     let o=`@startuml\n`;
     if(st.title)o+=`title ${san(st.title)}\n`;
     o+=`start\n`;
@@ -906,6 +1504,22 @@ function genPlantUML(){
     });
     return o+`@endgantt\n`;
   }
+  if(current==='state'){
+    let o=`@startuml\n`;
+    if(st.title)o+=`title ${esc(st.title)}\n`;
+    st.states.forEach(s=>{if(s.label&&s.label!==s.id)o+=`state "${esc(s.label)}" as ${s.id}\n`;});
+    st.transitions.forEach(t=>o+=`${t.from} --> ${t.to}${t.label?` : ${esc(t.label)}`:''}\n`);
+    return o+`@enduml\n`;
+  }
+  if(current==='mindmap'){
+    let o=`@startmindmap\n`;
+    if(st.title)o+=`title ${esc(st.title)}\n`;
+    const emit=(n,depth)=>{o+='*'.repeat(depth+1)+` ${esc(n.text)}\n`;st.nodes.filter(c=>c.parent===n.id&&c.id!==n.id).forEach(c=>emit(c,depth+1));};
+    if(st.nodes[0])emit(st.nodes[0],0);
+    return o+`@endmindmap\n`;
+  }
+  // Mermaid-only diagram types — PlantUML has no clean equivalent
+  return `@startuml\nnote as N\n  ${TYPES[current].label} diagrams are available in Mermaid only.\n  Switch the engine toggle to **Mermaid**.\nend note\n@enduml\n`;
 }
 
 function generate(){
@@ -921,6 +1535,7 @@ async function render(){
   const code=$('#scriptEditor').value;
   const pv=$('#preview'), pu=$('#plantumlView');
   if(engine==='plantuml'){
+    hideError();
     pv.style.display='none'; pu.style.display='flex';
     const enc=plantumlEncode(code);
     const svgUrl=`https://www.plantuml.com/plantuml/svg/${enc}`;
@@ -937,13 +1552,15 @@ async function render(){
   const seq=++renderSeq;
   try{
     const {svg}=await mermaid.render('m'+seq, code);
-    if(seq===renderSeq) pv.innerHTML=svg;
+    if(seq===renderSeq){ pv.innerHTML=svg; hideError(); }
   }catch(err){
-    if(seq===renderSeq) pv.innerHTML='';
-    const msg=(err&&err.message)||String(err);
-    pv.append(el('div',{class:'err'},'⚠ '+msg));
+    // keep the last good diagram on screen; surface the error in a small closable popup
+    ['m'+seq,'dm'+seq].forEach(id=>{const n=document.getElementById(id);if(n)n.remove();});
+    if(seq===renderSeq) showError((err&&err.message)||String(err));
   }
 }
+function showError(msg){ $('#errMsg').textContent=msg; $('#errPopup').style.display='block'; }
+function hideError(){ $('#errPopup').style.display='none'; }
 
 /* PlantUML text encoding: deflateRaw + custom base64 */
 function plantumlEncode(text){
@@ -984,6 +1601,8 @@ $('#engineToggle').addEventListener('click',e=>{
 });
 
 $('#genBtn').onclick=generate;
+$('#errClose').onclick=hideError;
+$('#sampleBtn').onclick=()=>{state[current]=structuredClone(SAMPLES[current]);renderBuilder();generate();toast('Loaded full-feature sample');};
 $('#scriptEditor').addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(render,400);});
 
 /* Collapsible script panel */
@@ -998,7 +1617,7 @@ $('#themeBtn').onclick=()=>{
   theme=theme==='dark'?'light':'dark';
   document.documentElement.dataset.theme=theme;
   localStorage.setItem('ds-theme',theme);
-  mermaid.initialize({startOnLoad:false,theme:theme==='dark'?'dark':'default',securityLevel:'loose'});
+  mermaid.initialize({startOnLoad:false,theme:theme==='dark'?'dark':'default',securityLevel:'loose',suppressErrorRendering:true});
   render();
 };
 
