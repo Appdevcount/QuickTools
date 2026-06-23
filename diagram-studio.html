@@ -11,6 +11,7 @@
     --bg:#f6f7f9; --panel:#ffffff; --border:#e2e5ea; --text:#1d2330;
     --muted:#6b7280; --accent:#4f6df5; --accent-soft:#eef1ff; --code-bg:#f3f4f6;
     --danger:#d64545; --ok:#22a06b; --shadow:0 1px 3px rgba(0,0,0,.07);
+    --builder-w:460px; --script-w:330px;
   }
   [data-theme="dark"]{
     --bg:#0f1320; --panel:#171c2b; --border:#2a3146; --text:#e6e9f0;
@@ -44,10 +45,43 @@
     padding:6px 10px;cursor:pointer;font-size:13px;font-weight:550;
   }
   .icon-btn:hover{background:var(--accent-soft)}
-  main{flex:1;display:grid;grid-template-columns:300px 1fr 1fr;min-height:0}
+  main{flex:1;display:grid;grid-template-columns:var(--builder-w) var(--script-w) 1fr;min-height:0;transition:grid-template-columns .2s ease}
+  main.script-collapsed{grid-template-columns:var(--builder-w) 40px 1fr}
   .pane{overflow:auto;padding:14px;border-right:1px solid var(--border);background:var(--panel)}
   .pane:last-child{border-right:0}
   .pane h2{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 10px}
+
+  /* collapsed script pane */
+  .script-reopen{display:none}
+  #scriptPane{transition:padding .2s ease}
+  main.script-collapsed #scriptPane{padding:10px 4px;overflow:hidden}
+  main.script-collapsed #scriptPane .editor-head,
+  main.script-collapsed #scriptPane #scriptEditor{display:none}
+  main.script-collapsed #scriptPane .script-reopen{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    writing-mode:vertical-rl;transform:rotate(180deg);
+    width:32px;padding:16px 6px;margin:0 auto;cursor:pointer;
+    border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft);
+    color:var(--accent);font-weight:650;font-size:12px;letter-spacing:.6px;text-transform:uppercase;
+  }
+  main.script-collapsed #scriptPane .script-reopen:hover{background:var(--accent);color:#fff}
+
+  /* builder guide */
+  .guide{border:1px solid var(--border);border-radius:9px;margin-bottom:12px;background:var(--accent-soft);overflow:hidden}
+  .guide>summary{cursor:pointer;padding:9px 11px;font-size:11.5px;font-weight:650;color:var(--accent);list-style:none;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.4px}
+  .guide>summary::-webkit-details-marker{display:none}
+  .guide>summary::before{content:'▸';font-size:10px;transition:transform .15s}
+  .guide[open]>summary::before{transform:rotate(90deg)}
+  .guide .guide-body{padding:2px 11px 12px;font-size:12px;line-height:1.6;color:var(--text)}
+  .guide p{margin:6px 0}
+  .guide code{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:ui-monospace,monospace;font-size:11px;color:var(--accent);white-space:nowrap}
+  .guide table{width:100%;border-collapse:collapse;margin:7px 0}
+  .guide th,.guide td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+  .guide th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:650}
+  .guide ul{margin:6px 0;padding-left:17px}
+  .guide li{margin:3px 0}
+  .guide .tip{margin-top:9px;padding:7px 9px;background:var(--panel);border-left:3px solid var(--accent);border-radius:5px;color:var(--text)}
+  .guide h4{margin:11px 0 3px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
   .builder-block{border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:12px;background:var(--bg)}
   .builder-block h3{margin:0 0 8px;font-size:12px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   label{display:block;font-size:12px;color:var(--muted);margin:6px 0 3px}
@@ -78,7 +112,14 @@
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-weight:600}
   .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
   .toast.show{opacity:1}
-  @media(max-width:1000px){main{grid-template-columns:1fr;grid-auto-rows:minmax(280px,auto);overflow:auto}.pane{border-right:0;border-bottom:1px solid var(--border)}}
+  @media(max-width:1000px){
+    main,main.script-collapsed{grid-template-columns:1fr;grid-auto-rows:minmax(280px,auto);overflow:auto}
+    .pane{border-right:0;border-bottom:1px solid var(--border)}
+    main.script-collapsed #scriptPane{padding:14px;overflow:auto}
+    main.script-collapsed #scriptPane .editor-head,
+    main.script-collapsed #scriptPane #scriptEditor{display:block}
+    main.script-collapsed #scriptPane .script-reopen{display:none}
+  }
 </style>
 </head>
 <body>
@@ -102,15 +143,17 @@
     <div class="hint" id="builderHint"></div>
   </section>
 
-  <section class="pane">
+  <section class="pane" id="scriptPane">
     <div class="editor-head">
       <h2 style="margin:0">Script <span class="badge" id="engineBadge">Mermaid</span></h2>
       <div class="spacer"></div>
       <button class="icon-btn" id="exampleBtn">Load example</button>
       <button class="icon-btn" id="copyBtn">Copy</button>
       <button class="icon-btn" id="downloadScriptBtn">Download</button>
+      <button class="icon-btn" id="collapseScriptBtn" title="Hide script panel">⟨ Hide</button>
     </div>
     <textarea id="scriptEditor" spellcheck="false" placeholder="Your diagram script appears here…"></textarea>
+    <button class="script-reopen" id="reopenScriptBtn" title="Show script panel">⟩ Show script</button>
   </section>
 
   <section class="pane">
@@ -288,6 +331,7 @@ const ICONS=['users','appservice','function','sql','cosmos','storage','frontdoor
 function renderBuilder(){
   const root=$('#builderRoot'); root.innerHTML='';
   const st=state[current];
+  root.append(guideBlock());
   // title
   root.append(field('Diagram title', st.title, v=>{st.title=v;}));
   if(current==='sequence') buildSequence(root,st);
@@ -307,6 +351,137 @@ const hints={
   er:'Add entities with attributes (PK/FK keys), then relationships with crow’s-foot cardinality.',
   class:'Add classes with attributes (+public/-private/#protected) and methods, then relationships.',
   gantt:'Add sections, then tasks with a start date or "after <id>", a duration (e.g. 5d), and status.'
+};
+
+/* Rich, mermaid-focused guide shown at the top of the builder */
+function guideBlock(){
+  const isOpen = localStorage.getItem('ds-guide-open')!=='0';
+  const d=el('details',{class:'guide'});
+  if(isOpen) d.setAttribute('open','');
+  d.addEventListener('toggle',()=>localStorage.setItem('ds-guide-open',d.open?'1':'0'));
+  d.append(el('summary',{},`Guide — ${TYPES[current].label}: keywords, arrows & tips`));
+  d.append(el('div',{class:'guide-body',html:guides[current]}));
+  return d;
+}
+
+const guides={
+  sequence:`
+    <p>Each message line is <code>From Arrow To: text</code>. The arrow style sets the meaning.</p>
+    <table><tr><th>Arrow</th><th>Meaning</th></tr>
+      <tr><td><code>-&gt;&gt;</code></td><td>Solid arrowhead — synchronous call</td></tr>
+      <tr><td><code>--&gt;&gt;</code></td><td>Dashed arrowhead — reply / return value</td></tr>
+      <tr><td><code>-&gt;</code></td><td>Solid line, no head — simple signal</td></tr>
+      <tr><td><code>--&gt;</code></td><td>Dashed line, no head</td></tr>
+      <tr><td><code>-)</code></td><td>Open head — async (fire &amp; forget)</td></tr>
+      <tr><td><code>--)</code></td><td>Dashed open head — async reply</td></tr>
+    </table>
+    <h4>Build complex flows (edit the script)</h4>
+    <ul>
+      <li><b>Lifelines:</b> add <code>+</code>/<code>-</code> after the arrow to activate/deactivate, e.g. <code>A-&gt;&gt;+B: call</code> then <code>B--&gt;&gt;-A: done</code>.</li>
+      <li><b>Loops &amp; branches:</b> wrap lines in <code>loop&nbsp;label … end</code>, <code>alt&nbsp;cond / else / end</code>, <code>opt&nbsp;cond … end</code>, or <code>par / and / end</code> for parallel.</li>
+      <li><b>Notes:</b> <code>Note over A,B: text</code> or <code>Note left of A: text</code>.</li>
+      <li><b>Highlight:</b> <code>rect rgb(235,240,255) … end</code> shades a region.</li>
+    </ul>
+    <div class="tip">The builder emits <code>autonumber</code> so every message is numbered automatically.</div>`,
+
+  swimlane:`
+    <p>Lanes become <code>subgraph</code> blocks; steps are nodes inside them; connections are <code>--&gt;</code> links across lanes.</p>
+    <h4>Node shapes</h4>
+    <table><tr><th>Shape</th><th>Syntax</th></tr>
+      <tr><td>Box (process)</td><td><code>["text"]</code></td></tr>
+      <tr><td>Rounded</td><td><code>("text")</code></td></tr>
+      <tr><td>Stadium (start/end)</td><td><code>(["text"])</code></td></tr>
+      <tr><td>Diamond (decision)</td><td><code>{"text"}</code></td></tr>
+      <tr><td>Circle</td><td><code>(("text"))</code></td></tr>
+    </table>
+    <h4>Link styles (script)</h4>
+    <ul>
+      <li><code>--&gt;</code> arrow · <code>---</code> open line · <code>-.-&gt;</code> dotted · <code>==&gt;</code> thick.</li>
+      <li>Label an edge with <code>--&gt;|Yes|</code>.</li>
+    </ul>
+    <div class="tip"><b>Direction</b> <code>TD</code>=top-down, <code>LR</code>=left-right. Use <code>LR</code> when you have many lanes so handoffs read horizontally.</div>`,
+
+  workflow:`
+    <p>Add nodes, choose a shape per node, then link them. Decision branches use a diamond plus labelled edges.</p>
+    <table><tr><th>Shape</th><th>Use for</th></tr>
+      <tr><td><code>["…"]</code> box</td><td>action / process step</td></tr>
+      <tr><td><code>{"…"}</code> diamond</td><td>decision (branch out with Yes/No)</td></tr>
+      <tr><td><code>(["…"])</code> stadium</td><td>start / end terminator</td></tr>
+      <tr><td><code>(("…"))</code> circle</td><td>connector / state</td></tr>
+    </table>
+    <h4>Complex diagrams (script)</h4>
+    <ul>
+      <li><b>Edge labels:</b> set the "Edge label" field (becomes <code>--&gt;|Yes|</code>) to mark branch conditions.</li>
+      <li><b>Loops:</b> point a step back to an earlier node to model retries.</li>
+      <li><b>Grouping:</b> wrap related nodes in <code>subgraph Name … end</code> in the script.</li>
+      <li><b>Styling:</b> <code>classDef warn fill:#fee,stroke:#c00;</code> then <code>class nodeId warn;</code>.</li>
+    </ul>
+    <div class="tip">Give a diamond two outgoing edges labelled <code>Yes</code> and <code>No</code> for clean decision logic.</div>`,
+
+  azure:`
+    <p>Built on Mermaid <code>architecture-beta</code>. Each service uses an authentic Azure icon; optionally place services inside a group.</p>
+    <h4>How it maps</h4>
+    <ul>
+      <li><code>group rg(cloud)[Resource Group]</code> — a container.</li>
+      <li><code>service app(az:appservice)[App Service] in rg</code> — an icon node.</li>
+      <li>Edges use side anchors: <code>app:R -- L:sql</code> (<code>T B L R</code> = top/bottom/left/right).</li>
+    </ul>
+    <h4>Complex topologies</h4>
+    <ul>
+      <li>Pick the <b>Group</b> dropdown to nest a service; leave blank for top-level (e.g. Users).</li>
+      <li>Choose anchor sides in the script to keep lines from crossing.</li>
+      <li>Add <code>junction</code> nodes in the script to fan one source out to many targets.</li>
+    </ul>
+    <div class="tip">14 real Azure glyphs are bundled offline (App Service, Functions, SQL, Cosmos, Front Door, AKS, Key Vault, Service Bus…).</div>`,
+
+  er:`
+    <p>Define entities with typed attributes, then relationships with crow's-foot cardinality. Mark keys as <code>PK</code>, <code>FK</code>, or <code>UK</code>.</p>
+    <h4>Cardinality (crow's foot)</h4>
+    <table><tr><th>Pick</th><th>Symbol</th><th>Reads</th></tr>
+      <tr><td>one to many</td><td><code>||--o{</code></td><td>one ↔ zero-or-many</td></tr>
+      <tr><td>one to one</td><td><code>||--||</code></td><td>exactly one ↔ one</td></tr>
+      <tr><td>many to many</td><td><code>}o--o{</code></td><td>many ↔ many</td></tr>
+      <tr><td>one to zero/one</td><td><code>||--o|</code></td><td>one ↔ optional one</td></tr>
+    </table>
+    <p>Symbols: <code>|</code>=one, <code>o</code>=zero, <code>{ }</code>=many. Solid <code>--</code> is identifying; dashed <code>..</code> is non-identifying.</p>
+    <div class="tip">The relationship <b>Label</b> (e.g. "places", "contains") sits on the connector — keep it a verb for readability.</div>`,
+
+  class:`
+    <p>Add classes with attributes and methods, then connect them. Prefix members with a visibility marker.</p>
+    <table><tr><th>Marker</th><th>Visibility</th></tr>
+      <tr><td><code>+</code></td><td>public</td></tr>
+      <tr><td><code>-</code></td><td>private</td></tr>
+      <tr><td><code>#</code></td><td>protected</td></tr>
+      <tr><td><code>~</code></td><td>package / internal</td></tr>
+    </table>
+    <p>Suffix <code>*</code> = abstract, <code>$</code> = static. Methods take <code>()</code> with an optional return type, e.g. <code>+save() bool</code>.</p>
+    <h4>Relationships</h4>
+    <table><tr><th>Type</th><th>Meaning</th></tr>
+      <tr><td><code>&lt;|--</code></td><td>inheritance</td></tr>
+      <tr><td><code>*--</code></td><td>composition</td></tr>
+      <tr><td><code>o--</code></td><td>aggregation</td></tr>
+      <tr><td><code>--&gt;</code></td><td>association</td></tr>
+      <tr><td><code>..&gt;</code></td><td>dependency</td></tr>
+      <tr><td><code>&lt;|..</code></td><td>realization (interface)</td></tr>
+    </table>
+    <div class="tip">In the script add <code>&lt;&lt;interface&gt;&gt;</code> above a class, or cardinality like <code>Order "1" --&gt; "*" Item</code>.</div>`,
+
+  gantt:`
+    <p>Group tasks into sections. Each task takes a status, an id, a start, and a duration.</p>
+    <h4>Task fields</h4>
+    <ul>
+      <li><b>Start:</b> a date (matching <b>Date format</b>, e.g. <code>2026-07-01</code>) or <code>after &lt;id&gt;</code> to chain off another task.</li>
+      <li><b>Duration:</b> <code>5d</code>, <code>2w</code>, <code>8h</code>.</li>
+      <li><b>Id:</b> a short handle so other tasks can depend on it.</li>
+    </ul>
+    <h4>Status tags</h4>
+    <table><tr><th>Status</th><th>Effect</th></tr>
+      <tr><td><code>done</code></td><td>completed (greyed)</td></tr>
+      <tr><td><code>active</code></td><td>in progress (highlighted)</td></tr>
+      <tr><td><code>crit</code></td><td>critical path (red)</td></tr>
+      <tr><td><code>milestone</code></td><td>zero-length marker ◆</td></tr>
+    </table>
+    <div class="tip">Chain tasks with <code>after a1</code> to build dependencies — durations then cascade automatically. Add <code>excludes weekends</code> in the script to skip Sat/Sun.</div>`
 };
 
 function field(labelText,val,onInput,type='text'){
@@ -811,6 +986,14 @@ $('#engineToggle').addEventListener('click',e=>{
 $('#genBtn').onclick=generate;
 $('#scriptEditor').addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(render,400);});
 
+/* Collapsible script panel */
+function setScriptCollapsed(c){
+  document.querySelector('main').classList.toggle('script-collapsed',c);
+  localStorage.setItem('ds-script-collapsed',c?'1':'0');
+}
+$('#collapseScriptBtn').onclick=()=>setScriptCollapsed(true);
+$('#reopenScriptBtn').onclick=()=>setScriptCollapsed(false);
+
 $('#themeBtn').onclick=()=>{
   theme=theme==='dark'?'light':'dark';
   document.documentElement.dataset.theme=theme;
@@ -852,6 +1035,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 
 /* ---------------- Init ---------------- */
 try{ mermaid.registerIconPacks([{name:'az', loader:async()=>AZ_ICONS}]); }catch(e){ console.warn('icon pack register failed',e); }
+if(localStorage.getItem('ds-script-collapsed')==='1') setScriptCollapsed(true);
 renderBuilder();
 generate();
 </script>
