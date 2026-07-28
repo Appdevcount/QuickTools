@@ -512,6 +512,8 @@
       <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
       <button class="btn-outline" style="font-size:11px;padding:4px 13px;background:#eff6ff;border-color:#2563eb;color:#2563eb;font-weight:700;" onclick="loadRoundPreset(0)" title="50 mixed-level questions — C# Basics, .NET (Intermediate+Expert), Azure, Real World, Testing, Perf/DevOps">⏱ Round 1 — 50 Qs</button>
       <button class="btn-outline" style="font-size:11px;padding:4px 13px;background:#f5f3ff;border-color:#7c3aed;color:#7c3aed;font-weight:700;" onclick="loadRoundPreset(1)" title="50 expert questions — Expert .NET/Azure, Production, System Design, SOLID, Microservices, Architecture, API, Containers">⏱ Round 2 — 50 Qs</button>
+      <span style="width:1px;height:20px;background:var(--border);margin:0 2px;flex-shrink:0;"></span>
+      <button class="btn-outline" style="font-size:11px;padding:4px 13px;background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:700;" onclick="loadMarkedExportPreset()" title="58 marked questions from the curated export — CF-9, Q3/Q4, Q12/Q18/Q21, AZ series, SQL, Coding, Architecture and more">⭐ Marked Export — 58 Qs</button>
     </div>
     <div class="preset-modal-body" id="preset-modal-body"></div>
     <div class="preset-modal-footer">
@@ -6488,8 +6490,42 @@ function showGlobalMarked(){
   const countEl   = document.getElementById('global-search-count');
   let totalMarked = 0, sectionsHit = 0, html = '';
 
-  SECTIONS.forEach(s => {
-    if(s.type === 'guide') return;
+  // ── Interview flow order (mirrors Marked Export preset sequence) ──────────
+  const _sectionMap = Object.fromEntries(SECTIONS.map(s => [s.id, s]));
+  const _FLOW = [
+    // 1. C# warm-up
+    's-csharp-basics',
+    // 2-3. .NET depth
+    's-intm-net', 's-expert-net',
+    // 4. SOLID & OOP
+    's-solid-gof', 's-oops-coding',
+    // 5. SQL
+    's-sql',
+    // 6. Coding challenges
+    's-coding',
+    // 7. API / Real-world .NET
+    's-rnet', 's-api-design',
+    // 8. Testing
+    's-testing',
+    // 9-10. Azure
+    's-intm-az', 's-expert-az', 's-raz', 's-azure-prod-scenarios',
+    // 11. Architecture / Microservices / Cloud patterns
+    's-architect', 's-microservices', 's-cloud-patterns', 's-perf-prod',
+    // 12. Containers / DevOps
+    's-container', 's-devops', 's-security',
+    // 13. Leadership
+    's-lead'
+  ];
+  const _flowSet = new Set(_FLOW);
+  const _ordered = [
+    ..._FLOW,
+    // any remaining non-guide sections (React, Angular, DSA, Sys Design, etc.)
+    ...SECTIONS.filter(s => s.type !== 'guide' && !_flowSet.has(s.id)).map(s => s.id)
+  ];
+
+  _ordered.forEach(id => {
+    const s = _sectionMap[id];
+    if(!s || s.type === 'guide') return;
     const marked = s.questions.filter(q => state[q.id]?.asked);
     if(!marked.length) return;
     totalMarked += marked.length;
@@ -8042,6 +8078,64 @@ function _updatePresetCount(){
 
   const applyBtn = document.getElementById('preset-apply-btn');
   if(applyBtn) applyBtn.textContent = '✓ Apply ' + checked + ' Mark' + (checked !== 1 ? 's' : '');
+}
+
+function loadMarkedExportPreset(){
+  const MARKED_CODES = new Set([
+    // ── 1. C# Language Fundamentals (warm-up) ─────────────────────────
+    'CF-9',
+
+    // ── 2. Intermediate .NET (async, DI) ──────────────────────────────
+    'Q3','Q4',
+
+    // ── 3. Expert .NET / C# (memory, perf, advanced language) ─────────
+    'Q12','Q18','Q21',
+    'QX-N5','QX-N6','QX-N10','QX-N12',
+    'QR-10','QR-13',
+
+    // ── 4. SOLID Principles & Design Patterns (OOP depth) ─────────────
+    'SG-5','SG-10','SG-11',
+    'OC-1','OC-4',
+
+    // ── 5. SQL (data reasoning) ────────────────────────────────────────
+    'SQL-5','SQL-7','SQL-21',
+
+    // ── 6. Coding Challenges (live coding) ────────────────────────────
+    'CODE-1','CODE-6','CODE-10','CODE-21',
+
+    // ── 7. API Design & Real-World .NET (practical application) ───────
+    'RNET-3',
+    'APIQ-3','APIQ-4','APIQ-5',
+    'API-4','API-7','API-9',
+
+    // ── 8. Testing & Quality ───────────────────────────────────────────
+    'UT-1',
+
+    // ── 9. Intermediate Azure (services breadth) ───────────────────────
+    'AZ-I1','AZ-I2','AZ-I4','AZ-I9',
+    'AZ-I19','AZ-I20','AZ-I28',
+
+    // ── 10. Expert Azure (advanced services & scenarios) ──────────────
+    'AZ-E4','AZ-E6','AZ-E7','AZ-E11',
+    'AZF-2','AZSB-2','AZCOS-1',
+    'RAZ-6',
+
+    // ── 11. Architecture, Microservices & Cloud Patterns ──────────────
+    'ARCH-3','ARCH-10','ARCHR-28',
+    'MP-1','MP-7',
+    'CP-1',
+
+    // ── 12. DevOps & Containers (deployment & infra) ───────────────────
+    'CT-1',
+    'DV-1','DV-6','DV-SCEN-1',
+
+    // ── 13. Team Lead / Leadership (close-out) ─────────────────────────
+    'TL-1'
+  ]);
+  document.querySelectorAll('.preset-cb').forEach(cb => { cb.checked = MARKED_CODES.has(cb.dataset.code); });
+  _updatePresetCount();
+  const matched = [...document.querySelectorAll('.preset-cb:checked')].length;
+  showToast('⭐ Marked Export — ' + matched + ' questions selected');
 }
 
 function presetSelectAll(on){
