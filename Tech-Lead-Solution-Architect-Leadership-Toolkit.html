@@ -1,0 +1,3076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tech Lead &amp; Solution Architect Leadership Toolkit</title>
+  <style>
+    :root {
+      --bg-1: #f7f3ea;
+      --bg-2: #e4f1ef;
+      --ink: #1f2933;
+      --muted: #52606d;
+      --card: #ffffffd9;
+      --line: #d9e2ec;
+      --accent: #0f766e;
+      --accent-2: #d97706;
+      --good: #166534;
+      --warn: #92400e;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Verdana", "Tahoma", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #fff8e8 0%, transparent 35%),
+        radial-gradient(circle at 95% 20%, #dff6f2 0%, transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      width: min(1200px, 94vw);
+      margin: 26px auto 40px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #0f766e 0%, #115e59 45%, #0b4f4a 100%);
+      color: #f8fafc;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+      animation: slideIn 420ms ease-out;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.09);
+      pointer-events: none;
+    }
+
+    .title {
+      margin: 0;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+      letter-spacing: 0.4px;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: #d7efe9;
+      max-width: 80ch;
+    }
+
+    .tagline {
+      margin-top: 14px;
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 16px 0 0;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
+      transition: transform 160ms ease, background 160ms ease;
+    }
+
+    .tab-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: #0f766e;
+    }
+
+    .panel {
+      margin-top: 18px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(4px);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      animation: fadeIn 380ms ease-out;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+    }
+
+    .stage {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .stage.pause { background: #0f766e; }
+    .stage.bridge { background: #b45309; }
+    .stage.move { background: #166534; }
+
+    .action {
+      margin: 0;
+      font-weight: 800;
+    }
+
+    .phrase {
+      margin: 8px 0;
+      padding: 8px;
+      border-left: 4px solid var(--accent-2);
+      background: #fff9ec;
+      font-weight: 700;
+      border-radius: 4px;
+    }
+
+    .when {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .example {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .memory {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #8fbeb8;
+      background: #f0fdfa;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      color: #115e59;
+    }
+
+    .scenario-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 14px;
+    }
+
+    .category-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .category-btn {
+      border: 1px solid #b8c7d1;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #fff;
+      color: #334155;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .category-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .category-btn.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .category-count {
+      display: inline-grid;
+      place-items: center;
+      min-width: 21px;
+      height: 21px;
+      margin-left: 5px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.1);
+      font-size: 0.72rem;
+    }
+
+    .category-btn.active .category-count {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .scenario-list {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .scenario-group + .scenario-group {
+      border-top: 4px solid #edf2f7;
+    }
+
+    .scenario-group-title {
+      margin: 0;
+      padding: 9px 12px;
+      background: #f1f7f6;
+      color: #115e59;
+      border-bottom: 1px solid #dbe7e5;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .scenario-btn {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+      text-align: left;
+      padding: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .scenario-btn:last-child {
+      border-bottom: 0;
+    }
+
+    .scenario-btn:hover {
+      background: #f8fafc;
+    }
+
+    .scenario-btn.active {
+      background: #ecfeff;
+      border-left: 4px solid var(--accent);
+      padding-left: 8px;
+    }
+
+    .scenario-btn strong {
+      display: block;
+      font-size: 0.93rem;
+      margin-bottom: 4px;
+    }
+
+    .scenario-btn span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .scenario-pane {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #fff;
+      padding: 14px;
+      min-height: 500px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+
+    .pill {
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.84rem;
+      background: #f8fafc;
+    }
+
+    .subhead {
+      margin: 12px 0 6px;
+      color: #0f172a;
+      font-size: 0.96rem;
+      font-weight: 800;
+    }
+
+    .kpi {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .sequence {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .journey {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .journey-step {
+      padding: 10px;
+      border: 1px solid #dbe7e5;
+      border-radius: var(--radius-sm);
+      background: #f8fffd;
+    }
+
+    .journey-step summary {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .journey-step summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .journey-step summary::after {
+      content: "+";
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .journey-step[open] summary::after {
+      content: "−";
+    }
+
+    .journey-content {
+      margin: 9px 0 0 44px;
+    }
+
+    .journey-number {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.82rem;
+    }
+
+    .journey-step h4 {
+      margin: 0 0 4px;
+      font-size: 0.93rem;
+    }
+
+    .journey-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .journey-step .step-care,
+    .journey-step .step-checkpoint {
+      margin-top: 7px;
+      padding: 7px 9px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+    }
+
+    .journey-step .step-timing {
+      margin: 2px 0 7px;
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .journey-step .step-care {
+      border-left: 3px solid var(--accent-2);
+      background: #fff8e7;
+      color: var(--warn);
+    }
+
+    .journey-step .step-checkpoint {
+      border-left: 3px solid var(--good);
+      background: #f0fdf4;
+      color: var(--good);
+    }
+
+    .journey-controls {
+      display: flex;
+      gap: 7px;
+      margin: 7px 0 10px;
+    }
+
+    .journey-control {
+      border: 1px solid #99c7c1;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--accent);
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    body.guide-mode {
+      overflow: hidden;
+    }
+
+    body.guide-mode .wrap {
+      margin: 0 auto;
+    }
+
+    .hero.compact {
+      padding: 8px 16px;
+      border-radius: 0;
+    }
+
+    .hero.compact::after {
+      display: none;
+    }
+
+    .hero.compact .title,
+    .hero.compact .subtitle,
+    .hero.compact .tagline {
+      display: none;
+    }
+
+    .hero.compact .tabs {
+      margin: 0;
+    }
+
+    .panel-full {
+      width: 100vw;
+      max-width: 100vw;
+      position: relative;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      border-radius: 0;
+      box-sizing: border-box;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      animation: none;
+    }
+
+    .guide-shell {
+      display: flex;
+      align-items: stretch;
+      height: calc(100vh - var(--app-header-h, 64px));
+      background: #fff;
+    }
+
+    .guide-sidebar {
+      flex: 0 0 300px;
+      width: 300px;
+      border-right: 1px solid var(--line);
+      background: #f8fafc;
+      overflow-y: auto;
+      padding: 16px;
+      box-sizing: border-box;
+      transition: width 180ms ease, padding 180ms ease, opacity 150ms ease;
+    }
+
+    .guide-sidebar.collapsed {
+      width: 0;
+      flex-basis: 0;
+      padding: 16px 0;
+      overflow: hidden;
+      opacity: 0;
+      border-right: 0;
+    }
+
+    .guide-sidebar-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: -16px -16px 10px;
+      padding: 16px 16px 10px;
+      background: #f8fafc;
+    }
+
+    .guide-sidebar-title {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #115e59;
+    }
+
+    .guide-sidebar-toggle,
+    .guide-expand-btn {
+      border: 1px solid #b8c7d1;
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: #115e59;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 6px 10px;
+      flex: 0 0 auto;
+      font-size: 0.85rem;
+    }
+
+    .guide-expand-btn {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: none;
+      margin: -30px 0 14px;
+    }
+
+    .guide-sidebar.collapsed + .guide-content-pane .guide-expand-btn {
+      display: inline-block;
+    }
+
+    .guide-search {
+      width: 100%;
+      border: 1px solid #b8c7d1;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font: inherit;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+
+    .guide-select {
+      width: 100%;
+      border: 1px solid #b8c7d1;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font: inherit;
+      background: #fff;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    .guide-quicklinks {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .guide-quicklink {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 7px 9px;
+      background: transparent;
+      color: #334155;
+      font: inherit;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: normal;
+      line-height: 1.3;
+      box-sizing: border-box;
+    }
+
+    .guide-quicklink:hover {
+      background: #e6f5f2;
+      color: var(--accent);
+    }
+
+    .guide-quicklink.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .guide-content-pane {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 30px clamp(16px, 4vw, 64px) 60px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+
+    .guide-content {
+      max-width: 92ch;
+      margin: 0 auto;
+      color: #1f2933;
+    }
+
+    .guide-content h1,
+    .guide-content h2,
+    .guide-content h3,
+    .guide-content h4 {
+      font-family: inherit;
+      color: #0b4f4a;
+      scroll-margin-top: 12px;
+    }
+
+    .guide-content h1 {
+      font-size: 1.55rem;
+      margin: 34px 0 14px;
+      padding-top: 16px;
+      border-top: 3px solid var(--accent);
+    }
+
+    .guide-content h1:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .guide-content h2 {
+      font-size: 1.28rem;
+      margin: 24px 0 10px;
+    }
+
+    .guide-content h3 {
+      font-size: 1.1rem;
+      margin: 18px 0 8px;
+    }
+
+    .guide-content h4 {
+      font-size: 1rem;
+      margin: 14px 0 6px;
+    }
+
+    .guide-content p {
+      margin: 0 0 12px;
+      color: #273444;
+    }
+
+    .guide-content ul,
+    .guide-content ol {
+      margin: 0 0 14px;
+      padding-left: 24px;
+      color: #273444;
+    }
+
+    .guide-content li {
+      margin-bottom: 5px;
+    }
+
+    .guide-content li > ul,
+    .guide-content li > ol {
+      margin: 6px 0 0;
+    }
+
+    .guide-content blockquote {
+      margin: 14px 0;
+      padding: 10px 14px;
+      border-left: 4px solid var(--accent-2);
+      background: #fff9ec;
+      border-radius: 6px;
+    }
+
+    .guide-content blockquote p {
+      margin: 0 0 6px;
+    }
+
+    .guide-content blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .guide-content pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 14px 0;
+      font-size: 0.85rem;
+    }
+
+    .guide-content code {
+      background: #eef2f7;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.88em;
+    }
+
+    .guide-content pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .guide-content hr {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 26px 0;
+    }
+
+    .guide-content .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0;
+    }
+
+    .guide-content table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .guide-content th,
+    .guide-content td {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .guide-content th {
+      background: #f1f7f6;
+      color: #115e59;
+    }
+
+    .guide-content mark {
+      background: #fff59d;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+
+    .seq-chip {
+      border: 1px solid #bae6fd;
+      background: #f0f9ff;
+      color: #0c4a6e;
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .builder {
+      margin-top: 14px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+    }
+
+    .builder textarea {
+      width: 100%;
+      min-height: 130px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #cbd5e1;
+      padding: 10px;
+      font: inherit;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn.ghost {
+      background: #eff6ff;
+      color: #1e3a8a;
+      border: 1px solid #c7d2fe;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 10px;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .scenario-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <h1 class="title">Tech Lead &amp; Solution Architect Leadership Toolkit</h1>
+      <p class="subtitle">
+        Interactive practice tool for Architect, Team Lead, and Individual Contributor communication scenarios.
+        Built from your HEART -> SOLVE operating model.
+      </p>
+      <div class="tagline">Listen first. Solve second.</div>
+      <div class="tabs" role="tablist" aria-label="Main tabs">
+        <button class="tab-btn active" data-tab="playbook" role="tab" aria-selected="true">Playbook</button>
+        <button class="tab-btn" data-tab="lab" role="tab" aria-selected="false">Scenario Lab</button>
+        <button class="tab-btn" data-tab="guide" role="tab" aria-selected="false">Complete Guide</button>
+      </div>
+    </header>
+
+    <section id="playbook" class="panel" role="tabpanel">
+      <div class="grid-2">
+        <div>
+          <h2 class="section-title">HEART</h2>
+          <div class="cards" id="heartCards"></div>
+        </div>
+        <div>
+          <h2 class="section-title">SOLVE</h2>
+          <div class="cards" id="solveCards"></div>
+        </div>
+      </div>
+      <div class="memory">Memory rule: HEART before SOLVE.</div>
+      <div class="footer-note">
+        Use order in real conversations: Hear -> Explore -> Align -> Reflect -> Trim -> Solution -> Ownership -> Lift -> Verify -> Execute.
+      </div>
+    </section>
+
+    <section id="lab" class="panel hidden" role="tabpanel">
+      <nav class="category-bar" id="categoryBar" aria-label="Scenario categories"></nav>
+      <div class="scenario-layout">
+        <aside class="scenario-list" id="scenarioList"></aside>
+        <article class="scenario-pane">
+          <h2 class="section-title" id="scenarioTitle"></h2>
+          <p class="kpi" id="scenarioSummary"></p>
+
+          <h3 class="subhead">Context</h3>
+          <p id="scenarioContext"></p>
+
+          <h3 class="subhead">Optimize for</h3>
+          <div class="pill-row" id="scenarioPriorities"></div>
+
+          <h3 class="subhead">Suggested phrase sequence (click to add to response builder)</h3>
+          <div class="sequence" id="scenarioSequence"></div>
+
+          <div id="scenarioJourneyWrap" class="hidden">
+            <h3 class="subhead">End-to-end relationship path</h3>
+            <div class="journey-controls">
+              <button class="journey-control" id="expandJourneyBtn" type="button">Expand all</button>
+              <button class="journey-control" id="collapseJourneyBtn" type="button">Collapse all</button>
+            </div>
+            <div class="journey" id="scenarioJourney"></div>
+          </div>
+
+          <div class="builder">
+            <h3 class="subhead">Response Builder</h3>
+            <textarea id="builderText" placeholder="Build your draft response here..."></textarea>
+            <div class="actions">
+              <button class="btn primary" id="copyBtn" type="button">Copy Draft</button>
+              <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+              <button class="btn ghost" id="insertFrameworkBtn" type="button">Insert Full HEART -> SOLVE Sequence</button>
+            </div>
+          </div>
+
+          <div class="footer-note" id="scenarioClose"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="guide" class="panel panel-full hidden" role="tabpanel">
+      <div class="guide-shell">
+        <aside class="guide-sidebar" id="guideSidebar">
+          <div class="guide-sidebar-header">
+            <p class="guide-sidebar-title">Sections</p>
+            <button class="guide-sidebar-toggle" id="guideSidebarToggle" type="button" title="Collapse sidebar">&laquo;</button>
+          </div>
+          <input class="guide-search" id="guideFilter" type="search" placeholder="Search sections..." aria-label="Filter guide sections" />
+          <select class="guide-select" id="guideJump" aria-label="Jump to section"></select>
+          <nav class="guide-quicklinks" id="guideQuickLinks" aria-label="Quick section links"></nav>
+        </aside>
+        <div class="guide-content-pane" id="guideScroll">
+          <button class="guide-expand-btn" id="guideExpandBtn" type="button">&raquo; Sections</button>
+          <article class="guide-content" id="guideContent"></article>
+        </div>
+      </div>
+    </section>
+
+    <script type="text/markdown" id="guideSource">
+# Tech Lead & Solution Architect
+## Team Working Agreement & Leadership Operating Model
+
+### Purpose
+
+As I join the team as Tech Lead and Solution Architect, my objective is to create an environment where the team can:
+
+- Deliver business value predictably.
+- Build secure, scalable and maintainable solutions.
+- Take ownership of the systems they develop.
+- Make sound technical decisions.
+- Continuously improve engineering practices.
+- Grow individually and as a team.
+- Communicate openly about risks, blockers and challenges.
+
+This is not intended to create unnecessary process or bureaucracy.
+
+
+# 1. My Leadership Principle
+
+
+The most important expectation I would establish is:
+
+> **High trust + high ownership + high accountability.**
+
+That combination gives you the right balance of **trust, autonomy, technical excellence and accountability** for a new Tech Lead/Solution Architect.
+
+---
+
+## Quick Reference — Leadership & Delivery Summary
+
+### My Leadership Philosophy / Metrics (CBETD Or ADQRET)
+
+**Create Requirement Clarity**
+- Functional + Non-Functional (Security, Scalability, Performance, Operability, Reliability, Compliance, Observability, Availability)
+- Dependencies + Risk + Mitigation + Uncertainties - These constraints influence what is feasible
+- Provide technical direction
+- Architecture decisions → ADR
+- Estimation comes after the scope and design are reasonably understood
+
+**Remove Blockers**
+- Technical challenges + Production Issues + Non Functional problems 
+- Cross-team and stakeholder communication
+
+**Protect Engineering Quality**
+- Design review + Code review (Correctness, Maintainability, Architecture, Performance, Security, Testing, Observability), DoD Checklist standards enforcement, so Engineers will have freedom to decide best implementation plan when the standards are clear
+
+**Team Collaboration Focus**
+- More focus on Outcome + Quality + Ownership + Accountability + Risk from team
+- by Mentoring + Peer knowledge sharing + Skill growth + Prioritizing
+- Over tracking every developer activity. This gives the right balance of trust , autonomy and excellence in delivery
+
+**Delivery**
+- Deliver business value predictably with transparency
+
+---
+
+### What I Expect From Management
+
+- Clear priorities
+- Clear ownership on Responsibilities
+- Decision support on Organizational Blockers
+- Realistic commitments
+- Support for engineering quality
+- Team development
+
+---
+
+### Sprint Lifecycle
+
+#### Sprint Backlog Build
+
+**Sprint Goal**
+- What business value are we targeting in this sprint delivery?
+
+**Sprint Refinement** *(Solution Architect + PO + Tech Lead)*
+- Requirement clarity
+- Uncertainties + Dependencies + Risk
+- Technical complexity
+- Estimation
+- Stakeholder discussion
+
+**Epic / Feature → User Story**
+- Split by: Workflow, Component, Bug, Spike
+
+**User Story Attributes**
+
+| Attribute | Description |
+|---|---|
+| Title | Short, descriptive, unique |
+| Description | As a [user], I want [feature], so that [benefit] |
+| Acceptance Criteria | Given / When / Then (BDD) or numbered list |
+| Definition of Done (DoD) | Agreed at team level, reused across all stories |
+| Priority | Set by Product Owner |
+| Target Date | Expected completion date |
+| Due Date | Hard deadline if applicable |
+| Dependencies | External teams, APIs, infrastructure |
+| Story Points & Estimate | Fibonacci: 1, 2, 3, 5, 8, 13, 21 |
+| Labels / Tags | `backend`, `frontend`, `infrastructure`, `security`, `tech-debt`, `bug`, `spike` |
+
+---
+
+#### Sprint Planning
+
+- Plan features to **70–75% capacity**
+
+**Steps:**
+Focus on:
+  - Sprint Goal
+  - Priority (must meet Definition of Ready)
+  - Capacity
+  - Commitment
+  - Dependencies 
+
+- Reserve **10–20%** for:
+  - Production urgent incidents
+  - Unplanned work / buffer
+  - Stakeholder escalations
+  - Technical debt items
+---
+
+#### Sprint Retrospective
+
+- What worked?
+- What didn't?
+- What should we change?
+- What should we continue?
+- **Retro actions must be implemented — not just recorded.**
+
+---
+
+#### Sprint Review
+
+- Demo completed work against acceptance criteria.
+- Gather stakeholder feedback.
+- Assess sprint goal achievement.
+- Update backlog based on feedback.
+
+
+
+## “HOW DO YOU PRIORITIZE?”(BUDT)
+Use this framework/factors:
+
+Business value — What creates the most value?  
+Urgency — What has a genuine deadline?  
+Dependency — What blocks other work?  
+Technical Complexity / Risk — What could cause major business/technical impact?  
+
+# Production Incident Management
+
+**Detect → Assess → Communicate → Mitigate → Resolve → Learn**
+
+During an incident:
+
+### First priority
+Restore service / reduce impact.
+### Second priority
+Find root cause.
+### Third priority
+Prevent recurrence.
+
+We should avoid blame.Instead of: > "Who caused this?"  Ask: > "Why did our system/process allow this failure to reach production?"
+
+## “HOW DO YOU HANDLE AMBIGUITY?”
+
+“I don't wait for complete information before starting. I identify what we know, what we don't know, and which unknowns can materially change the decision.”
+
+Known → Unknown → Assumption → Risk → Validation → Decision
+
+Example: “If the expected traffic is uncertain, I wouldn't blindly design for an arbitrary huge scale. I would establish a reasonable baseline, identify the scaling strategy, validate assumptions and make the architecture capable of evolving.”
+
+## “HOW DO YOU INFLUENCE WITHOUT AUTHORITY?”(CCR-H)
+“Influence comes from credibility, relationships and clarity rather than hierarchy.”
+Then:
+1. Understand their objective.
+2. Build credibility.
+3. Bring evidence.
+4. Present alternatives.
+5. Explain trade-offs.
+6. Listen to objections.
+7. Build consensus.
+8. Make the decision visible.
+
+“I don't need everyone to agree with my original idea. I need the team to understand the decision and commit to it.”
+
+## 28. “WHAT IS YOUR BIGGEST WEAKNESS?”
+Use something genuine but controlled.Example:
+
+“Earlier in my career, I sometimes spent too much time trying to make the technical solution completely robust before getting enough feedback from stakeholders.”
+
+“Over time I learned to validate assumptions earlier, get feedback sooner and use incremental decisions rather than trying to solve every future problem upfront.”
+
+
+## 29. “WHY SHOULD WE HIRE YOU?”
+
+“I think I bring a combination of hands-on technical depth and architectural leadership. I can go deep when the engineering team needs technical direction, but I can also step back and discuss business impact, risk, cost and delivery with stakeholders.”
+
+“I've worked across different domains and complex distributed systems, and I've learned that successful architecture isn't just about selecting the right technology. It's about making the right trade-offs and helping people align around those decisions.”
+
+## “TELL ME ABOUT YOURSELF” FOR THIS ROUND [Years - Domain - TechnicalCloud - LeadershipExperience - Focus(TLSB)]
+
+“I'm a .NET technical specialist and associate architect with over 12 years of experience across healthcare, retail, telecom and government domains. Over the last several years, my role has evolved from primarily development into technical leadership and architecture.
+
+I've worked on distributed and event-driven systems, Azure platforms, microservices and cloud-native solutions, but what I enjoy most now is solving complex problems with teams rather than simply implementing features myself.
+
+I've led engineering teams, worked closely with product and business stakeholders, driven architecture and design discussions, handled production and scalability challenges, and also worked on significant cloud cost optimization.
+
+One example I'm particularly proud of is helping optimize our Azure platform and reduce the monthly cloud cost by approximately $30,000 while maintaining the required reliability and performance.
+
+At this stage of my career, I'm looking for a role or focus on where I can combine technical architecture, people leadership, stakeholder collaboration and business impact. That's what makes this opportunity particularly interesting to me.”
+
+Do not memorize this word-for-word.  
+Memorize the story flow.
+
+
+## “WHAT IF YOUR TEAM IS GOING TO MISS A DEADLINE?”
+
+First understand whether we're dealing with:
+• estimation issue
+• technical blocker
+• dependency
+• scope change
+• resource constraint
+
+Options:
+
+A — Reduce scope  
+Deliver the critical functionality.
+
+B — Reprioritize  
+Move lower-priority work.
+
+C — Add support  
+Only where additional people genuinely help.
+
+D — Change delivery approach  
+For example, incremental delivery.
+
+Then communicate:
+
+“Here is where we are, here is the risk, here are the options, and here is my recommendation.”
+
+
+## YOUR FINAL-ROUND MINDSET
+
+Go into the interview thinking:
+
+“I'm here to demonstrate how I make decisions, lead people, handle ambiguity and create business value using technology.”
+
+Your technical depth is your foundation.
+
+Your differentiator should be:
+
+Technical depth + leadership + business thinking + communication + ownership.
+
+For you specifically, repeatedly bring your answers back to these themes:
+
+12+ years experience → architecture → team leadership → stakeholder management → distributed systems → Azure → cost optimization → production ownership → mentoring → business impact.
+
+
+# Communication Guide for a  Architect + Team Lead + Individual Contributor Role
+
+## Purpose
+
+This guide turns **9 simple communication lines of ** **HEART → SOLVE (PAUSE → BRIDGE → MOVE)** into a practical system for both Real Life and Work Intense situation handling:
+
+- Stakeholder management
+- Cross-functional communication
+- One-to-one relationship building
+- Conflict and difficult conversations
+- Leading without formal authority
+- Working as an Architect + Team Lead + Individual Contributor
+
+
+You meet a stakeholder who disagrees with your architecture proposal.
+
+Instead of defending yourself, mentally walk through **HEART → SOLVE (PAUSE → BRIDGE → MOVE)**:
+
+
+# HEART → SOLVE
+
+> **Listen first. Solve second.**
+>
+> For difficult conversations, stakeholder discussions, architecture reviews, production incidents, conflicts, and leadership situations.
+
+
+# Mental Model
+
+## HEART First
+
+```text
+Hear
+↓
+Explore
+↓
+Align
+↓
+Reflect
+↓
+Trim
+```
+
+**Goal:** Understand people before solving problems.
+
+---
+
+## SOLVE Second
+
+```text
+Solution
+↓
+Ownership
+↓
+Lift
+↓
+Verify
+↓
+Execute
+```
+
+**Goal:** Turn understanding into action.
+
+
+---
+
+# HEART
+
+| Stage | Action | Phrase | Use When | Example |
+|----------|----------|----------|----------|----------|
+| **PAUSE** | Hear | **"I understand your perspective."** | Another team or stakeholder disagrees with you. | "I understand your perspective. From the Operations side, stability is your primary concern. From the delivery side, we are trying to improve speed. Let's see how we can address both." |
+| **PAUSE** | Explore | **"What's your concern?"** | Someone resists, disagrees, or repeatedly challenges a proposal. | "Before we debate solutions, can I understand what's your main concern about this approach?" |
+| **PAUSE** | Align | **"What's your top priority?"** | Different stakeholders want different things. | "We have performance, cost, delivery speed, and maintainability to optimise. What is your top priority for this quarter?" |
+| **PAUSE** | Reflect | **"I need a moment to process this."** | You receive criticism, an unexpected challenge, or incomplete information. | "That's an important point. I want to think about it properly rather than respond immediately. Let me process this and come back with a considered view." |
+| **PAUSE** | Trim | **"Let's break it into smaller steps."** | A problem or decision feels overwhelming. | "Instead of redesigning the entire platform at once, let's break it into immediate fix, short-term improvement, and long-term architecture." |
+
+---
+
+# SOLVE
+
+| Stage | Action | Phrase | Use When | Example |
+|----------|----------|----------|----------|----------|
+| **BRIDGE** | Solution | **"Let's focus on the solution."** | People are arguing, blaming, or getting stuck in the past. | "We can analyse how this happened later. For now, let's focus on the solution and what we need to do next." |
+| **BRIDGE** | Ownership | **"This is our problem, and we will deal with it together."** | There is a production issue, mistake, conflict, or cross-team blame. | "We are not going to look for an individual to blame. This is our problem now, and we will deal with it together." |
+| **BRIDGE** | Lift | **"How can I support you now?"** | A person or team is blocked or struggling. | "What would be most useful from me right now? Do you need a technical decision, stakeholder alignment, or help removing a dependency?" |
+| **BRIDGE** | Verify | **"Let's revisit when things are clear."** | Requirements, facts, constraints, or emotions are unclear. | "We don't have enough information yet to make a good architecture decision. Let's revisit this once the requirements and constraints are clearer." |
+| **MOVE** | Execute | **"What is the next action we will take?"** | The discussion has reached alignment and needs closure. | "We agree on the approach. Let's define the owner, timeline, and immediate next step." |
+
+---
+
+# One-Line Memory Rule
+
+> **HEART before SOLVE.**
+
+
+# The Difficult Stakeholder Conversation Framework
+
+Use this natural sequence:
+
+> “I understand your perspective. Help me understand your concern. What is the top priority we should optimise for? Let's break this into smaller steps and focus on the solution. If we don't have enough clarity yet, let's revisit once we do. This is something we can work through together. How can I support moving this forward?”
+
+This pattern contains almost the entire framework.
+
+> First understand people.
+> Then solve the problem.
+
+
+
+> **Do not try to win the conversation. Try to create clarity, trust, and forward movement.**
+
+
+The key is not to mechanically say all nine sentences. They are **tools in your communication toolkit**.
+
+> **HEART → SOLVE tells you WHAT tools you have.**  
+> **PAUSE → BRIDGE → MOVE tells you WHEN and HOW to use them.**
+
+
+
+#   Applying It to Stakeholder Management
+
+As an Architect and Team Lead, the difficult part is often not technical design.
+
+It is **alignment**.
+
+Different stakeholders optimise for different things:
+
+| Stakeholder | Likely priority |
+|---|---|
+| Business | Speed and value |
+| Product | Features and customer experience |
+| Engineering | Maintainability |
+| Operations | Stability |
+| Security | Risk reduction |
+| Finance | Cost |
+| Leadership | Strategic outcomes |
+
+Your first job is not to convince them.
+
+Your first job is to **understand what they are optimising for**.
+
+When communicating technical issues with Business stakeholders, avoid unnecessary technical terminology.
+
+Explain:
+
+**Problem → Business impact → Options → Recommendation → Decision required**
+
+Example:
+> "Under higher traffic, response time may increase because we depend on two downstream systems. We have two options. I recommend asynchronous processing for this part because it reduces user-facing latency and gives us better scalability."
+
+---
+
+## Example: Stakeholder Challenges Your Architecture
+
+Stakeholder:
+
+> “I don't think this architecture is practical. It will take too long.”
+
+Avoid immediately defending your design.
+
+Instead:
+
+> “I understand your perspective. Can I understand what your main concern is? Is it the delivery timeline, cost, or implementation complexity?”
+
+Then ask:
+
+> “What is the top priority for this initiative?”
+
+After listening:
+
+> “Okay. Given that speed is the priority, let's break the solution into phases and see what minimum architecture gives us value sooner.”
+
+The conversation changes from:
+
+> **You vs Me**
+
+to:
+
+> **Us vs the problem**
+
+That is stakeholder influence.
+
+
+# Handling Disagreements
+Technical disagreement is healthy.
+
+When we disagree:
+
+1. Clarify the problem.
+2. Identify assumptions.
+3. Present options.
+4. Discuss trade-offs and have *Evidence Driven Discussion*.
+5. Use data where possible.
+6. Make a *Data driven decision*.
+7. Commit to the decision.
+
+Once a decision is made:
+> **Disagree and commit.**
+No passive resistance after the decision.
+---
+
+#   Cross-Functional Communication
+
+Cross-functional influence is rarely about convincing people through technical superiority.
+
+It is about understanding their context.
+
+## The 3-Layer Model
+
+### 1. Their Perspective
+Ask:
+
+> “What are you trying to optimise for?”
+
+### 2. Their Concern
+Ask:
+
+> “What's your concern with this approach?”
+
+### 3. Shared Outcome
+Say:
+
+> “Let's focus on the outcome we are both trying to achieve.”
+
+---
+
+## Example: Engineering vs Operations
+
+Engineering:
+
+> “We need Kubernetes because we need scalability.”
+
+Operations:
+
+> “We don't want additional operational complexity.”
+
+Instead of saying:
+
+> “Kubernetes is the industry standard.”
+
+Try:
+
+> “I understand the operational concern. What's the biggest risk you see?”
+
+Operations may explain:
+
+- Skills
+- Monitoring
+- On-call support
+
+Then:
+
+> “That makes sense. Let's break this into smaller steps. Instead of moving everything, let's start with one workload and validate the operational model.”
+
+This is influence.
+
+You did not win an argument.
+
+You reduced resistance and created shared ownership.
+
+---
+
+# Leadership, Delivery, and Cross-Team Scenarios
+
+Use these scenarios to practise applying **HEART → SOLVE** without mechanically using every phrase. Select the phrases that move the specific conversation forward.
+
+## Leadership Scenario: Team Member Is Struggling
+
+**Situation:** A capable team member repeatedly misses commitments and becomes defensive when progress is discussed.
+
+**Approach:** Start privately with *“I understand your perspective”* and ask *“What's your concern?”* Clarify whether the cause is unclear expectations, workload, skills, confidence, or an external dependency. Ask *“How can I support you now?”* and agree on a smaller, measurable commitment.
+
+**Outcome:** The person receives support and clear accountability without being blamed or micromanaged.
+
+---
+
+## Leadership Scenario: Delegation Without Losing Accountability
+
+**Situation:** A senior engineer expects you to make every technical decision, creating a bottleneck and reducing team ownership.
+
+**Approach:** Ask *“What's your top priority?”* and *“How can I support you now?”* Clarify the decision boundaries, expected outcome, risks that require escalation, and review checkpoint. Close with *“What is the next action we will take?”*
+
+**Outcome:** The engineer owns the decision while you remain available for direction and escalation.
+
+---
+
+## Project Management Scenario: Scope Changes During a Sprint
+
+**Situation:** A stakeholder requests urgent additional scope after the sprint commitment has been made.
+
+**Approach:** Acknowledge the need with *“I understand your perspective”* and ask *“What's your top priority?”* Make the impact on scope, capacity, dependencies, quality, and timeline visible. Use *“Let's break it into smaller steps”* to identify the minimum valuable change, then agree what must be deferred.
+
+**Outcome:** The decision becomes an explicit trade-off rather than hidden extra work for the team.
+
+---
+
+## Project Management Scenario: Delivery Is Turning Red
+
+**Situation:** Milestones are slipping because estimates were optimistic and several risks have materialised.
+
+**Approach:** Use *“Let's focus on the solution”* and present the current position, business impact, causes, options, and recommendation. Consider reducing scope, reprioritising work, adding targeted support, or delivering incrementally. Close with *“What is the next action we will take?”*
+
+**Outcome:** Leadership receives an early, transparent recovery plan with owners and dates.
+
+---
+
+## Distributed Team Scenario: Time-Zone Handoffs Are Failing
+
+**Situation:** Teams in different time zones lose context during handoffs, causing delays and repeated work.
+
+**Approach:** Ask each location *“What's your concern?”* and *“What's your top priority?”* Use *“This is our problem, and we will deal with it together”* to avoid location-based blame. Define a shared handoff template covering status, decisions, blockers, owner, and next action, with a short overlap window for critical work.
+
+**Outcome:** Work continues across time zones with less waiting, duplication, and misunderstanding.
+
+---
+
+## Distributed Team Scenario: Remote Team Member Is Excluded
+
+**Situation:** Important decisions are being made informally by co-located colleagues before remote team members can contribute.
+
+**Approach:** Say *“I understand your perspective”* to the affected team member and ask *“How can I support you now?”* Move decisions into visible channels, circulate context before meetings, collect asynchronous input, and record the decision and owner.
+
+**Outcome:** Distributed team members have equal access to context and a meaningful opportunity to influence decisions.
+
+---
+
+## Dependent Team Scenario: Another Team Will Miss a Dependency
+
+**Situation:** A dependent team's delayed API or infrastructure work threatens your delivery date.
+
+**Approach:** Avoid escalation as the opening move. Ask *“What's your concern?”* and understand their constraints and priorities. Use *“Let's focus on the solution”* to explore a stub, contract-first delivery, reduced scope, resequencing, or an interim interface. Confirm owners and dates with *“What is the next action we will take?”*
+
+**Outcome:** Both teams share a practical mitigation plan, and unresolved delivery risk is escalated with evidence rather than blame.
+
+---
+
+## Cross-Team Scenario: Competing Priorities for a Shared Specialist
+
+**Situation:** Two teams need the same security, platform, or data specialist during the same delivery window.
+
+**Approach:** Ask both teams *“What's your top priority?”* Compare business value, urgency, dependencies, and technical risk. If both requests remain critical, use *“Let's break it into smaller steps”* to time-box the specialist's input and enable parallel progress.
+
+**Outcome:** Scarce capacity is allocated using visible criteria rather than influence or escalation volume.
+
+---
+
+## Blocker Scenario: Technical Uncertainty Stops Progress
+
+**Situation:** The team cannot estimate or proceed because a key architecture assumption is unverified.
+
+**Approach:** Say *“Let's revisit when things are clear”* for the irreversible decision, but do not pause all work. Use *“Let's break it into smaller steps”* to create a time-boxed spike with a hypothesis, owner, evidence required, and decision date.
+
+**Outcome:** Uncertainty becomes a managed validation activity instead of an open-ended blocker.
+
+---
+
+## Blocker Scenario: External Access or Vendor Response Is Delayed
+
+**Situation:** Delivery is blocked by an environment, permission, procurement, or vendor response outside the team's control.
+
+**Approach:** Ask *“How can I support you now?”* and make the request, owner, due date, impact, and escalation path visible. Use *“Let's focus on the solution”* to identify work that can continue through mocks, local environments, alternative sequencing, or reduced scope.
+
+**Outcome:** The blocker is actively owned and escalated while the team preserves as much progress as possible.
+
+---
+
+## Stakeholder Scenario: Executive Escalation With Conflicting Messages
+
+**Situation:** Senior stakeholders receive different status messages from product, engineering, and delivery teams.
+
+**Approach:** Use *“This is our problem, and we will deal with it together”* to align the internal team first. Establish one factual view of progress, risks, decisions, and forecast. Communicate **Problem → Business impact → Options → Recommendation → Decision required**, then ask *“What is the next action we will take?”*
+
+**Outcome:** Stakeholders receive one transparent narrative and a clear decision request instead of competing explanations.
+
+---
+
+# End-to-End Relationship-Building Scenarios
+
+These scenarios focus on establishing relationships that remain effective after the first conversation. The goal is not instant agreement; it is a dependable working relationship with trust, clear boundaries, visible commitments, and a way to handle future tension.
+
+## Scenario 1: Build Trust and Ownership Within a New Team
+
+**Situation:** You join an established distributed team as Tech Lead and Solution Architect. Some engineers expect close direction, others are protective of existing decisions, and remote members feel less visible. Delivery must continue while you build credibility.
+
+**Relationship objective:** Create psychological safety and clarity without lowering engineering standards or taking ownership away from the team.
+
+### 1. Prepare Before Acting
+
+- Review the product goals, architecture, delivery commitments, incidents, dependencies, and known technical debt.
+- Avoid judging the team from documents or dashboards alone.
+- Arrange individual conversations across roles, locations, seniority levels, and time zones.
+- Note repeated themes, but do not attribute comments to individuals.
+
+### 2. Listen to Each Team Member
+
+Open with: *“I want to understand how things are working from your perspective.”*
+
+Use HEART:
+
+- *“I understand your perspective.”*
+- *“What's your concern?”*
+- *“What's your top priority?”*
+- *“How can I support you now?”*
+
+Ask what is working, what slows delivery, where decisions are unclear, what support is missing, and what they would preserve. Do not promise immediate changes before hearing the wider team.
+
+### 3. Reflect Back What You Heard
+
+Bring anonymised themes to the team: *“This is what I heard; please tell me what I have misunderstood.”* Separate facts, perceptions, assumptions, and unresolved questions. This demonstrates listening without presenting every request as an approved action.
+
+### 4. Agree the Team Working Model
+
+Co-create a small working agreement covering:
+
+- Decision ownership and when an ADR is required.
+- Definition of Ready and Definition of Done.
+- Code and design review expectations.
+- How blockers are raised and how quickly they receive a response.
+- Meeting etiquette and asynchronous participation for distributed members.
+- Escalation paths and no-blame incident behaviour.
+
+Use *“Let's break it into smaller steps”* and trial the agreement for two sprints rather than redesigning every process immediately.
+
+### 5. Build Ownership Through Delivery
+
+Delegate outcomes, not only tasks. Clarify the goal, constraints, decision boundaries, and review point. Ask *“How can I support you now?”* before prescribing implementation. Publicly recognise team contributions and give corrective feedback privately and specifically.
+
+### 6. Handle the First Disagreement Consistently
+
+When challenged, do not use authority to close the discussion. Say *“I understand your perspective”*, ask for evidence and trade-offs, make the decision method visible, and record the outcome. Once decided, apply **disagree and commit** consistently, including to your own preferred option.
+
+### 7. Follow Through
+
+- Hold regular one-to-ones focused on support, growth, and obstacles.
+- Review working-agreement actions in retrospectives.
+- Close or update every blocker you personally accepted.
+- Revisit the model after two sprints using delivery evidence and team feedback.
+
+**Relationship is settling when:** Engineers raise risks early, disagree openly without becoming defensive, make decisions within agreed boundaries, include remote colleagues, and ask for support before a blocker becomes a crisis.
+
+---
+
+## Scenario 2: Build a Trusted Partnership With Management
+
+**Situation:** Management expects predictable delivery and concise status. You need support for engineering quality and organisational blockers, but you do not want every technical concern to sound like resistance or escalation.
+
+**Relationship objective:** Establish a no-surprises partnership in which management trusts your delivery view and you can ask for decisions or support clearly.
+
+### 1. Understand Their Success Measures
+
+Ask *“What's your top priority?”* Clarify business outcomes, dates, cost constraints, regulatory obligations, stakeholder expectations, and how success will be measured. Understand what information they need, how often they need it, and which decisions only they can make.
+
+### 2. Agree Communication and Decision Cadence
+
+Propose a concise update format:
+
+1. Overall status and confidence.
+2. Business value delivered or expected.
+3. Top risks and dependencies.
+4. Mitigation in progress.
+5. Decision or support required, with due date.
+
+Agree which issues stay within the team, which require management awareness, and which require immediate escalation.
+
+### 3. Establish Credibility Through Evidence
+
+Do not hide uncertainty or present guesses as commitments. Separate facts, assumptions, forecast, and confidence. Explain technical concerns through business impact, options, recommendation, and decision required. Bring bad news early enough for management to act.
+
+### 4. Handle Pressure for an Unrealistic Commitment
+
+Begin with *“I understand your perspective”* and clarify the underlying business need. Say *“Let's focus on the solution”* and present viable options: reduce scope, reprioritise, add targeted support, change sequencing, or deliver incrementally. Explain the quality and operational consequences of each option, then recommend one.
+
+Example: *“The full scope is at risk for 30 September because the identity dependency is two weeks late. We can protect the date by deferring reporting, or protect full scope by moving the date. I recommend preserving the customer workflow and delivering reporting in the next increment. I need a scope decision by Wednesday.”*
+
+### 5. Ask for Support Without Transferring Ownership
+
+State what your team has already done, what remains blocked, the impact date, and the specific intervention needed. Use *“How can I support you now?”* in both directions by asking how you can make the management decision easier.
+
+### 6. Follow Through After a Decision
+
+- Record the decision, owner, assumptions, and consequences.
+- Communicate it consistently to the team and stakeholders.
+- Report progress against the agreed option rather than reopening it informally.
+- Escalate material changes immediately with evidence and a recommendation.
+
+**Relationship is settling when:** Management hears risks from you before hearing them elsewhere, trusts your forecasts, supports necessary trade-offs, and receives clear decision requests rather than unstructured technical detail.
+
+---
+
+## Scenario 3: Build a Durable Relationship With Dependent and Peer Teams
+
+**Situation:** Your delivery depends on platform, security, data, operations, or another product team. Previous interactions have been ticket-driven and adversarial, and each team believes the other causes delays.
+
+**Relationship objective:** Replace transactional escalation with a shared delivery model while keeping ownership, dates, and consequences explicit.
+
+### 1. Learn Their Context Before Requesting Commitment
+
+Meet the peer lead and say *“I understand your perspective.”* Ask about their goals, capacity, constraints, approval process, and current priorities. Explain your business outcome and dependency without presenting your deadline as automatically more important.
+
+### 2. Define the Shared Outcome and Interface
+
+Agree on:
+
+- Business outcome and critical milestone.
+- Deliverables from each team.
+- API, data, security, or infrastructure contract.
+- Assumptions and acceptance criteria.
+- Owners and target dates.
+- Earliest warning point for risk.
+
+Capture this in a shared location accessible across time zones.
+
+### 3. Create a Lightweight Operating Cadence
+
+Use a short dependency checkpoint only while risk is active. Maintain one shared view of status, decisions, blockers, and next actions. Prefer asynchronous updates and reserve meetings for decisions or unresolved risks.
+
+### 4. Respond When Their Dependency Slips
+
+Do not begin with blame or copy senior management immediately. Ask *“What's your concern?”* and determine whether the cause is capacity, ambiguity, technical risk, approval, or another dependency. Say *“This is our problem, and we will deal with it together”* and explore contract-first delivery, stubs, reduced scope, resequencing, or an interim interface.
+
+### 5. Escalate Constructively When Needed
+
+Escalation should contain the shared facts, business impact, actions already attempted, options considered, both teams' views, and the decision required. Inform the peer lead before escalating unless urgency or conduct makes that unsafe.
+
+### 6. Repair Trust After Tension
+
+After resolution, hold a short joint retrospective. Ask what each team should start, stop, and continue. Own your team's contribution to the problem. Update the interface, handoff, or escalation agreement so the same failure is less likely to recur.
+
+### 7. Invest Outside Active Problems
+
+- Share roadmap changes early.
+- Credit the other team publicly for their contribution.
+- Offer useful context or support without waiting for a request.
+- Maintain periodic lead-to-lead contact so the next interaction is not an escalation.
+
+**Relationship is settling when:** Both teams surface dependency risk early, negotiate priorities directly, use one shared status, and can escalate a decision without damaging the working relationship.
+
+---
+
+## Scenario 4: Establish an Effective Partnership With a Co-Architect
+
+**Situation:** You and another architect share responsibility across connected domains. You have different design preferences, stakeholders approach each of you separately, and engineers receive inconsistent guidance.
+
+**Relationship objective:** Create one coherent architecture direction while preserving healthy challenge and clear domain ownership.
+
+### 1. Start With Mutual Context, Not Territory
+
+Arrange a private working session. Ask *“What's your top priority?”* and *“What's your concern?”* Understand their domain pressures, previous decisions, stakeholder commitments, and non-negotiable constraints. Share your own context with the same transparency.
+
+### 2. Agree Roles and Decision Boundaries
+
+Define primary ownership by domain or decision type, consultation expectations, decisions requiring joint agreement, and the escalation path for unresolved disagreements. Agree that neither architect will overturn the other's direction through side conversations.
+
+### 3. Establish a Shared Decision Method
+
+For significant choices, jointly define requirements and quality attributes before proposing technology. Compare options using evidence, business impact, security, scalability, operability, cost, delivery risk, and reversibility. Record major decisions and dissent in ADRs.
+
+### 4. Handle a Strong Technical Disagreement
+
+Say *“I understand your perspective”* and restate their argument fairly before presenting yours. If emotions or evidence are unclear, use *“I need a moment to process this”* or *“Let's revisit when things are clear.”* Agree on a spike, benchmark, or expert review when evidence can resolve the issue.
+
+If both options remain valid, use the previously agreed decision owner. Once decided, disagree and commit. Present the decision consistently to teams and stakeholders without describing it as one architect's victory.
+
+### 5. Prevent Stakeholder Triangulation
+
+When a stakeholder seeks a different answer privately, do not contradict your co-architect immediately. Clarify that you will align together, then provide one response. Keep architecture decisions visible so stakeholders do not need to identify which architect has authority.
+
+### 6. Share Credit and Feedback
+
+Credit ideas and outcomes accurately. Give disagreement feedback privately, directly, and close to the event. Ask *“How can I support you now?”* during periods of high workload, stakeholder pressure, or incidents.
+
+### 7. Review the Partnership
+
+Hold a brief recurring architecture alignment covering upcoming decisions, cross-domain risks, stakeholder messages, and unresolved tensions. Periodically ask what should change in how you work together.
+
+**Relationship is settling when:** Engineers receive consistent direction, disagreements are resolved through the agreed method, stakeholders cannot play one architect against the other, and both architects can challenge each other without protecting territory.
+
+---
+
+#   One-on-One Relationship Building
+
+In a new role, do not establish credibility only through expertise.
+
+People remember:
+
+- Whether you listened
+- Whether you understood their challenges
+- Whether you helped them
+- Whether they felt safe disagreeing with you
+
+Use the **HEART opening** (H → E → A → T):
+
+## H — Hear
+> "What's currently challenging you?"
+
+## E — Explore
+> "How can I support you?"
+
+## A — Align
+> "What's your top priority right now?"
+
+## T — Trim
+> “What's the smallest next step we can take?”
+
+---
+
+## First One-on-One With a Team Member
+
+### Opening
+> “I want to understand how things are working from your perspective.”
+
+### Explore
+> “What's going well?”
+
+> “What's frustrating you?”
+
+> “What's your biggest concern?”
+
+### Prioritise
+> “What would make the biggest difference for you right now?”
+
+### Support
+> “How can I support you?”
+
+### Close
+> “Let's agree on one or two small actions rather than trying to solve everything at once.”
+
+---
+
+# My Recommendation in explaining Challenges handled in general: Don't Use STAR, But  Say "SCAR"
+
+For interviews, structure your example naturally:
+
+### Situation
+
+> Multiple teams had different priorities around a technical solution.
+
+### Challenge
+
+> The discussion was becoming defensive, with each group defending its position.
+
+### Action
+
+You used:
+
+* *“I understand your perspective”*
+* *“What's your concern?”*
+* *“What's your top priority?”*
+* *“Let's break it into smaller steps”*
+* *“Let's focus on the solution”*
+
+### Result
+
+> Shared understanding, phased solution, and better ownership.
+
+#   Your Three Hats
+
+You will operate in three modes.
+
+## 1. Architect
+
+Your responsibility:
+
+- See the system
+- Understand trade-offs
+- Create technical direction
+
+Most useful questions:
+
+> “What's your top priority?”
+
+> “What's your concern?”
+
+> “Let's break it into smaller steps.”
+
+> “Let's focus on the solution.”
+
+---
+
+## 2. Team Lead
+
+Your responsibility:
+
+- Create trust
+- Remove blockers
+- Align people
+
+Most useful lines:
+
+> “I understand your perspective.”
+
+> “This is our problem, and we will deal with it together.”
+
+> “How can I support you now?”
+
+---
+
+## 3. Individual Contributor
+
+Your responsibility:
+
+- Deliver
+- Learn
+- Collaborate without ego
+
+Most useful lines:
+
+> “I need a moment to process this.”
+
+> “Let's revisit when things are clear.”
+
+---
+
+
+
+
+### Shorter, more conversational version on the question on describing my soft skill
+
+
+---
+
+### HEART → SOLVE Version Answer
+
+
+> **“My key soft skills centre on listening first and solving second. Over my experience in software development and technical delivery, I've realised that many challenges that initially look like technical problems are actually problems of alignment, communication, or competing priorities.”**
+>
+> **“One example was during a complex healthcare platform migration where I was working as a Team Lead and Technical Associate Architect. We were transforming a tightly coupled system into a hybrid microservices-based, event-driven architecture. As the platform was expected to onboard additional health plans and handle increasing transaction volumes, we had to make several architectural decisions around scalability, deployment, operations, and cost.”**
+>
+> **“One particular decision involved the hosting strategy for our Kafka consumers. Initially, because of delivery timelines, we used a Windows Service to accelerate the initial implementation. As we started looking at future transaction growth, we realised that this approach would not give us the scalability and operational flexibility we would need. We evaluated alternatives, including App Service and AKS.”**
+>
+> **“At that point, different stakeholders had different perspectives. Some were focused on delivery speed and reducing operational complexity, while others were concerned about future scalability and long-term growth. Instead of simply pushing my preferred solution, I consciously tried to start with *‘I understand your perspective’* and then ask *‘What's your concern?’*. The discussion helped surface the actual trade-offs rather than becoming a debate about which technology was better.”**
+>
+> **“Then I focused the discussion on *‘What's your top priority?’*. We looked at the expected growth, large payload processing, regulatory considerations, scaling requirements, and operational control. This helped us move the conversation away from personal preferences and towards objective architectural criteria.”**
+>
+> **“We eventually evolved the architecture from Windows Service to evaluating App Service and then deciding on AKS for the long-term platform direction. For me, the important lesson was that architecture is not about proving that your original decision was correct. It is about continuously reassessing decisions as business requirements and system realities evolve.”**
+>
+> **“When the problem felt large, I also used the approach *‘Let's break it into smaller steps’*. Instead of trying to redesign everything at once, we separated immediate delivery needs from longer-term architectural improvements. That allowed the team to continue delivering while still moving towards a more scalable architecture.”**
+>
+> **“This is generally how I approach difficult conversations. When I'm in disagreement, I start with *‘I understand your perspective’* — not necessarily to agree, but to make sure the other person feels heard. Then I ask *‘What's your concern?’* because the visible disagreement is rarely the real issue. Once I understand that, I ask *‘What's your top priority?’* because different teams optimise for different things.”**
+>
+> **“If I receive challenging or unexpected feedback, my instinct is *‘I need a moment to process this’* rather than reacting defensively. In complex architecture discussions, I think taking time to understand a different perspective often leads to a better decision than immediately defending your own.”**
+>
+> **“Once we have clarity, I shift towards action by saying *‘Let's focus on the solution’*. I also believe strongly in shared ownership. Particularly when working across teams, I prefer the mindset *‘This is our problem, and we will deal with it together’* rather than trying to identify who is responsible for a particular issue.”**
+>
+> **“As a Team Lead, I also don't believe leadership means having all the answers or doing all the solutioning myself. When someone is blocked, I try to ask *‘How can I support you now?’*. That could mean helping with a technical decision, removing a dependency, mentoring someone, or helping align with another stakeholder.”**
+>
+> **“And if we don't yet have enough information to make a good decision, I'm comfortable saying *‘Let's revisit when things are clear’*. I've learned that forcing a decision just to close a discussion can sometimes create more problems later.”**
+>
+> **“Overall, I would describe my soft skills as listening, creating clarity, structured problem-solving, building shared ownership, and moving conversations towards action. My technical background is one of my strengths, but as I move into broader Architect and Team Lead responsibilities, I'm consciously developing the ability to influence beyond technical expertise.”**
+>
+> **“I believe technical expertise gives you a solution, but listening helps you get alignment around that solution. And as an Architect, the architecture conversation is often a people conversation first.”**
+
+
+
+This answer directly addresses the feedback you received about **stakeholder management and influencing without direct authority**, while sounding natural rather than defensive.
+    </script>
+  </div>
+
+  <script>
+    const phraseMap = {
+      hear: '"I understand your perspective."',
+      explore: '"What\'s your concern?"',
+      align: '"What\'s your top priority?"',
+      reflect: '"I need a moment to process this."',
+      trim: '"Let\'s break it into smaller steps."',
+      solution: '"Let\'s focus on the solution."',
+      ownership: '"This is our problem, and we will deal with it together."',
+      lift: '"How can I support you now?"',
+      verify: '"Let\'s revisit when things are clear."',
+      execute: '"What is the next action we will take?"'
+    };
+
+    const heart = [
+      {
+        stage: "PAUSE",
+        stageClass: "pause",
+        action: "Hear",
+        phrase: phraseMap.hear,
+        when: "Another team or stakeholder disagrees with you.",
+        example: "I understand your perspective. From the Operations side, stability is your primary concern. From the delivery side, we are trying to improve speed. Let us see how we can address both."
+      },
+      {
+        stage: "PAUSE",
+        stageClass: "pause",
+        action: "Explore",
+        phrase: phraseMap.explore,
+        when: "Someone resists or repeatedly challenges a proposal.",
+        example: "Before we debate solutions, can I understand what your main concern is about this approach?"
+      },
+      {
+        stage: "PAUSE",
+        stageClass: "pause",
+        action: "Align",
+        phrase: phraseMap.align,
+        when: "Different stakeholders want different outcomes.",
+        example: "We have performance, cost, delivery speed, and maintainability to optimize. What is your top priority for this quarter?"
+      },
+      {
+        stage: "PAUSE",
+        stageClass: "pause",
+        action: "Reflect",
+        phrase: phraseMap.reflect,
+        when: "You receive criticism or unexpected challenge.",
+        example: "That is an important point. I want to think about it properly rather than respond immediately."
+      },
+      {
+        stage: "PAUSE",
+        stageClass: "pause",
+        action: "Trim",
+        phrase: phraseMap.trim,
+        when: "Problem scope feels overwhelming.",
+        example: "Instead of redesigning everything now, let us split into immediate fix, short-term improvement, and long-term architecture."
+      }
+    ];
+
+    const scenarioGroups = [
+      {
+        id: "core",
+        name: "Core Communication",
+        scenarioIds: ["stakeholder-architecture", "eng-vs-ops", "production-incident", "ambiguity-scale"]
+      },
+      {
+        id: "leadership",
+        name: "Leadership & Team",
+        scenarioIds: ["leadership-struggling-member", "leadership-delegation"]
+      },
+      {
+        id: "delivery",
+        name: "Project Delivery",
+        scenarioIds: ["missed-deadline", "pm-scope-change", "pm-delivery-red"]
+      },
+      {
+        id: "distributed",
+        name: "Distributed & Cross-Team",
+        scenarioIds: ["distributed-handoffs", "distributed-exclusion", "dependent-team-delay", "cross-team-specialist"]
+      },
+      {
+        id: "blockers",
+        name: "Blockers & Stakeholders",
+        scenarioIds: ["blocker-technical-uncertainty", "blocker-external-access", "stakeholder-conflicting-status"]
+      },
+      {
+        id: "relationships",
+        name: "Relationship Building",
+        scenarioIds: ["relationship-own-team", "relationship-management", "relationship-other-teams", "relationship-co-architect"]
+      }
+    ];
+
+    const solve = [
+      {
+        stage: "BRIDGE",
+        stageClass: "bridge",
+        action: "Solution",
+        phrase: phraseMap.solution,
+        when: "Conversation gets stuck in blame or the past.",
+        example: "We can analyze root cause shortly. For now, let us focus on the solution and immediate next steps."
+      },
+      {
+        stage: "BRIDGE",
+        stageClass: "bridge",
+        action: "Ownership",
+        phrase: phraseMap.ownership,
+        when: "There is cross-team blame or issue ownership confusion.",
+        example: "We are not looking for an individual to blame. This is our problem and we will handle it together."
+      },
+      {
+        stage: "BRIDGE",
+        stageClass: "bridge",
+        action: "Lift",
+        phrase: phraseMap.lift,
+        when: "People are blocked and need support.",
+        example: "Do you need a technical decision, dependency escalation, or stakeholder alignment support right now?"
+      },
+      {
+        stage: "BRIDGE",
+        stageClass: "bridge",
+        action: "Verify",
+        phrase: phraseMap.verify,
+        when: "Facts are unclear and a premature decision is risky.",
+        example: "We do not yet have enough information for a high-quality architecture decision."
+      },
+      {
+        stage: "MOVE",
+        stageClass: "move",
+        action: "Execute",
+        phrase: phraseMap.execute,
+        when: "Alignment exists and action is required.",
+        example: "We agree on direction. Let us define owner, timeline, and first milestone."
+      }
+    ];
+
+    const scenarios = [
+      {
+        id: "stakeholder-architecture",
+        title: "Stakeholder says architecture is impractical",
+        summary: "A stakeholder says: This architecture will take too long.",
+        context: "You need to preserve trust, understand the true concern, and still move toward a practical delivery path.",
+        priorities: ["Delivery timeline", "Cost", "Implementation complexity", "Business value"],
+        sequence: ["hear", "explore", "align", "trim", "solution", "execute"],
+        close: "Target outcome: Move from You vs Me to Us vs the problem with a phased plan."
+      },
+      {
+        id: "eng-vs-ops",
+        title: "Engineering vs Operations conflict",
+        summary: "Engineering wants scale quickly; Operations is worried about complexity.",
+        context: "A platform decision creates tension between speed and operational stability.",
+        priorities: ["Stability", "Scalability", "Support model", "Risk reduction"],
+        sequence: ["hear", "explore", "align", "trim", "verify", "execute"],
+        close: "Target outcome: Pilot a smaller workload first and validate operations readiness."
+      },
+      {
+        id: "production-incident",
+        title: "Production incident with blame pressure",
+        summary: "System impact exists and teams are beginning to blame each other.",
+        context: "You must reduce impact first, then coordinate root cause and prevention.",
+        priorities: ["Restore service", "Clear communication", "Shared ownership", "Prevention"],
+        sequence: ["solution", "ownership", "lift", "execute", "verify"],
+        close: "Target outcome: Restore service quickly and preserve psychological safety for better learning."
+      },
+      {
+        id: "missed-deadline",
+        title: "Team likely to miss a deadline",
+        summary: "Risk is high for committed delivery date.",
+        context: "You need to assess root causes and present options with recommendation.",
+        priorities: ["Critical scope", "Dependencies", "Risk mitigation", "Transparent communication"],
+        sequence: ["explore", "align", "trim", "solution", "ownership", "execute"],
+        close: "Target outcome: Present options (reduce scope, reprioritize, add targeted support, incremental delivery) with clear recommendation."
+      },
+      {
+        id: "ambiguity-scale",
+        title: "Ambiguous scaling requirement",
+        summary: "Expected traffic is uncertain and decision could overdesign or underdesign platform.",
+        context: "You need to make progress with partial information while controlling risk.",
+        priorities: ["Assumption clarity", "Validation plan", "Incremental decisioning", "Architecture evolution"],
+        sequence: ["reflect", "explore", "align", "verify", "trim", "execute"],
+        close: "Target outcome: Baseline design + scaling strategy + assumption validation checkpoints."
+      },
+      {
+        id: "leadership-struggling-member",
+        title: "Leadership: Team member is struggling",
+        summary: "A capable team member repeatedly misses commitments and becomes defensive.",
+        context: "Hold a private conversation to identify unclear expectations, workload, skills, confidence, or external dependencies without removing accountability.",
+        priorities: ["Psychological safety", "Root cause", "Support", "Clear accountability"],
+        sequence: ["hear", "explore", "align", "lift", "trim", "execute"],
+        close: "Target outcome: Agree on support and a smaller measurable commitment without blame or micromanagement."
+      },
+      {
+        id: "leadership-delegation",
+        title: "Leadership: Delegate without losing accountability",
+        summary: "A senior engineer expects you to make every technical decision.",
+        context: "Your decision-making has become a bottleneck and the team is not building ownership.",
+        priorities: ["Decision boundaries", "Team ownership", "Risk escalation", "Review checkpoints"],
+        sequence: ["explore", "align", "lift", "ownership", "execute"],
+        close: "Target outcome: The engineer owns the decision while you provide direction and escalation support."
+      },
+      {
+        id: "pm-scope-change",
+        title: "Project management: Mid-sprint scope change",
+        summary: "A stakeholder requests urgent scope after the sprint commitment.",
+        context: "Make the impact on capacity, dependencies, quality, and timeline visible before accepting the change.",
+        priorities: ["Business urgency", "Minimum value", "Team capacity", "Explicit trade-offs"],
+        sequence: ["hear", "explore", "align", "trim", "solution", "execute"],
+        close: "Target outcome: Identify the minimum valuable change and explicitly agree what will be deferred."
+      },
+      {
+        id: "pm-delivery-red",
+        title: "Project management: Delivery is turning red",
+        summary: "Milestones are slipping after optimistic estimates and materialized risks.",
+        context: "Communicate early and present a recovery recommendation rather than reporting status alone.",
+        priorities: ["Business impact", "Recovery options", "Realistic forecast", "Clear ownership"],
+        sequence: ["solution", "ownership", "trim", "lift", "execute"],
+        close: "Target outcome: A transparent recovery plan using scope reduction, reprioritization, targeted support, or incremental delivery."
+      },
+      {
+        id: "distributed-handoffs",
+        title: "Distributed teams: Time-zone handoffs fail",
+        summary: "Teams lose context during handoffs, causing delay and repeated work.",
+        context: "Replace location-based blame with a shared handoff model for status, decisions, blockers, owner, and next action.",
+        priorities: ["Context continuity", "Async clarity", "Overlap time", "Shared ownership"],
+        sequence: ["explore", "align", "ownership", "trim", "execute"],
+        close: "Target outcome: Work continues across time zones with less waiting, duplication, and misunderstanding."
+      },
+      {
+        id: "distributed-exclusion",
+        title: "Distributed teams: Remote member is excluded",
+        summary: "Co-located colleagues make decisions before remote members can contribute.",
+        context: "Create equal access to context by moving decisions into visible channels and enabling asynchronous input.",
+        priorities: ["Inclusion", "Decision visibility", "Async input", "Trust"],
+        sequence: ["hear", "explore", "lift", "ownership", "execute"],
+        close: "Target outcome: Remote team members have a meaningful opportunity to influence visible decisions."
+      },
+      {
+        id: "dependent-team-delay",
+        title: "Dependent teams: Critical dependency is late",
+        summary: "Another team's delayed API or infrastructure work threatens delivery.",
+        context: "Understand their constraints before escalating, then jointly explore contract-first delivery, stubs, reduced scope, or resequencing.",
+        priorities: ["Dependency impact", "Joint mitigation", "Delivery sequence", "Evidence-based escalation"],
+        sequence: ["hear", "explore", "align", "solution", "ownership", "execute"],
+        close: "Target outcome: A jointly owned mitigation plan with evidence-based escalation for unresolved risk."
+      },
+      {
+        id: "cross-team-specialist",
+        title: "Cross-team: Competing demand for a specialist",
+        summary: "Two teams need the same specialist during the same delivery window.",
+        context: "Allocate scarce capacity using visible criteria instead of influence or escalation volume.",
+        priorities: ["Business value", "Urgency", "Dependencies", "Technical risk"],
+        sequence: ["hear", "explore", "align", "trim", "execute"],
+        close: "Target outcome: Time-box specialist input and sequence work using agreed priority criteria."
+      },
+      {
+        id: "blocker-technical-uncertainty",
+        title: "Blocker: Technical uncertainty stops progress",
+        summary: "The team cannot estimate because a key architecture assumption is unverified.",
+        context: "Avoid making an irreversible decision without evidence, but do not pause all delivery work.",
+        priorities: ["Testable hypothesis", "Time-boxed spike", "Evidence", "Decision date"],
+        sequence: ["reflect", "verify", "trim", "lift", "execute"],
+        close: "Target outcome: Turn uncertainty into a managed validation activity with an owner and deadline."
+      },
+      {
+        id: "blocker-external-access",
+        title: "Blocker: External access or vendor delay",
+        summary: "An environment, permission, procurement, or vendor response blocks delivery.",
+        context: "Make the request, owner, due date, impact, and escalation path visible while finding work that can continue.",
+        priorities: ["Blocker ownership", "Impact visibility", "Escalation", "Parallel progress"],
+        sequence: ["explore", "lift", "solution", "trim", "execute"],
+        close: "Target outcome: Escalate actively while preserving progress through mocks, local environments, resequencing, or reduced scope."
+      },
+      {
+        id: "stakeholder-conflicting-status",
+        title: "Stakeholders: Executive escalation has conflicting messages",
+        summary: "Product, engineering, and delivery provide different status narratives.",
+        context: "Align internally on one factual view of progress, risks, decisions, and forecast before communicating upward.",
+        priorities: ["Single source of truth", "Business impact", "Options", "Decision required"],
+        sequence: ["hear", "align", "ownership", "solution", "execute"],
+        close: "Target outcome: Give executives one transparent narrative and a clear decision request."
+      },
+      {
+        id: "relationship-own-team",
+        title: "Relationship: Build trust within a new team",
+        summary: "You inherit an established distributed team with mixed expectations and guarded trust.",
+        context: "Build credibility while delivery continues, creating psychological safety, clear standards, inclusion, and team ownership.",
+        priorities: ["Trust", "Team ownership", "Distributed inclusion", "Engineering standards"],
+        sequence: ["hear", "explore", "align", "lift", "trim", "ownership", "execute"],
+        journey: [
+          {
+            title: "Prepare without judging",
+            timing: "Before and during week 1",
+            body: "Review goals, architecture, commitments, incidents, dependencies, and technical debt. Arrange individual conversations across roles, seniority levels, locations, and time zones.",
+            relationship: "I will arrive informed but curious. This shows respect for the team's history while avoiding premature conclusions about people or performance.",
+            care: "Do not diagnose team performance from dashboards, inherited opinions, or one person's account. Treat early observations as hypotheses.",
+            checkpoint: "You have a balanced stakeholder map, a consistent set of listening questions, and enough delivery context to ask informed questions."
+          },
+          {
+            title: "Listen to every perspective",
+            timing: "Days 2-10",
+            body: "Ask what works, what slows delivery, where decisions are unclear, what support is missing, and what should be preserved. Use examples to distinguish isolated frustration from repeated patterns.",
+            relationship: "I will give each person uninterrupted space and follow up on what I heard. People begin to trust that visibility and disagreement will not be punished.",
+            care: "Do not defend existing decisions, jump into solution mode, or promise a change before hearing the wider team.",
+            checkpoint: "You can explain the major concerns, strengths, and expectations across seniority levels and locations without exposing confidential comments."
+          },
+          {
+            title: "Reflect themes back",
+            timing: "End of week 2",
+            body: "Share anonymized themes and ask what you misunderstood. Separate facts, perceptions, assumptions, and unresolved questions, then rank themes by delivery and team impact.",
+            relationship: "I will demonstrate that listening produced an accurate shared picture, not a private assessment. Inviting correction makes the team part of the diagnosis.",
+            care: "Protect confidentiality and avoid presenting majority opinion as proof that an individual view is wrong.",
+            checkpoint: "The team confirms the themes are recognizable and agrees on the one or two issues that should be addressed first."
+          },
+          {
+            title: "Agree a working model",
+            timing: "Sprint 2 planning",
+            body: "Co-create decision boundaries, ADR use, Ready and Done criteria, review standards, blocker response, distributed meeting etiquette, and escalation behavior. Assign owners and trial it for two sprints.",
+            relationship: "I will involve the team in defining how we work, while being clear about required standards. Shared rules reduce dependence on my personal approval.",
+            care: "Keep the agreement short and observable. Avoid creating rules that the team cannot apply during delivery pressure.",
+            checkpoint: "The working agreement has owners, a start date, a review date, and specific behaviors the team can recognize in daily work."
+          },
+          {
+            title: "Build ownership through delivery",
+            timing: "Sprints 2-3",
+            body: "Delegate outcomes with goals, constraints, risks, and checkpoints. Ask engineers to propose approaches, recognize contributions publicly, and give corrective feedback privately and promptly.",
+            relationship: "I will show trust through meaningful decision authority, not only words. Reliable support and fair feedback make accountability feel safe and predictable.",
+            care: "Do not delegate an unclear outcome and later judge the implementation against expectations you never stated. Do not take work back at the first difficulty.",
+            checkpoint: "Engineers make routine decisions within agreed boundaries, escalate material risk, and can explain both the outcome and trade-offs they own."
+          },
+          {
+            title: "Follow through consistently",
+            timing: "Every sprint and monthly",
+            body: "Hold support-focused one-to-ones, close or update accepted blockers, review actions in retrospectives, and adjust the agreement using evidence after two sprints.",
+            relationship: "I will make my commitments visible and close the loop repeatedly. Consistency over time turns initial confidence into durable trust.",
+            care: "Trust falls quickly when agreed actions disappear. Never accept a blocker without recording the next update or returning ownership explicitly.",
+            checkpoint: "Actions are visibly closed, repeated problems are reducing, and the team can identify what changed as a result of its feedback."
+          }
+        ],
+        close: "Relationship is settling when engineers raise risks early, disagree safely, decide within boundaries, include remote colleagues, and seek support before blockers become crises."
+      },
+      {
+        id: "relationship-management",
+        title: "Relationship: Build a trusted management partnership",
+        summary: "Management needs predictable delivery while you need support for quality and organizational blockers.",
+        context: "Create a no-surprises relationship where your forecasts are trusted and decision requests are concise and actionable.",
+        priorities: ["No surprises", "Business outcomes", "Forecast confidence", "Decision support"],
+        sequence: ["explore", "align", "hear", "solution", "lift", "execute"],
+        journey: [
+          {
+            title: "Understand success measures",
+            timing: "First management meeting",
+            body: "Clarify business outcomes, dates, cost, compliance, stakeholder expectations, reporting needs, and decisions that only management can make. Confirm how competing outcomes should be prioritized.",
+            relationship: "I will understand the management context before requesting support. This shows that my technical direction serves business outcomes rather than competing with them.",
+            care: "Do not assume management only values schedule. Ask which trade-offs are acceptable and which constraints are genuinely fixed.",
+            checkpoint: "You can state the top outcomes, non-negotiable constraints, success measures, and management decision rights in plain language."
+          },
+          {
+            title: "Agree the communication cadence",
+            timing: "By the end of week 1",
+            body: "Agree frequency, audience, and one concise format: status and confidence, value, top risks, mitigation, and decision or support required with a due date.",
+            relationship: "I will communicate in the format management can act on. A predictable cadence reduces status chasing and establishes a no-surprises expectation in both directions.",
+            care: "Avoid reporting too many engineering metrics or waiting for a scheduled update when a material risk crosses the agreed threshold.",
+            checkpoint: "Management knows when updates arrive, what each status means, and which changes will trigger immediate escalation."
+          },
+          {
+            title: "Establish evidence-based credibility",
+            timing: "Every status update",
+            body: "Separate facts, assumptions, forecasts, and confidence. Show trends where useful and translate technical concerns into business impact, options, recommendation, and decision required.",
+            relationship: "I will be transparent about confidence and uncertainty. Forecasts become trusted because changes are explained by evidence rather than defended as personal judgment.",
+            care: "Do not create false precision, hide uncertainty, or change a forecast without explaining what new evidence caused the change.",
+            checkpoint: "Every status claim can be traced to delivery evidence, and forecast confidence is explained rather than implied."
+          },
+          {
+            title: "Handle unrealistic pressure",
+            timing: "When demand exceeds capacity",
+            body: "Understand the business need, quantify the gap, and offer explicit choices such as reduced scope, reprioritization, targeted support, sequencing changes, or incremental delivery with consequences.",
+            relationship: "I will avoid a defensive no and help management make an informed trade-off. Constructive options show commercial awareness while protecting delivery integrity.",
+            care: "Do not respond with a technical no, accept an impossible commitment silently, or imply that adding people always accelerates late work.",
+            checkpoint: "Management chooses or sponsors a documented option with understood scope, date, quality, cost, and operational implications."
+          },
+          {
+            title: "Ask for specific support",
+            timing: "As soon as an escalation threshold is crossed",
+            body: "State what the team has done, what remains blocked, the impact date, the exact intervention needed, and when the intervention must occur. Retain ownership of the delivery response.",
+            relationship: "I will make it easy for management to help without making them solve the whole problem. This demonstrates ownership and respect for their decision role.",
+            care: "Do not transfer the whole problem upward. Make the smallest useful request and explain what your team will continue doing meanwhile.",
+            checkpoint: "A named person owns the management action, its due date is visible, and your team's parallel mitigation remains active."
+          },
+          {
+            title: "Close the loop",
+            timing: "After every decision or intervention",
+            body: "Record decisions, assumptions, owner, and consequences. Communicate consistently, report against the chosen option, and escalate material changes early with evidence and a recommendation.",
+            relationship: "I will confirm what changed because of management support and report the result. Closing the loop proves that their decisions lead to controlled action.",
+            care: "Avoid reopening settled decisions through informal conversations or allowing different stakeholders to hear different versions.",
+            checkpoint: "Affected stakeholders acknowledge the same decision, progress is tracked against it, and changed assumptions trigger a visible review."
+          }
+        ],
+        close: "Relationship is settling when management hears risks from you first, trusts your forecasts, supports trade-offs, and receives clear decisions instead of unstructured technical detail."
+      },
+      {
+        id: "relationship-other-teams",
+        title: "Relationship: Build trust with dependent teams",
+        summary: "Peer teams have a ticket-driven, adversarial history and blame each other for delays.",
+        context: "Create a shared delivery model across platform, security, data, operations, and product teams without weakening accountability.",
+        priorities: ["Shared outcome", "Dependency clarity", "Early warning", "Constructive escalation"],
+        sequence: ["hear", "explore", "align", "ownership", "solution", "execute"],
+        journey: [
+          {
+            title: "Learn their context",
+            timing: "Before the first urgent dependency",
+            body: "Meet the peer lead before urgent delivery pressure to understand goals, capacity, constraints, approvals, and priorities. Explain your dependency and its business impact clearly.",
+            relationship: "I will invest before I need something. Understanding their pressures signals peer respect and makes later priority negotiation less transactional.",
+            care: "Do not make the first meaningful interaction a ticket escalation or assume your deadline automatically outranks their commitments.",
+            checkpoint: "Both leads can explain the other team's objectives, constraints, decision process, and preferred escalation route."
+          },
+          {
+            title: "Define the shared interface",
+            timing: "Before either team commits dates",
+            body: "Agree the business outcome, milestones, deliverables, technical contract, assumptions, acceptance criteria, owners, dates, and earliest risk warning point in one shared location.",
+            relationship: "I will replace assumptions with a jointly owned agreement. Clarity protects both teams from surprise blame and builds confidence in each other's commitments.",
+            care: "Avoid vague dependencies such as 'platform support needed.' Define what good looks like, who accepts it, and what can change safely.",
+            checkpoint: "Each dependency has a named owner, acceptance criteria, target date, consumer, and explicit warning threshold."
+          },
+          {
+            title: "Create a lightweight cadence",
+            timing: "Weekly while dependency risk is active",
+            body: "Maintain one shared status for progress, decisions, blockers, and next actions. Set an update owner and use a short checkpoint only while dependency risk is active.",
+            relationship: "I will create visibility without controlling the other team. A mutually useful cadence builds reliability while respecting their autonomy and time.",
+            care: "Do not solve poor visibility by adding permanent meetings. Prefer asynchronous updates and reserve live time for decisions and unresolved risks.",
+            checkpoint: "Both teams use the same current status, and a missed update or threshold breach is noticed before the delivery date is affected."
+          },
+          {
+            title: "Respond jointly when work slips",
+            timing: "Within one working day of a warning",
+            body: "Identify whether capacity, ambiguity, technical risk, approval, or another dependency is responsible. Quantify impact and explore stubs, contract-first delivery, reduced scope, resequencing, or an interim interface.",
+            relationship: "I will work beside the peer team on mitigation before assigning fault. Joint problem-solving demonstrates that accountability does not mean abandonment.",
+            care: "Do not hide impact to protect the relationship, and do not accuse the other team before validating the cause and available options.",
+            checkpoint: "Both teams agree the cause, mitigation, owners, next update, and residual risk that may require escalation."
+          },
+          {
+            title: "Escalate with both views",
+            timing: "When the agreed risk threshold is crossed",
+            body: "Prepare a joint brief with facts, business impact, actions attempted, options, both teams' views, recommendation, and decision required. Inform the peer lead before escalation.",
+            relationship: "I will represent the other team's position accurately and avoid surprises. This makes escalation a governance tool rather than a threat to the partnership.",
+            care: "Never use escalation as a surprise, punishment, or substitute for a direct conversation unless urgency or conduct makes prior notice unsafe.",
+            checkpoint: "The escalation asks for one specific decision, accurately represents both teams, and preserves a path for continued collaboration."
+          },
+          {
+            title: "Repair and invest",
+            timing: "After each milestone and periodically",
+            body: "Run a short joint retrospective, own your team's contribution, improve the interface or escalation agreement, share roadmap changes early, and maintain contact outside active problems.",
+            relationship: "I will acknowledge my team's part, share credit, and stay connected when no issue is active. Mutual investment turns a dependency into a professional partnership.",
+            care: "Keep the retrospective focused on system and process improvement, not proving which team caused the delay.",
+            checkpoint: "Improvement actions have owners and dates, the shared agreement is updated, and lead-to-lead contact continues after the incident closes."
+          }
+        ],
+        close: "Relationship is settling when teams surface risks early, negotiate priorities directly, share one status, and escalate decisions without damaging trust."
+      },
+      {
+        id: "relationship-co-architect",
+        title: "Relationship: Partner effectively with a co-architect",
+        summary: "Two architects share connected domains but provide inconsistent direction and hold different design preferences.",
+        context: "Create coherent architecture direction while preserving healthy challenge, domain expertise, and clear ownership.",
+        priorities: ["Role clarity", "Evidence-based decisions", "Consistent direction", "Healthy challenge"],
+        sequence: ["hear", "explore", "align", "reflect", "verify", "ownership", "execute"],
+        journey: [
+          {
+            title: "Begin with mutual context",
+            timing: "First week of shared responsibility",
+            body: "Hold a private working session to understand each architect's domain pressure, prior decisions, stakeholder commitments, priorities, concerns, and non-negotiable constraints.",
+            relationship: "I will approach the co-architect as a peer whose context may reveal constraints I cannot see. Fairly restating their position establishes intellectual respect.",
+            care: "Do not begin by dividing territory or challenging inherited choices. First understand why the current position exists.",
+            checkpoint: "Each architect can restate the other's goals, constraints, and strongest technical concern fairly and accurately."
+          },
+          {
+            title: "Agree decision boundaries",
+            timing: "Within the first two working sessions",
+            body: "Define primary ownership by domain or decision type, consultation expectations, decisions requiring joint agreement, response times, and escalation paths.",
+            relationship: "I will make authority explicit so neither person must defend territory. Clear boundaries allow autonomy while preserving consultation and mutual accountability.",
+            care: "Avoid ambiguous shared ownership. Agree not to overturn direction through side conversations or let urgent requests bypass consultation silently.",
+            checkpoint: "A visible decision matrix states who decides, who contributes, who must be informed, and how unresolved decisions move forward."
+          },
+          {
+            title: "Use one decision method",
+            timing: "Before the next major architecture decision",
+            body: "Define requirements and quality attributes before technology choices. Compare options using business impact, security, scalability, operability, cost, delivery risk, reversibility, and evidence.",
+            relationship: "I will agree how decisions are made before arguing about an option. A shared method makes challenge feel objective rather than personal or political.",
+            care: "Do not start with preferred products or use architecture principles selectively to defend a preselected answer.",
+            checkpoint: "Both architects use the same evaluation criteria and ADR format, including assumptions, trade-offs, owner, and review trigger."
+          },
+          {
+            title: "Resolve strong disagreement",
+            timing: "Whenever material disagreement emerges",
+            body: "Restate the other view fairly, identify the disputed assumption, and use a time-boxed spike, benchmark, or expert review where evidence can decide. Otherwise use the agreed decision owner.",
+            relationship: "I will challenge the idea while protecting the person and the partnership. Respecting the agreed decision path proves that collaboration survives disagreement.",
+            care: "Do not keep debating after the decision method has produced an answer. Record dissent professionally and avoid passive resistance.",
+            checkpoint: "The decision has an owner, evidence or rationale, a date, and a review trigger; both architects communicate it consistently."
+          },
+          {
+            title: "Prevent triangulation",
+            timing: "Immediately when conflicting guidance appears",
+            body: "When stakeholders seek different answers privately, acknowledge the question, align with your co-architect, and provide one response through a visible decision channel.",
+            relationship: "I will protect our shared credibility even when private agreement would benefit me. A united external response creates confidence that differences are handled directly.",
+            care: "Do not contradict your co-architect in the moment merely to appear decisive, and do not present alignment as one person's victory.",
+            checkpoint: "Stakeholders know where architecture decisions are recorded and receive the same answer regardless of which architect they approach."
+          },
+          {
+            title: "Maintain the partnership",
+            timing: "Fortnightly and before major reviews",
+            body: "Share credit, give direct private feedback close to the event, offer support under pressure, and review upcoming decisions, cross-domain risks, stakeholder messages, and unresolved tension regularly.",
+            relationship: "I will invest in the partnership outside conflict, offer help without taking control, and address tension early. Regular contact makes honest challenge routine rather than exceptional.",
+            care: "Do not limit contact to disagreements or governance meetings. Unspoken tension becomes inconsistent guidance for engineering teams.",
+            checkpoint: "The alignment cadence is useful, feedback is exchanged directly, upcoming conflicts are identified early, and teams receive coherent direction."
+          }
+        ],
+        close: "Relationship is settling when engineers receive consistent guidance, disagreements follow the agreed method, stakeholder triangulation stops, and challenge no longer feels territorial."
+      }
+    ];
+
+    const sequenceKeys = [
+      "hear",
+      "explore",
+      "align",
+      "reflect",
+      "trim",
+      "solution",
+      "ownership",
+      "lift",
+      "verify",
+      "execute"
+    ];
+
+    function cardTemplate(item) {
+      return `
+        <article class="card">
+          <span class="stage ${item.stageClass}">${item.stage}</span>
+          <p class="action">${item.action}</p>
+          <p class="phrase">${item.phrase}</p>
+          <p class="when"><strong>Use when:</strong> ${item.when}</p>
+          <p class="example"><strong>Example:</strong> ${item.example}</p>
+        </article>
+      `;
+    }
+
+    document.getElementById("heartCards").innerHTML = heart.map(cardTemplate).join("");
+    document.getElementById("solveCards").innerHTML = solve.map(cardTemplate).join("");
+
+    const tabButtons = [...document.querySelectorAll(".tab-btn")];
+
+    function updateGuideOffset() {
+      const hero = document.querySelector(".hero");
+      document.documentElement.style.setProperty("--app-header-h", `${hero.getBoundingClientRect().height}px`);
+    }
+
+    window.addEventListener("resize", () => {
+      if (document.body.classList.contains("guide-mode")) updateGuideOffset();
+    });
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach((b) => {
+          b.classList.remove("active");
+          b.setAttribute("aria-selected", "false");
+        });
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+
+        const isGuide = btn.dataset.tab === "guide";
+        document.getElementById("playbook").classList.toggle("hidden", btn.dataset.tab !== "playbook");
+        document.getElementById("lab").classList.toggle("hidden", btn.dataset.tab !== "lab");
+        document.getElementById("guide").classList.toggle("hidden", !isGuide);
+        document.body.classList.toggle("guide-mode", isGuide);
+        document.querySelector(".hero").classList.toggle("compact", isGuide);
+        if (isGuide) requestAnimationFrame(updateGuideOffset);
+      });
+    });
+
+    const scenarioList = document.getElementById("scenarioList");
+    const categoryBar = document.getElementById("categoryBar");
+    let selectedCategory = "all";
+
+    function createScenarioButton(scenario) {
+      const btn = document.createElement("button");
+      btn.className = "scenario-btn";
+      btn.type = "button";
+      btn.dataset.id = scenario.id;
+      btn.innerHTML = `<strong>${scenario.title}</strong><span>${scenario.summary}</span>`;
+      btn.addEventListener("click", () => renderScenario(scenario.id));
+      return btn;
+    }
+
+    function renderScenarioList(categoryId, scenarioIdToOpen) {
+      scenarioList.innerHTML = "";
+      const visibleGroups = categoryId === "all"
+        ? scenarioGroups
+        : scenarioGroups.filter((group) => group.id === categoryId);
+
+      visibleGroups.forEach((group) => {
+        const section = document.createElement("section");
+        section.className = "scenario-group";
+
+        const heading = document.createElement("h3");
+        heading.className = "scenario-group-title";
+        heading.textContent = `${group.name} (${group.scenarioIds.length})`;
+        section.appendChild(heading);
+
+        group.scenarioIds.forEach((id) => {
+          const scenario = scenarios.find((item) => item.id === id);
+          if (scenario) section.appendChild(createScenarioButton(scenario));
+        });
+
+        scenarioList.appendChild(section);
+      });
+
+      const firstVisibleId = visibleGroups[0]?.scenarioIds[0];
+      renderScenario(scenarioIdToOpen || firstVisibleId);
+    }
+
+    function createCategoryButton(id, name, count) {
+      const btn = document.createElement("button");
+      btn.className = "category-btn" + (id === selectedCategory ? " active" : "");
+      btn.type = "button";
+      btn.dataset.category = id;
+      btn.innerHTML = `${name}<span class="category-count">${count}</span>`;
+      btn.addEventListener("click", () => {
+        selectedCategory = id;
+        [...document.querySelectorAll(".category-btn")].forEach((item) => {
+          item.classList.toggle("active", item.dataset.category === id);
+        });
+        renderScenarioList(id);
+      });
+      return btn;
+    }
+
+    categoryBar.appendChild(createCategoryButton("all", "All Scenarios", scenarios.length));
+    scenarioGroups.forEach((group) => {
+      categoryBar.appendChild(createCategoryButton(group.id, group.name, group.scenarioIds.length));
+    });
+
+    function createSequenceChip(key) {
+      const chip = document.createElement("button");
+      chip.className = "seq-chip";
+      chip.type = "button";
+      chip.textContent = phraseMap[key];
+      chip.addEventListener("click", () => appendToBuilder(phraseMap[key]));
+      return chip;
+    }
+
+    function renderScenario(id) {
+      const scenario = scenarios.find((item) => item.id === id);
+      if (!scenario) return;
+
+      [...document.querySelectorAll(".scenario-btn")].forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.id === id);
+      });
+
+      document.getElementById("scenarioTitle").textContent = scenario.title;
+      document.getElementById("scenarioSummary").textContent = scenario.summary;
+      document.getElementById("scenarioContext").textContent = scenario.context;
+
+      const priorities = document.getElementById("scenarioPriorities");
+      priorities.innerHTML = "";
+      scenario.priorities.forEach((p) => {
+        const el = document.createElement("span");
+        el.className = "pill";
+        el.textContent = p;
+        priorities.appendChild(el);
+      });
+
+      const sequenceEl = document.getElementById("scenarioSequence");
+      sequenceEl.innerHTML = "";
+      scenario.sequence.forEach((key) => {
+        sequenceEl.appendChild(createSequenceChip(key));
+      });
+
+      const journeyWrap = document.getElementById("scenarioJourneyWrap");
+      const journeyEl = document.getElementById("scenarioJourney");
+      journeyEl.innerHTML = "";
+      journeyWrap.classList.toggle("hidden", !scenario.journey);
+      if (scenario.journey) {
+        scenario.journey.forEach((step, index) => {
+          const item = document.createElement("details");
+          item.className = "journey-step";
+          item.open = true;
+
+          const number = document.createElement("span");
+          number.className = "journey-number";
+          number.textContent = String(index + 1);
+
+          const summary = document.createElement("summary");
+          const heading = document.createElement("div");
+          const title = document.createElement("h4");
+          title.textContent = step.title;
+          const timing = document.createElement("p");
+          timing.className = "step-timing";
+          timing.textContent = step.timing;
+          heading.append(title, timing);
+
+          const content = document.createElement("div");
+          content.className = "journey-content";
+          const body = document.createElement("p");
+          body.innerHTML = `<strong>Practical execution:</strong> ${step.body}`;
+
+          const care = document.createElement("p");
+          care.className = "step-care";
+          care.innerHTML = `<strong>Take care:</strong> ${step.care}`;
+
+          const checkpoint = document.createElement("p");
+          checkpoint.className = "step-checkpoint";
+          checkpoint.innerHTML = `<strong>Checkpoint:</strong> ${step.checkpoint}`;
+
+          summary.append(number, heading);
+          content.append(body, care, checkpoint);
+          item.append(summary, content);
+          journeyEl.appendChild(item);
+        });
+      }
+
+      document.getElementById("scenarioClose").textContent = scenario.close;
+    }
+
+    function appendToBuilder(text) {
+      const area = document.getElementById("builderText");
+      const sep = area.value.trim().length === 0 ? "" : "\n";
+      area.value = `${area.value}${sep}${text}`;
+      area.focus();
+    }
+
+    document.getElementById("insertFrameworkBtn").addEventListener("click", () => {
+      const fullSequence = sequenceKeys.map((k) => phraseMap[k]).join("\n");
+      const area = document.getElementById("builderText");
+      const sep = area.value.trim().length === 0 ? "" : "\n\n";
+      area.value = `${area.value}${sep}${fullSequence}`;
+      area.focus();
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("builderText").value = "";
+    });
+
+    document.getElementById("expandJourneyBtn").addEventListener("click", () => {
+      document.querySelectorAll("#scenarioJourney details").forEach((item) => { item.open = true; });
+    });
+
+    document.getElementById("collapseJourneyBtn").addEventListener("click", () => {
+      document.querySelectorAll("#scenarioJourney details").forEach((item) => { item.open = false; });
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const text = document.getElementById("builderText").value;
+      if (!text.trim()) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById("copyBtn");
+        const original = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => {
+          btn.textContent = original;
+        }, 900);
+      } catch (err) {
+        alert("Copy failed. Please select and copy manually.");
+      }
+    });
+
+    renderScenarioList("all", scenarios[0].id);
+
+    // ---- Complete Guide: Markdown renderer, TOC, search, quicklinks ----
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function inlineMd(text) {
+      let out = escapeHtml(text);
+      out = out.replace(/`([^`]+)`/g, (_, code) => `<code>${code}</code>`);
+      out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      out = out.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      return out;
+    }
+
+    function parseList(lines, start) {
+      let i = start;
+      const items = [];
+      let ordered = null;
+      let baseIndent = null;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (line.trim() === "") {
+          let j = i + 1;
+          while (j < lines.length && lines[j].trim() === "") j += 1;
+          if (j < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[j])) {
+            i = j;
+            continue;
+          }
+          break;
+        }
+
+        const m = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
+        if (!m) {
+          if (/^\s{2,}/.test(line) && items.length) {
+            items[items.length - 1].text += " " + line.trim();
+            i += 1;
+            continue;
+          }
+          break;
+        }
+
+        const indent = m[1].length;
+        if (baseIndent === null) baseIndent = indent;
+        if (indent < baseIndent) break;
+
+        if (indent > baseIndent && items.length) {
+          const nested = parseList(lines, i);
+          items[items.length - 1].childHtml = nested.html;
+          i = nested.next;
+          continue;
+        }
+
+        if (ordered === null) ordered = /\d+\./.test(m[2]);
+        items.push({ text: m[3], childHtml: "" });
+        i += 1;
+      }
+
+      const tag = ordered ? "ol" : "ul";
+      const html = `<${tag}>` + items.map((it) => `<li>${inlineMd(it.text)}${it.childHtml}</li>`).join("") + `</${tag}>`;
+      return { html, next: i };
+    }
+
+    function renderMarkdown(markdown) {
+      const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+      const usedIds = new Set();
+      const toc = [];
+      const htmlParts = [];
+      let i = 0;
+
+      function slugify(text) {
+        let base = text
+          .toLowerCase()
+          .replace(/[“”"'’‘]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-+|-+$)/g, "");
+        if (!base) base = "section";
+        let id = base;
+        let n = 2;
+        while (usedIds.has(id)) {
+          id = `${base}-${n}`;
+          n += 1;
+        }
+        usedIds.add(id);
+        return id;
+      }
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (line.trim() === "") {
+          i += 1;
+          continue;
+        }
+
+        if (/^```/.test(line.trim())) {
+          const codeLines = [];
+          i += 1;
+          while (i < lines.length && !/^```/.test(lines[i].trim())) {
+            codeLines.push(lines[i]);
+            i += 1;
+          }
+          i += 1;
+          htmlParts.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+          continue;
+        }
+
+        const headingMatch = line.match(/^(#{1,4})\s+(.*)$/);
+        if (headingMatch) {
+          const level = headingMatch[1].length;
+          const text = headingMatch[2].trim();
+          const id = slugify(text);
+          toc.push({ level, id, text });
+          htmlParts.push(`<h${level} id="${id}">${inlineMd(text)}</h${level}>`);
+          i += 1;
+          continue;
+        }
+
+        if (/^-{3,}\s*$/.test(line.trim())) {
+          htmlParts.push("<hr>");
+          i += 1;
+          continue;
+        }
+
+        if (/^>/.test(line.trim())) {
+          const quoteLines = [];
+          while (i < lines.length && (/^>/.test(lines[i].trim()) || lines[i].trim() === "")) {
+            if (lines[i].trim() === "") {
+              if (quoteLines.length && quoteLines[quoteLines.length - 1] !== "") quoteLines.push("");
+              i += 1;
+              continue;
+            }
+            quoteLines.push(lines[i].trim().replace(/^>\s?/, ""));
+            i += 1;
+          }
+          while (quoteLines.length && quoteLines[quoteLines.length - 1] === "") quoteLines.pop();
+          let inner = "";
+          let buf = [];
+          quoteLines.forEach((l) => {
+            if (l === "") {
+              if (buf.length) {
+                inner += `<p>${buf.map((b) => inlineMd(b)).join("<br>")}</p>`;
+                buf = [];
+              }
+            } else {
+              buf.push(l);
+            }
+          });
+          if (buf.length) inner += `<p>${buf.map((b) => inlineMd(b)).join("<br>")}</p>`;
+          htmlParts.push(`<blockquote>${inner}</blockquote>`);
+          continue;
+        }
+
+        if (
+          /^\|.*\|\s*$/.test(line.trim()) &&
+          i + 1 < lines.length &&
+          /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1].trim())
+        ) {
+          const headerCells = line
+            .trim()
+            .replace(/^\||\|$/g, "")
+            .split("|")
+            .map((c) => c.trim());
+          i += 2;
+          const rows = [];
+          while (i < lines.length && /^\|.*\|\s*$/.test(lines[i].trim())) {
+            rows.push(
+              lines[i]
+                .trim()
+                .replace(/^\||\|$/g, "")
+                .split("|")
+                .map((c) => c.trim())
+            );
+            i += 1;
+          }
+          let tableHtml = '<div class="table-wrap"><table><thead><tr>';
+          tableHtml += headerCells.map((c) => `<th>${inlineMd(c)}</th>`).join("");
+          tableHtml += "</tr></thead><tbody>";
+          rows.forEach((r) => {
+            tableHtml += "<tr>" + r.map((c) => `<td>${inlineMd(c)}</td>`).join("") + "</tr>";
+          });
+          tableHtml += "</tbody></table></div>";
+          htmlParts.push(tableHtml);
+          continue;
+        }
+
+        if (/^\s*([-*]|\d+\.)\s+/.test(line)) {
+          const result = parseList(lines, i);
+          htmlParts.push(result.html);
+          i = result.next;
+          continue;
+        }
+
+        const paraLines = [];
+        while (
+          i < lines.length &&
+          lines[i].trim() !== "" &&
+          !/^(#{1,4})\s+/.test(lines[i]) &&
+          !/^```/.test(lines[i].trim()) &&
+          !/^-{3,}\s*$/.test(lines[i].trim()) &&
+          !/^>/.test(lines[i].trim()) &&
+          !/^\s*([-*]|\d+\.)\s+/.test(lines[i]) &&
+          !/^\|.*\|\s*$/.test(lines[i].trim())
+        ) {
+          paraLines.push(lines[i].trim());
+          i += 1;
+        }
+        if (paraLines.length) {
+          htmlParts.push(`<p>${paraLines.map((l) => inlineMd(l)).join("<br>")}</p>`);
+        } else {
+          i += 1;
+        }
+      }
+
+      return { html: htmlParts.join("\n"), toc };
+    }
+
+    const rawGuideMarkdown = document.getElementById("guideSource").textContent.trim();
+    const guideResult = renderMarkdown(rawGuideMarkdown);
+    document.getElementById("guideContent").innerHTML = guideResult.html;
+
+    const guideQuickLinks = document.getElementById("guideQuickLinks");
+    const guideJump = document.getElementById("guideJump");
+    const guideFilter = document.getElementById("guideFilter");
+    const guideScroll = document.getElementById("guideScroll");
+    const guideSidebar = document.getElementById("guideSidebar");
+
+    document.getElementById("guideSidebarToggle").addEventListener("click", () => {
+      guideSidebar.classList.add("collapsed");
+    });
+
+    document.getElementById("guideExpandBtn").addEventListener("click", () => {
+      guideSidebar.classList.remove("collapsed");
+    });
+
+    const topLevelHeadings = guideResult.toc.filter((h) => h.level === 1);
+
+    function buildQuickLinks(entries) {
+      guideQuickLinks.innerHTML = "";
+      entries.forEach((h) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "guide-quicklink";
+        btn.dataset.id = h.id;
+        btn.textContent = h.text;
+        btn.addEventListener("click", () => jumpToSection(h.id));
+        guideQuickLinks.appendChild(btn);
+      });
+    }
+
+    function buildJumpDropdown(entries) {
+      guideJump.innerHTML = '<option value="">Jump to section...</option>';
+      entries.forEach((h) => {
+        const opt = document.createElement("option");
+        opt.value = h.id;
+        opt.textContent = `${"— ".repeat(h.level - 1)}${h.text}`;
+        guideJump.appendChild(opt);
+      });
+    }
+
+    function jumpToSection(id) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      [...guideQuickLinks.querySelectorAll(".guide-quicklink")].forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.id === id);
+      });
+    }
+
+    buildQuickLinks(topLevelHeadings);
+    buildJumpDropdown(guideResult.toc);
+
+    guideJump.addEventListener("change", () => {
+      if (guideJump.value) jumpToSection(guideJump.value);
+    });
+
+    guideFilter.addEventListener("input", () => {
+      const query = guideFilter.value.trim().toLowerCase();
+      const filteredQuick = query ? topLevelHeadings.filter((h) => h.text.toLowerCase().includes(query)) : topLevelHeadings;
+      const filteredAll = query ? guideResult.toc.filter((h) => h.text.toLowerCase().includes(query)) : guideResult.toc;
+      buildQuickLinks(filteredQuick);
+      buildJumpDropdown(filteredAll);
+    });
+
+    if (topLevelHeadings.length) {
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          if (visible.length) {
+            const id = visible[0].target.id;
+            [...guideQuickLinks.querySelectorAll(".guide-quicklink")].forEach((btn) => {
+              btn.classList.toggle("active", btn.dataset.id === id);
+            });
+          }
+        },
+        { root: guideScroll, threshold: 0.1, rootMargin: "0px 0px -70% 0px" }
+      );
+      topLevelHeadings.forEach((h) => {
+        const el = document.getElementById(h.id);
+        if (el) sectionObserver.observe(el);
+      });
+    }
+  </script>
+</body>
+</html>
