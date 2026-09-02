@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azure Well-Architected Framework Assessment</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --primary:#0078D4;--primary-dark:#005a9e;--primary-light:#deecf9;
+  --success:#107C10;--warning:#CA5010;--danger:#D13438;
+  --bg:#f5f6fa;--card:#fff;--border:#e1e4e8;
+  --text:#323130;--text-light:#605e5c;
+  --mono:'Consolas','Cascadia Code','Courier New',monospace;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--primary)}
+/* ── HEADER ── */
+header{background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;
+  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{font-size:18px;font-weight:700}
+header .sub{font-size:11px;opacity:.85;margin-top:2px}
+header .hdr-actions{display:flex;gap:8px;align-items:center}
+header .hdr-actions a,header .hdr-actions button{
+  padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;
+  text-decoration:none;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff}
+header .hdr-actions button.solid{background:#fff;color:var(--primary-dark);border-color:#fff}
+/* ── LAYOUT ── */
+.app{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
+nav.side{width:250px;min-width:250px;background:var(--card);border-right:1px solid var(--border);
+  position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;padding:10px 0}
+.nav-item{padding:10px 18px;cursor:pointer;font-size:13px;display:flex;align-items:center;
+  gap:9px;color:var(--text-light);border-left:3px solid transparent;justify-content:space-between}
+.nav-item .lbl{display:flex;align-items:center;gap:9px}
+.nav-item:hover{background:var(--primary-light)}
+.nav-item.active{background:var(--primary-light);color:var(--primary-dark);
+  border-left-color:var(--primary);font-weight:600}
+.nav-pct{font-size:10.5px;font-weight:700;color:var(--text-light);background:#eef1f5;
+  border-radius:10px;padding:1px 7px}
+.nav-item.active .nav-pct{background:var(--primary);color:#fff}
+main{flex:1;padding:24px 28px;max-width:1050px;width:100%}
+.panel{display:none}.panel.active{display:block}
+/* ── CARDS / BANNERS ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px}
+.banner{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
+  border-radius:8px;padding:20px 24px;margin-bottom:18px}
+.banner h1{font-size:21px;font-weight:700;margin-bottom:4px}
+.banner .meta{font-size:12px;opacity:.85;margin-top:6px}
+.banner .tag{background:rgba(255,255,255,.2);padding:2px 10px;border-radius:12px;font-size:11px;margin-right:8px}
+h2{font-size:15px;font-weight:700;margin-bottom:12px}
+h3{font-size:13.5px;font-weight:700;margin:16px 0 8px}
+p{font-size:12.5px;line-height:1.6;color:var(--text-light)}
+/* ── PRINCIPLE CARDS ── */
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.principle{border:1px solid var(--border);border-radius:6px;padding:10px 12px;background:var(--primary-light)}
+.principle .pn{font-size:12.5px;font-weight:700;color:var(--primary-dark);margin-bottom:3px}
+.principle .pg{font-size:11.5px;color:var(--text-light)}
+.zt-box{background:#fff4e5;border-left:4px solid var(--warning);border-radius:5px;padding:11px 15px;
+  font-size:12px;margin:12px 0;color:#7a3000}
+/* ── WEIGHT SELECTOR ── */
+.weight-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.weight-row .wl{font-size:12.5px;font-weight:600}
+.wbtn{padding:5px 12px;border:1.5px solid var(--border);border-radius:14px;background:#fff;
+  font-size:11.5px;cursor:pointer;font-weight:600;color:var(--text-light)}
+.wbtn.sel{border-color:var(--primary);background:var(--primary);color:#fff}
+/* ── CHECKLIST ROWS ── */
+.item-row{border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.item-code{display:inline-block;background:var(--primary);color:#fff;font-size:10.5px;font-weight:700;
+  padding:2px 7px;border-radius:4px;margin-right:6px}
+.item-title{font-size:12.5px;font-weight:600;color:var(--text)}
+.item-desc{font-size:11.5px;color:var(--text-light);margin-top:4px}
+.item-link{font-size:10.5px;margin-top:5px;display:inline-block}
+.score-sel{display:flex;gap:4px;flex-shrink:0}
+.sbtn{width:32px;height:28px;border:2px solid var(--border);border-radius:4px;background:#fff;
+  cursor:pointer;font-size:12px;font-weight:700;color:var(--text-light);transition:all .15s}
+.sbtn:hover{border-color:var(--primary);color:var(--primary)}
+.sbtn.s0.sel{background:#fde7e9;border-color:var(--danger);color:var(--danger)}
+.sbtn.s1.sel{background:#fff4e5;border-color:var(--warning);color:var(--warning)}
+.sbtn.s2.sel{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
+.sbtn.s3.sel{background:#dff6dd;border-color:var(--success);color:var(--success)}
+.item-note{width:100%;margin-top:8px;border:1px solid var(--border);border-radius:5px;padding:6px 9px;
+  font-size:11.5px;font-family:var(--font);resize:vertical;min-height:30px}
+/* ── SCORE TOTAL / BADGES ── */
+.score-total{text-align:center;padding:18px;border-radius:8px}
+.score-total .snum{font-size:42px;font-weight:700;line-height:1}
+.score-total .slbl{font-size:13px;margin-top:6px;font-weight:600}
+.st-excellent{background:#dff6dd;color:var(--success)}
+.st-good{background:var(--primary-light);color:var(--primary)}
+.st-fair{background:#fff4e5;color:var(--warning)}
+.st-poor{background:#fde7e9;color:var(--danger)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;color:#fff}
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th{background:var(--primary);color:#fff;padding:8px 10px;text-align:left;font-weight:600}
+td{padding:7px 10px;border-bottom:1px solid var(--border)}
+/* ── DASHBOARD ── */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-wrap{position:relative;height:280px}
+.gap-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+  border-bottom:1px solid var(--border);font-size:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+.fg label{display:block;font-size:11.5px;font-weight:600;margin-bottom:4px}
+.fg input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:5px;font-size:12.5px}
+.btn{padding:9px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;
+  font-size:12.5px;font-weight:600;cursor:pointer;margin-right:8px;margin-bottom:8px}
+.btn.sec{background:#fff;color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid var(--danger)}
+.milestone-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+  border-bottom:1px solid var(--border);font-size:12px}
+.delta-up{color:var(--success);font-weight:700}
+.delta-down{color:var(--danger);font-weight:700}
+/* ── GUIDES / TRADEOFFS ── */
+.guide-item,.trade-item{border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.guide-item .gt{font-size:13px;font-weight:700;margin-bottom:3px}
+.guide-item .gd{font-size:11.5px;color:var(--text-light);margin-bottom:5px}
+.trade-item .tpair{font-size:12px;font-weight:700;color:var(--primary-dark);margin-bottom:4px}
+@media (max-width:900px){
+  .app{flex-direction:column}
+  nav.side{width:100%;height:auto;position:static;display:flex;overflow-x:auto;white-space:nowrap}
+  .nav-item{border-left:none;border-bottom:3px solid transparent}
+  .nav-item.active{border-bottom-color:var(--primary)}
+  .principle-grid,.dash-grid,.form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏛 Azure Well-Architected Framework Assessment</h1>
+    <div class="sub">5 Pillars · 59 Official Checkpoints · Maturity Scoring &amp; Trend Tracking</div>
+  </div>
+  <div class="hdr-actions">
+    <a href="index.html">← Hub</a>
+    <button class="solid" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="side" id="sideNav"></nav>
+  <main>
+
+    <section class="panel" id="panel-start">
+      <div class="banner">
+        <h1>🧭 Getting Started</h1>
+        <div class="meta"><span class="tag">Self-Assessment</span><span class="tag">~59 Questions</span><span class="tag">Collaborative &amp; Blameless</span></div>
+      </div>
+      <div class="card">
+        <h2>What is the Well-Architected Framework?</h2>
+        <p>The Azure Well-Architected Framework (WAF) is a set of five pillars — Reliability, Security, Cost Optimization, Operational Excellence, and Performance Efficiency — that Microsoft recommends for evaluating cloud workload design. This tool lets you self-assess a workload against the framework's official design principles and checklist, score your current maturity, and produce a shareable report.</p>
+        <h3>How to use this tool</h3>
+        <p>
+        1. Open each pillar tab and read its design principles before scoring.<br>
+        2. For every checklist item, rate your current state: 0 = Not present, 1 = Partial, 2 = Implemented, 3 = Excellent.<br>
+        3. Optionally set a priority weight per pillar if some matter more to this workload than others.<br>
+        4. Visit the Dashboard tab to see your composite score, radar chart, and top improvement opportunities.<br>
+        5. Save a milestone whenever you complete a review pass, so you can track progress over time.
+        </p>
+        <h3>Tips from Microsoft's assessment guidance</h3>
+        <p>
+        • Treat the assessment as a collaborative exercise — participants should feel safe discussing shortcomings openly.<br>
+        • For brownfield (already-deployed) workloads, re-assess on a regular cadence, e.g. every 3-4 months.<br>
+        • For greenfield workloads, use the assessment during initial design to establish a baseline.<br>
+        • Consider scoring one pillar at a time rather than all 59 items in a single sitting.<br>
+        • This is a local, offline tool — it does not connect to Azure Advisor or your subscription. For a live, Advisor-integrated review, use the official <a href="https://learn.microsoft.com/en-us/assessments/azure-architecture-review/" target="_blank" rel="noopener">Azure Well-Architected Review</a>.
+        </p>
+      </div>
+      <div class="card">
+        <h2>Specialized reviews (external)</h2>
+        <p>For deeper, technology-specific assessments beyond the core framework, Microsoft also publishes:</p>
+        <p>
+        • <a href="https://learn.microsoft.com/en-us/assessments/ea306cce-c7fa-4a2b-89a6-bfefba6a9cf4/" target="_blank" rel="noopener">AI workload review</a><br>
+        • <a href="https://learn.microsoft.com/en-us/assessments/d349c8c3-fe9c-4829-afdd-a5228e72a570/" target="_blank" rel="noopener">SaaS workload review</a><br>
+        • <a href="https://learn.microsoft.com/en-us/assessments/azure-architecture-review-data/" target="_blank" rel="noopener">Data Services review</a><br>
+        • <a href="https://learn.microsoft.com/en-us/azure/advisor/" target="_blank" rel="noopener">Azure Advisor</a> — live, subscription-aware recommendations (not integrated into this offline tool)
+        </p>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-RE"><div id="body-RE"></div></section>
+    <section class="panel" id="panel-SE"><div id="body-SE"></div></section>
+    <section class="panel" id="panel-CO"><div id="body-CO"></div></section>
+    <section class="panel" id="panel-OE"><div id="body-OE"></div></section>
+    <section class="panel" id="panel-PE"><div id="body-PE"></div></section>
+
+    <section class="panel" id="panel-tradeoffs">
+      <div class="banner">
+        <h1>⚖️ Cross-Pillar Tradeoffs</h1>
+        <div class="meta">Optimizing one pillar often costs another — know the tension points before you decide.</div>
+      </div>
+      <div class="card" id="tradeoffsBody"></div>
+    </section>
+
+    <section class="panel" id="panel-guides">
+      <div class="banner">
+        <h1>📚 Design Guides Library</h1>
+        <div class="meta">Cross-cutting, prescriptive guides from the official Well-Architected Framework</div>
+      </div>
+      <div class="card" id="guidesBody"></div>
+    </section>
+
+    <section class="panel" id="panel-dashboard">
+      <div class="banner">
+        <h1>📊 Dashboard &amp; Report</h1>
+        <div class="meta">Composite score, radar view, improvement backlog, and milestone trend</div>
+      </div>
+
+      <div class="card">
+        <h2>Workload details</h2>
+        <div class="form-row">
+          <div class="fg"><label>Workload / Project name</label><input id="wf-name" placeholder="e.g. Contoso Checkout API"></div>
+          <div class="fg"><label>Assessed by</label><input id="wf-by" placeholder="e.g. Platform Team"></div>
+          <div class="fg"><label>Assessment date</label><input id="wf-date" type="date"></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <h2>Pillar radar</h2>
+          <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Composite score</h2>
+          <div class="score-total" id="overallTotal"><div class="snum">0%</div><div class="slbl">Score your checklist items</div></div>
+          <table style="margin-top:14px"><thead><tr><th>Pillar</th><th>Score</th><th>Weight</th></tr></thead><tbody id="pillarSummaryBody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Top improvement opportunities</h2>
+        <p style="margin-bottom:8px">Lowest-scored checklist items across all pillars — good candidates for your backlog.</p>
+        <div id="topGaps"></div>
+      </div>
+
+      <div class="card">
+        <h2>Milestones &amp; trend</h2>
+        <p style="margin-bottom:8px">Save a snapshot each time you complete a review pass to track improvement over time.</p>
+        <div class="fg" style="max-width:320px;margin-bottom:10px"><label>Milestone name</label><input id="ms-name" placeholder="e.g. Q1 2026 Review"></div>
+        <button class="btn" onclick="saveMilestone()">💾 Save Milestone</button>
+        <div class="chart-wrap" style="height:200px;margin-top:14px" id="trendWrap"><canvas id="trendChart"></canvas></div>
+        <div id="milestoneList" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Export</h2>
+        <button class="btn" onclick="copyReport()">📋 Copy Report</button>
+        <button class="btn sec" onclick="downloadReportTxt()">⬇ Download TXT</button>
+        <button class="btn danger" onclick="resetAssessment()">🗑 Reset Assessment</button>
+        <pre id="report-out" style="white-space:pre-wrap;font-family:var(--mono);font-size:11px;
+          background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px;margin-top:12px;max-height:400px;overflow:auto"></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA — sourced from learn.microsoft.com/azure/well-architected
+// ══════════════════════════════════════════════════════════════
+const PILLARS = [
+  {code:'RE', name:'Reliability', icon:'🛡️', path:'reliability',
+    tagline:'Does the workload survive failure without data loss or unacceptable downtime?'},
+  {code:'SE', name:'Security', icon:'🔒', path:'security',
+    tagline:'Is the blast radius of a breach minimized through Zero Trust design?'},
+  {code:'CO', name:'Cost Optimization', icon:'💰', path:'cost-optimization',
+    tagline:'Is every dollar of spend justified by the business value delivered?'},
+  {code:'OE', name:'Operational Excellence', icon:'⚙️', path:'operational-excellence',
+    tagline:'Can the team develop, deploy, and run this workload safely in production?'},
+  {code:'PE', name:'Performance Efficiency', icon:'⚡', path:'performance-efficiency',
+    tagline:'Does the workload meet its SLOs efficiently under expected and peak load?'}
+];
+
+const ITEMS = [
+// Reliability — RE:01-10
+{p:'RE',c:'RE:01',t:'Focus on simplicity and efficiency',d:'Use a practical approach that avoids unnecessary complexity while still meeting business goals.',s:'simplify'},
+{p:'RE',c:'RE:02',t:'Identify and rate critical flows',d:'Rate user and system flows by business criticality to prioritize reliability investment.',s:'identify-flows'},
+{p:'RE',c:'RE:03',t:'Perform failure mode analysis (FMA)',d:'Identify dependencies and failure points, and develop mitigation strategies for each.',s:'failure-mode-analysis'},
+{p:'RE',c:'RE:04',t:'Define reliability & recovery targets',d:'Set measurable targets that inform your design and form the basis of your health model.',s:'metrics'},
+{p:'RE',c:'RE:05',t:'Add redundancy for critical flows',d:'Add redundant infrastructure and multiple solution instances to meet reliability targets.',s:'redundancy'},
+{p:'RE',c:'RE:06',t:'Implement a reliable scaling strategy',d:'Scale application, data, and infrastructure based on real usage patterns with minimal manual intervention.',s:'scaling'},
+{p:'RE',c:'RE:07',t:'Build self-preservation & self-healing',d:'Use proven cloud patterns so the workload stays functional during and recovers from incidents.',s:'self-preservation'},
+{p:'RE',c:'RE:08',t:'Test resiliency with chaos engineering',d:'Verify the workload withstands faults, scales under demand, and recovers within targets.',s:'reliability-test'},
+{p:'RE',c:'RE:09',t:'Implement tested disaster recovery plans',d:'DR plans must be structured, documented, tested, and cover every component plus the whole system.',s:'disaster-recovery'},
+{p:'RE',c:'RE:10',t:'Continuously monitor system health',d:'Track uptime and reliability indicators to support fast detection, response, and post-incident analysis.',s:'monitoring'},
+// Security — SE:01-12
+{p:'SE',c:'SE:01',t:'Establish a security baseline',d:'Align to compliance requirements, industry standards, and platform recommendations; measure against it regularly.',s:'establish-baseline'},
+{p:'SE',c:'SE:02',t:'Align a secure development lifecycle',d:'Build confidentiality, integrity, and availability into the SDLC with a security-first mindset.',s:'secure-development-lifecycle'},
+{p:'SE',c:'SE:03',t:'Classify data and system sensitivity',d:'Apply consistent classification labels to influence design, implementation, and security priority.',s:'data-classification'},
+{p:'SE',c:'SE:04',t:'Create intentional segmentation',d:'Segment networks, roles, identities, and resource organization based on business requirements.',s:'segmentation'},
+{p:'SE',c:'SE:05',t:'Implement strict identity & access management',d:'Enforce least privilege, conditional access, and auditable IAM across users and system components.',s:'identity-access'},
+{p:'SE',c:'SE:06',t:'Isolate and filter network traffic',d:'Apply defense-in-depth with controls on both ingress/egress and east-west/north-south traffic.',s:'networking'},
+{p:'SE',c:'SE:07',t:'Encrypt data with modern standards',d:'Encrypt data at rest, in transit, and in use, aligned with data classification levels.',s:'encryption'},
+{p:'SE',c:'SE:08',t:'Harden all workload components',d:'Reduce extraneous surface area and tighten configuration to raise the cost of attack.',s:'harden-resources'},
+{p:'SE',c:'SE:09',t:'Protect application secrets',d:'Harden secret storage, restrict access, audit usage, and run a reliable rotation process.',s:'application-secrets'},
+{p:'SE',c:'SE:10',t:'Implement holistic threat monitoring',d:'Use modern detection mechanisms integrated with SecOps, with reliable triage alerts.',s:'monitor-threats'},
+{p:'SE',c:'SE:11',t:'Establish a comprehensive testing regimen',d:'Combine approaches to prevent, validate, and test threat detection and prevention.',s:'test'},
+{p:'SE',c:'SE:12',t:'Define and test incident response',d:'Cover everything from localized issues to full disaster recovery, with clear ownership.',s:'incident-response'},
+// Cost Optimization — CO:01-14
+{p:'CO',c:'CO:01',t:'Create a culture of financial responsibility',d:'Train personnel, foster spending accountability, and invest in tooling and automation.',s:'create-culture-financial-responsibility'},
+{p:'CO',c:'CO:02',t:'Create and maintain a cost model',d:'Estimate initial cost, run rates, and ongoing costs; negotiate budget with a buffer.',s:'cost-model'},
+{p:'CO',c:'CO:03',t:'Collect and review cost data',d:'Capture daily costs, review trends and forecasts, and automate anomaly alerts.',s:'collect-review-cost-data'},
+{p:'CO',c:'CO:04',t:'Set spending guardrails',d:'Use release gates, governance policies, resource limits, and access controls.',s:'set-spending-guardrails'},
+{p:'CO',c:'CO:05',t:'Get the best rates from providers',d:'Review regional pricing, tiers, billing models, license portability, and purchasing plans.',s:'get-best-rates'},
+{p:'CO',c:'CO:06',t:'Align usage to billing increments',d:'Understand billing meters and align resource usage to those increments to avoid waste.',s:'align-usage-to-billing-increments'},
+{p:'CO',c:'CO:07',t:'Optimize component costs',d:'Regularly remove or optimize legacy, unneeded, and underutilized components.',s:'optimize-component-costs'},
+{p:'CO',c:'CO:08',t:'Optimize environment costs',d:'Align spend per environment (prod/non-prod/DR) to its real availability and security needs.',s:'optimize-environment-costs'},
+{p:'CO',c:'CO:09',t:'Optimize flow costs',d:'Align the cost of each flow with its business priority and requirements.',s:'optimize-flow-costs'},
+{p:'CO',c:'CO:10',t:'Optimize data costs',d:'Improve tiering, retention, replication, backups, file formats, and storage solutions.',s:'optimize-data-costs'},
+{p:'CO',c:'CO:11',t:'Optimize code costs',d:'Evaluate and modify code to meet requirements with fewer or cheaper resources.',s:'optimize-code-costs'},
+{p:'CO',c:'CO:12',t:'Optimize scaling costs',d:'Evaluate alternative scaling configurations aligned with the cost model and utilization.',s:'optimize-scaling-costs'},
+{p:'CO',c:'CO:13',t:'Optimize personnel time',d:'Align time spent on tasks with their priority; reduce noise, build times, and toil.',s:'optimize-personnel-time'},
+{p:'CO',c:'CO:14',t:'Consolidate resources and responsibility',d:'Increase density within the workload and reuse centralized services outside it.',s:'consolidation'},
+// Operational Excellence — OE:01-11
+{p:'OE',c:'OE:01',t:'Define standard development & operating practices',d:'Align team specializations to clear practices with accountability and a blameless culture.',s:'devops-culture'},
+{p:'OE',c:'OE:02',t:'Formalize operations tasks',d:'Standardize routine, ad-hoc, and emergency operations to be consistent and predictable.',s:'formalize-operations-tasks'},
+{p:'OE',c:'OE:03',t:'Formalize development practices',d:'Make the full SDLC transparent to the team and stakeholders, from ideation to delivery.',s:'formalize-development-practices'},
+{p:'OE',c:'OE:04',t:'Standardize tools & quality assurance',d:'Standardize source control, design patterns, documentation, and style guides.',s:'tools-processes'},
+{p:'OE',c:'OE:05',t:'Use standardized Infrastructure as Code',d:'Prefer declarative, modular IaC for consistent, quality-assured provisioning.',s:'infrastructure-as-code-design'},
+{p:'OE',c:'OE:06',t:'Build an automated workload supply chain',d:'Drive changes through predictable pipelines that test and promote across environments.',s:'workload-supply-chain'},
+{p:'OE',c:'OE:07',t:'Design a monitoring stack',d:'Capture operational telemetry, metrics, and logs to validate decisions and guide improvement.',s:'observability'},
+{p:'OE',c:'OE:08',t:'Establish structured incident management',d:'Define roles and documented procedures for rapid detection, diagnosis, and recovery.',s:'incident-response'},
+{p:'OE',c:'OE:09',t:'Adopt aligned testing practices',d:'Test in ways that align with business objectives and uphold quality standards.',s:'testing'},
+{p:'OE',c:'OE:10',t:'Design reliable, secure automation',d:'Automate repetitive procedural tasks that deliver clear return on investment.',s:'enable-automation'},
+{p:'OE',c:'OE:11',t:'Define safe deployment practices',d:'Use small incremental releases, quality gates, and progressive exposure to manage risk.',s:'safe-deployments'},
+// Performance Efficiency — PE:01-12
+{p:'PE',c:'PE:01',t:'Define performance targets',d:'Set numerical targets tied to workload requirements for every workload flow.',s:'performance-targets'},
+{p:'PE',c:'PE:02',t:'Conduct capacity planning',d:'Plan ahead of predicted usage changes: seasonality, launches, campaigns, or regulation.',s:'capacity-planning'},
+{p:'PE',c:'PE:03',t:'Select the right services and tiers',d:'Choose services and tiers that support performance targets and expected capacity changes.',s:'select-services'},
+{p:'PE',c:'PE:04',t:'Establish consistent performance measurement',d:'Analyze behavior over time against baselines to detect degradation and scaling gaps.',s:'monitoring'},
+{p:'PE',c:'PE:05',t:'Optimize scaling and partitioning',d:'Base scaling and partitioning strategy on the workload\u2019s scale unit design.',s:'scale-partition'},
+{p:'PE',c:'PE:06',t:'Regularly performance-test the workload',d:'Test in a production-like environment to confirm targets and business objectives are met.',s:'performance-test'},
+{p:'PE',c:'PE:07',t:'Optimize code and infrastructure',d:'Use performant code that offloads responsibility to the platform where possible.',s:'optimize-code-infrastructure'},
+{p:'PE',c:'PE:08',t:'Optimize data usage',d:'Optimize data stores, partitions, and indexes for their actual intended use.',s:'optimize-data-performance'},
+{p:'PE',c:'PE:09',t:'Prioritize critical flow performance',d:'Focus resources and optimization effort on the most important business flows.',s:'prioritize-critical-flows'},
+{p:'PE',c:'PE:10',t:'Optimize operational tasks',d:'Minimize the performance impact of routine tasks like scans, rotations, and backups.',s:'optimize-operational-tasks'},
+{p:'PE',c:'PE:11',t:'Respond to live performance issues',d:'Have clear communication lines and responsibilities to resolve problems quickly.',s:'respond-live-performance-issues'},
+{p:'PE',c:'PE:12',t:'Continuously optimize performance',d:'Focus on components that show deteriorating performance over time.',s:'continuous-performance-optimize'}
+];
+
+const PRINCIPLES = {
+  RE:[
+    {n:'Design for business requirements',g:'Align reliability targets, SLOs, and investment with negotiated business goals, not guesswork.'},
+    {n:'Design for resilience',g:'Build fault-tolerant components that degrade gracefully instead of failing outright.'},
+    {n:'Design for recovery',g:'Have structured, tested recovery plans so the workload restores within agreed targets.'},
+    {n:'Design for operations',g:'Shift left — build observability and test failure scenarios throughout the lifecycle.'},
+    {n:'Keep it simple',g:'Avoid overengineering; every added component is a new potential point of failure.'}
+  ],
+  SE:[
+    {n:'Plan your security readiness',g:'Build a security plan with clear ownership, training, and incident response ahead of need.'},
+    {n:'Design to protect confidentiality',g:'Restrict and classify data access using least privilege and encryption.'},
+    {n:'Design to protect integrity',g:'Prevent tampering of code, data, and infrastructure via strong access control and verification.'},
+    {n:'Design to protect availability',g:'Defend against attacks that degrade the workload without blocking legitimate users.'},
+    {n:'Sustain and evolve your posture',g:'Continuously test, measure, and improve defenses as attackers evolve.'}
+  ],
+  CO:[
+    {n:'Develop cost-management discipline',g:'Build team-wide financial accountability, budgets, and a regular reporting cadence.'},
+    {n:'Design with a cost-efficiency mindset',g:'Every architectural decision has a cost — optimize for ROI, not just low price.'},
+    {n:'Design for usage optimization',g:'Fully use what you already pay for before buying more capacity or a higher tier.'},
+    {n:'Design for rate optimization',g:'Get the best unit price via reservations, regions, and the right billing model.'},
+    {n:'Monitor and optimize over time',g:'Cost optimization is continuous — review, alert, and decommission waste regularly.'}
+  ],
+  OE:[
+    {n:'Embrace DevOps culture',g:'Shared ownership, blameless learning, and collaboration between dev and ops.'},
+    {n:'Establish development standards',g:'Consistent tooling, source control, and quality gates across the full SDLC.'},
+    {n:'Evolve operations with observability',g:'Build a dedicated monitoring stack that gives actionable, prioritized signals.'},
+    {n:'Automate for efficiency',g:'Replace repetitive manual tasks with reliable, secure, maintainable automation.'},
+    {n:'Adopt safe deployment practices',g:'Ship small, tested, reversible releases using IaC and progressive exposure.'}
+  ],
+  PE:[
+    {n:'Negotiate realistic performance targets',g:'Define measurable, numerical targets per flow, aligned with business expectations.'},
+    {n:'Design to meet capacity requirements',g:'Right-size and plan capacity ahead of predictable demand changes.'},
+    {n:'Achieve and sustain performance',g:'Continuously test and monitor in production to prevent regressions.'},
+    {n:'Optimize for long-term improvement',g:'Use real production data to keep refining efficiency over time.'}
+  ]
+};
+
+const TRADEOFFS = [
+  {a:'RE',b:'SE',t:'Redundancy and DR add attack surface; incident-response urgency can tempt teams to bypass security controls.'},
+  {a:'RE',b:'CO',t:'Redundancy, over-provisioning, DR environments, and on-call rotations all increase ongoing spend.'},
+  {a:'RE',b:'OE',t:'More resiliency patterns mean more operational complexity, documentation, and cross-region coordination.'},
+  {a:'RE',b:'PE',t:'Replication and health checks add latency; burst over-provisioning conflicts with "just enough resources".'},
+  {a:'SE',b:'CO',t:'Security tooling (WAF, Defender, pen tests, SOC) and encryption/logging both carry real license and compute cost.'},
+  {a:'SE',b:'OE',t:'Access reviews, audits, and approval gates add process overhead and can slow deployment velocity.'},
+  {a:'SE',b:'PE',t:'Encryption, inspection (WAF/TLS termination), and identity checks add latency to every request.'},
+  {a:'CO',b:'OE',t:'Consolidating to cheaper tiers can mean less built-in redundancy in tooling and more manual operational work.'},
+  {a:'CO',b:'PE',t:'Right-sizing to cheaper SKUs reduces headroom for spikes; consumption pricing trades predictability for savings.'},
+  {a:'OE',b:'PE',t:'Rigorous test/deployment gates add cycle time; heavy instrumentation itself can measurably affect performance.'}
+];
+
+const GUIDES = [
+  {t:'Background jobs',d:'Develop background jobs to minimize UI load, improve availability, and reduce response time.',u:'design-guides/background-jobs'},
+  {t:'Disaster recovery plan',d:'Build a multi-region DR plan aligned to business priorities and reliability objectives.',u:'design-guides/disaster-recovery'},
+  {t:'Handle transient faults',d:'Retry strategies and best practices for surviving temporary failures.',u:'design-guides/handle-transient-faults'},
+  {t:'Health modeling for workloads',d:'Quantify application health by combining business context with monitoring data.',u:'design-guides/health-modeling'},
+  {t:'Complete a WAF Review assessment',d:'How to run, prioritize, and act on a formal Well-Architected Review.',u:'design-guides/implementing-recommendations'},
+  {t:'Optimize workload using flows',d:'A three-step process for aligning critical flows with business processes.',u:'design-guides/optimize-workload-using-flows'},
+  {t:'Data partitioning',d:'Partition data in distributed systems to improve scalability and reduce contention.',u:'design-guides/partition-data'},
+  {t:'Availability zones & regions',d:'When and how to deploy across zones or regions, including cost/reliability trade-offs.',u:'design-guides/regions-availability-zones'},
+  {t:'Continuous integration',d:'Source control, automated testing, and best practices for release engineering.',u:'design-guides/release-engineering-continuous-integration'}
+];
+
+const WEIGHT_LABELS = {1:'Low',2:'Medium',3:'High',4:'Critical'};
+const LS_KEY = 'waf-assessment-v1';
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let state = {
+  wfName:'', wfBy:'', wfDate:'',
+  scores:{}, notes:{}, weights:{RE:2,SE:2,CO:2,OE:2,PE:2},
+  milestones:[]
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) state = Object.assign(state, JSON.parse(raw));
+  }catch(e){ /* ignore corrupt storage */ }
+}
+function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+function esc(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCORING
+// ══════════════════════════════════════════════════════════════
+function computePillarScore(code){
+  const items = ITEMS.filter(i=>i.p===code);
+  let sum=0; items.forEach(i=>{ sum += (state.scores[i.c]||0); });
+  const max = items.length*3;
+  return {sum, max, pct: max? Math.round(sum/max*100) : 0};
+}
+function computeOverall(){
+  let wSum=0, wTotal=0;
+  PILLARS.forEach(p=>{
+    const w = state.weights[p.code]||2;
+    wSum += computePillarScore(p.code).pct * w;
+    wTotal += w;
+  });
+  return wTotal? Math.round(wSum/wTotal) : 0;
+}
+function scoreClass(pct){
+  if(pct>=91) return 'st-excellent';
+  if(pct>=74) return 'st-good';
+  if(pct>=50) return 'st-fair';
+  return 'st-poor';
+}
+function scoreLabel(pct){
+  if(pct>=91) return 'Excellent — Well-Architected';
+  if(pct>=74) return 'Good — Mostly Aligned';
+  if(pct>=50) return 'Fair — Developing';
+  return 'Poor — At Risk';
+}
+
+function setScore(code, val){
+  state.scores[code] = val;
+  saveState();
+  refreshItemButtons(code);
+  refreshAll();
+}
+function setNote(code, val){
+  state.notes[code] = val;
+  saveState();
+}
+function setWeight(pillar, val){
+  state.weights[pillar] = val;
+  saveState();
+  refreshAll();
+}
+function refreshItemButtons(code){
+  document.querySelectorAll('.sbtn[data-code="'+code+'"]').forEach(btn=>{
+    btn.classList.toggle('sel', Number(btn.dataset.val)===(state.scores[code]||0));
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — sidebar
+// ══════════════════════════════════════════════════════════════
+const TABS = ['start','RE','SE','CO','OE','PE','tradeoffs','guides','dashboard'];
+function buildSideNav(){
+  const nav = document.getElementById('sideNav');
+  nav.innerHTML = `
+    <div class="nav-item" data-tab="start" onclick="switchTab('start')"><span class="lbl">🧭 Getting Started</span></div>
+    ${PILLARS.map(p=>`<div class="nav-item" data-tab="${p.code}" onclick="switchTab('${p.code}')">
+      <span class="lbl">${p.icon} ${p.name}</span><span class="nav-pct" id="pct-${p.code}">0%</span></div>`).join('')}
+    <div class="nav-item" data-tab="tradeoffs" onclick="switchTab('tradeoffs')"><span class="lbl">⚖️ Tradeoffs</span></div>
+    <div class="nav-item" data-tab="guides" onclick="switchTab('guides')"><span class="lbl">📚 Design Guides</span></div>
+    <div class="nav-item" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="lbl">📊 Dashboard &amp; Report</span></div>
+  `;
+}
+function switchTab(tab){
+  TABS.forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    const nv = document.querySelector('.nav-item[data-tab="'+t+'"]');
+    if(nv) nv.classList.toggle('active', t===tab);
+  });
+  if(tab==='dashboard') refreshDashboard();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — pillar panels
+// ══════════════════════════════════════════════════════════════
+function buildPillarPanel(p){
+  const items = ITEMS.filter(i=>i.p===p.code);
+  const principles = PRINCIPLES[p.code];
+  const zt = p.code==='SE' ? `<div class="zt-box"><strong>Zero Trust compass:</strong> Verify explicitly · Use least-privilege access · Assume breach</div>` : '';
+  const html = `
+    <div class="banner">
+      <h1>${p.icon} ${p.name}</h1>
+      <div class="meta">${p.tagline}</div>
+    </div>
+    <div class="card">
+      <h2>Design principles</h2>
+      <div class="principle-grid">
+        ${principles.map(pr=>`<div class="principle"><div class="pn">${esc(pr.n)}</div><div class="pg">${esc(pr.g)}</div></div>`).join('')}
+      </div>
+      ${zt}
+    </div>
+    <div class="card">
+      <h2>Pillar priority for this workload</h2>
+      <div class="weight-row">
+        <span class="wl">Weight:</span>
+        ${[1,2,3,4].map(w=>`<button class="wbtn" data-pillar="${p.code}" data-w="${w}" onclick="setWeight('${p.code}',${w})">${WEIGHT_LABELS[w]}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h2>Checklist — rate your current maturity</h2>
+      <p style="margin-bottom:10px">0 = Not present &nbsp;·&nbsp; 1 = Partial &nbsp;·&nbsp; 2 = Implemented &nbsp;·&nbsp; 3 = Excellent</p>
+      ${items.map(i=>`
+        <div class="item-row">
+          <div class="item-top">
+            <div>
+              <div><span class="item-code">${i.c}</span><span class="item-title">${esc(i.t)}</span></div>
+              <div class="item-desc">${esc(i.d)}</div>
+              <a class="item-link" href="https://learn.microsoft.com/en-us/azure/well-architected/${p.path}/${i.s}" target="_blank" rel="noopener">Learn more →</a>
+            </div>
+            <div class="score-sel">
+              ${[0,1,2,3].map(v=>`<button class="sbtn s${v}" data-code="${i.c}" data-val="${v}" onclick="setScore('${i.c}',${v})">${v}</button>`).join('')}
+            </div>
+          </div>
+          <textarea class="item-note" placeholder="Notes (optional)" onchange="setNote('${i.c}',this.value)">${esc(state.notes[i.c]||'')}</textarea>
+        </div>`).join('')}
+      <div class="score-total" id="total-${p.code}" style="margin-top:10px"><div class="snum">0%</div><div class="slbl">0 / ${items.length*3}</div></div>
+    </div>
+  `;
+  document.getElementById('body-'+p.code).innerHTML = html;
+}
+
+function refreshPillarUI(code){
+  const {sum,max,pct} = computePillarScore(code);
+  const totalEl = document.getElementById('total-'+code);
+  if(totalEl){
+    totalEl.className = 'score-total '+scoreClass(pct);
+    totalEl.innerHTML = `<div class="snum">${pct}%</div><div class="slbl">${sum} / ${max} — ${scoreLabel(pct)}</div>`;
+  }
+  const pctBadge = document.getElementById('pct-'+code);
+  if(pctBadge) pctBadge.textContent = pct+'%';
+  document.querySelectorAll('.wbtn[data-pillar="'+code+'"]').forEach(b=>{
+    b.classList.toggle('sel', Number(b.dataset.w)===(state.weights[code]||2));
+  });
+}
+
+function refreshAll(){
+  PILLARS.forEach(p=>refreshPillarUI(p.code));
+  if(document.getElementById('panel-dashboard').classList.contains('active')) refreshDashboard();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER — tradeoffs & guides (static)
+// ══════════════════════════════════════════════════════════════
+function pillarName(code){ return PILLARS.find(p=>p.code===code).name; }
+function buildTradeoffs(){
+  document.getElementById('tradeoffsBody').innerHTML = TRADEOFFS.map(t=>`
+    <div class="trade-item">
+      <div class="tpair">${pillarName(t.a)} ⟷ ${pillarName(t.b)}</div>
+      <p>${esc(t.t)}</p>
+    </div>`).join('') + `<p style="margin-top:10px">See the official <a href="https://learn.microsoft.com/en-us/azure/well-architected/reliability/tradeoffs" target="_blank" rel="noopener">pillar tradeoffs</a> articles for the full, in-depth analysis.</p>`;
+}
+function buildGuides(){
+  document.getElementById('guidesBody').innerHTML = GUIDES.map(g=>`
+    <div class="guide-item">
+      <div class="gt">${esc(g.t)}</div>
+      <div class="gd">${esc(g.d)}</div>
+      <a href="https://learn.microsoft.com/en-us/azure/well-architected/${g.u}" target="_blank" rel="noopener">Read guide →</a>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+let radarChart=null, trendChart=null;
+
+function refreshDashboard(){
+  const overall = computeOverall();
+  const overallEl = document.getElementById('overallTotal');
+  overallEl.className = 'score-total '+scoreClass(overall);
+  overallEl.innerHTML = `<div class="snum">${overall}%</div><div class="slbl">${scoreLabel(overall)}</div>`;
+
+  document.getElementById('pillarSummaryBody').innerHTML = PILLARS.map(p=>{
+    const {sum,max,pct} = computePillarScore(p.code);
+    return `<tr><td>${p.icon} ${p.name}</td><td>${sum}/${max} (${pct}%)</td><td>${WEIGHT_LABELS[state.weights[p.code]||2]}</td></tr>`;
+  }).join('');
+
+  const gaps = ITEMS.map(i=>({...i, score: state.scores[i.c]||0}))
+    .filter(i=>i.score<=1)
+    .sort((a,b)=>a.score-b.score)
+    .slice(0,10);
+  document.getElementById('topGaps').innerHTML = gaps.length ? gaps.map(g=>`
+    <div class="gap-item"><span><span class="item-code">${g.c}</span>${esc(g.t)}</span><span class="badge" style="background:${g.score===0?'var(--danger)':'var(--warning)'}">${g.score===0?'NOT PRESENT':'PARTIAL'}</span></div>
+  `).join('') : '<p>No major gaps yet — score some checklist items first.</p>';
+
+  updateRadarChart();
+  renderMilestoneHistory();
+  updateTrendChart();
+
+  const nameEl = document.getElementById('wf-name');
+  if(nameEl && !nameEl.value) nameEl.value = state.wfName||'';
+  const byEl = document.getElementById('wf-by');
+  if(byEl && !byEl.value) byEl.value = state.wfBy||'';
+  const dateEl = document.getElementById('wf-date');
+  if(dateEl && !dateEl.value) dateEl.value = state.wfDate||'';
+}
+
+function updateRadarChart(){
+  const ctx = document.getElementById('radarChart');
+  if(!ctx || typeof Chart==='undefined') return;
+  const data = PILLARS.map(p=>computePillarScore(p.code).pct);
+  if(radarChart){ radarChart.data.datasets[0].data = data; radarChart.update(); return; }
+  radarChart = new Chart(ctx.getContext('2d'), {
+    type:'radar',
+    data:{ labels:PILLARS.map(p=>p.name),
+      datasets:[{label:'Current maturity %', data, backgroundColor:'rgba(0,120,212,.2)', borderColor:'#0078D4', pointBackgroundColor:'#0078D4'}]},
+    options:{ scales:{ r:{ min:0, max:100, ticks:{stepSize:25} } }, plugins:{legend:{display:false}} }
+  });
+}
+
+function updateTrendChart(){
+  const ctx = document.getElementById('trendChart');
+  if(!ctx || typeof Chart==='undefined') return;
+  const labels = state.milestones.map(m=>m.name);
+  const data = state.milestones.map(m=>m.overallPct);
+  if(trendChart){ trendChart.data.labels=labels; trendChart.data.datasets[0].data=data; trendChart.update(); return; }
+  trendChart = new Chart(ctx.getContext('2d'), {
+    type:'line',
+    data:{ labels, datasets:[{label:'Overall score %', data, borderColor:'#0078D4', backgroundColor:'rgba(0,120,212,.15)', tension:.25, fill:true}]},
+    options:{ scales:{ y:{ min:0, max:100 } }, plugins:{legend:{display:false}} }
+  });
+}
+
+function saveMilestone(){
+  const nameInput = document.getElementById('ms-name');
+  const name = (nameInput.value||'').trim() || ('Milestone '+(state.milestones.length+1));
+  const pillarPct = {};
+  PILLARS.forEach(p=>{ pillarPct[p.code] = computePillarScore(p.code).pct; });
+  state.milestones.push({ id:Date.now(), name, date:new Date().toISOString().slice(0,10), overallPct:computeOverall(), pillarPct });
+  nameInput.value='';
+  saveState();
+  renderMilestoneHistory();
+  updateTrendChart();
+}
+
+function renderMilestoneHistory(){
+  const el = document.getElementById('milestoneList');
+  if(!state.milestones.length){ el.innerHTML = '<p>No milestones saved yet.</p>'; return; }
+  el.innerHTML = state.milestones.map((m,idx)=>{
+    const prev = state.milestones[idx-1];
+    let deltaHtml = '';
+    if(prev){
+      const d = m.overallPct - prev.overallPct;
+      deltaHtml = `<span class="${d>=0?'delta-up':'delta-down'}">${d>=0?'▲':'▼'} ${Math.abs(d)}%</span>`;
+    }
+    return `<div class="milestone-row"><span>${esc(m.name)} <span style="color:var(--text-light)">(${m.date})</span></span><span>${m.overallPct}% ${deltaHtml}</span></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════════════════════════
+function buildReport(){
+  const overall = computeOverall();
+  const lines = [];
+  lines.push('═'.repeat(70));
+  lines.push('AZURE WELL-ARCHITECTED FRAMEWORK ASSESSMENT REPORT');
+  lines.push('═'.repeat(70));
+  lines.push('Workload: ' + (state.wfName||'(unnamed)'));
+  lines.push('Assessed by: ' + (state.wfBy||'-'));
+  lines.push('Date: ' + (state.wfDate||new Date().toISOString().slice(0,10)));
+  lines.push('Overall score: ' + overall + '% — ' + scoreLabel(overall));
+  lines.push('');
+  PILLARS.forEach(p=>{
+    const {sum,max,pct} = computePillarScore(p.code);
+    lines.push('-'.repeat(70));
+    lines.push(p.name.toUpperCase() + '  —  ' + sum + '/' + max + ' (' + pct + '%)  —  Weight: ' + WEIGHT_LABELS[state.weights[p.code]||2]);
+    lines.push('-'.repeat(70));
+    ITEMS.filter(i=>i.p===p.code).forEach(i=>{
+      const sc = state.scores[i.c]||0;
+      lines.push('  [' + sc + '/3] ' + i.c + ' — ' + i.t);
+      if(state.notes[i.c]) lines.push('        Note: ' + state.notes[i.c]);
+    });
+    lines.push('');
+  });
+  lines.push('-'.repeat(70));
+  lines.push('TOP IMPROVEMENT OPPORTUNITIES');
+  lines.push('-'.repeat(70));
+  const gaps = ITEMS.map(i=>({...i, score: state.scores[i.c]||0})).filter(i=>i.score<=1).sort((a,b)=>a.score-b.score).slice(0,10);
+  if(gaps.length) gaps.forEach(g=> lines.push('  ' + g.c + ' — ' + g.t + ' (score ' + g.score + ')'));
+  else lines.push('  None identified yet.');
+  lines.push('');
+  lines.push('-'.repeat(70));
+  lines.push('MILESTONE HISTORY');
+  lines.push('-'.repeat(70));
+  if(state.milestones.length) state.milestones.forEach(m=> lines.push('  ' + m.date + '  ' + m.name + '  —  ' + m.overallPct + '%'));
+  else lines.push('  No milestones saved yet.');
+  lines.push('');
+  lines.push('═'.repeat(70));
+  return lines.join('\n');
+}
+
+function copyReport(){
+  const text = buildReport();
+  document.getElementById('report-out').textContent = text;
+  navigator.clipboard.writeText(text).then(()=>alert('Report copied to clipboard.')).catch(()=>alert('Could not copy automatically — the report is shown below to copy manually.'));
+}
+function downloadReportTxt(){
+  const text = buildReport();
+  document.getElementById('report-out').textContent = text;
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'WAF_Assessment_' + (state.wfName||'workload').replace(/[^a-z0-9]+/gi,'_') + '_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function resetAssessment(){
+  if(!confirm('This clears all scores, notes, weights, and milestones. Continue?')) return;
+  state = { wfName:'', wfBy:'', wfDate:'', scores:{}, notes:{}, weights:{RE:2,SE:2,CO:2,OE:2,PE:2}, milestones:[] };
+  saveState();
+  PILLARS.forEach(p=>buildPillarPanel(p));
+  document.querySelectorAll('.item-note').forEach(t=>t.value='');
+  document.getElementById('wf-name').value='';
+  document.getElementById('wf-by').value='';
+  document.getElementById('wf-date').value='';
+  document.getElementById('report-out').textContent='';
+  refreshAll();
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+function init(){
+  loadState();
+  buildSideNav();
+  PILLARS.forEach(p=>buildPillarPanel(p));
+  buildTradeoffs();
+  buildGuides();
+  ITEMS.forEach(i=>refreshItemButtons(i.c));
+  refreshAll();
+  switchTab('start');
+
+  document.getElementById('wf-name').addEventListener('change', e=>{ state.wfName=e.target.value; saveState(); });
+  document.getElementById('wf-by').addEventListener('change', e=>{ state.wfBy=e.target.value; saveState(); });
+  document.getElementById('wf-date').addEventListener('change', e=>{ state.wfDate=e.target.value; saveState(); });
+}
+init();
+</script>
+</body>
+</html>
